@@ -1,0 +1,104 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: #17201a;
+  background: #f4f0e8;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+main {
+  padding: 28px;
+}
+
+.topbar,
+.team-card,
+.leaderboard {
+  border: 1px solid #d5cdbf;
+  background: #fffaf0;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 18px 20px;
+}
+
+.topbar p,
+.topbar h1 {
+  margin: 0;
+}
+
+.topbar p {
+  color: #667066;
+  font-size: 14px;
+}
+
+.topbar h1 {
+  font-size: clamp(32px, 5vw, 64px);
+  line-height: 1;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+}
+
+.maps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.team-card {
+  padding: 14px;
+}
+
+.team-card header,
+.rank {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin-top: 12px;
+  aspect-ratio: 1;
+}
+
+.cell {
+  border: 1px solid #cfc5b4;
+  background: #eee5d4;
+}
+
+.cell.active {
+  background: #2f7d57;
+}
+
+.leaderboard {
+  padding: 16px;
+}
+
+.leaderboard h2 {
+  margin: 0 0 14px;
+}
+
+.rank {
+  padding: 12px 0;
+  border-top: 1px solid #e3dacb;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

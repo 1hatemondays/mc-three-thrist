@@ -1,0 +1,19 @@
+export const EVENTS = {
+  TEAM_JOIN: "team:join",
+  SETUP_SUBMIT_MAZE: "setup:submitMaze",
+  MOVE_CHOOSE: "move:choose",
+  QUESTION_ANSWER: "question:answer",
+  AUCTION_BID: "auction:bid",
+  COMBAT_BET: "combat:bet",
+  GAME_STATE: "game:state",
+  ROUND_QUESTION: "round:question",
+  ROUND_RESULT: "round:result",
+  AUCTION_RESULT: "auction:result",
+  COMBAT_RESULT: "combat:result",
+  GAME_OVER: "game:over"
+};
+
+export const ROOMS = {
+  HOSTS: "hosts",
+  team: (teamId) => `team:${teamId}`
+};

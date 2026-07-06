@@ -1,0 +1,53 @@
+import { config } from "./config.js";
+
+const makeTeam = (index) => ({
+  id: `team${index + 1}`,
+  name: `Team ${index + 1}`,
+  hp: 100,
+  score: 0,
+  position: { x: 0, y: 0 },
+  startPoint: null,
+  endPoint: null,
+  walls: [],
+  discoveredCells: [{ x: 0, y: 0 }],
+  supportItems: []
+});
+
+export const gameState = {
+  config: {
+    teamCount: config.teamCount,
+    boardSize: 6
+  },
+  teams: Array.from({ length: config.teamCount }, (_, index) => makeTeam(index)),
+  round: {
+    roundNumber: 1,
+    phase: "movement",
+    pendingAnswers: {},
+    currentQuestion: null
+  }
+};
+
+export const findTeam = (teamId) => gameState.teams.find((team) => team.id === teamId);
+
+export const getHostState = () => gameState;
+
+export const getPlayerState = (teamId) => {
+  const team = findTeam(teamId);
+  if (!team) return null;
+
+  return {
+    config: gameState.config,
+    team: {
+      id: team.id,
+      name: team.name,
+      hp: team.hp,
+      score: team.score,
+      position: team.position,
+      startPoint: team.startPoint,
+      discoveredCells: team.discoveredCells,
+      supportItems: team.supportItems
+    },
+    leaderboard: gameState.teams.map(({ id, name, hp, score }) => ({ id, name, hp, score })),
+    round: gameState.round
+  };
+};

@@ -1,0 +1,20 @@
+{
+  "name": "maze-of-knowledge",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "server",
+    "host",
+    "player"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace server\" \"npm run dev --workspace host\" \"npm run dev --workspace player\"",
+    "dev:server": "npm run dev --workspace server",
+    "dev:host": "npm run dev --workspace host",
+    "dev:player": "npm run dev --workspace player"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "type": "module"
+}

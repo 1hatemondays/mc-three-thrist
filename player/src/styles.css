@@ -1,0 +1,111 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: #17201a;
+  background: #f4f0e8;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+main {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 20px;
+}
+
+.panel,
+.state-card {
+  border: 1px solid #d5cdbf;
+  background: #fffaf0;
+}
+
+.panel {
+  width: min(100%, 440px);
+  padding: 24px;
+}
+
+p,
+h1,
+h2 {
+  margin: 0;
+}
+
+p {
+  color: #667066;
+  font-size: 14px;
+}
+
+h1 {
+  margin-top: 4px;
+  font-size: 36px;
+  line-height: 1;
+}
+
+form {
+  margin-top: 28px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.join-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+input,
+button {
+  min-height: 44px;
+  border: 1px solid #bdb3a2;
+  font: inherit;
+}
+
+input {
+  width: 100%;
+  padding: 0 12px;
+  background: #ffffff;
+}
+
+button {
+  padding: 0 18px;
+  color: #ffffff;
+  background: #2f7d57;
+  cursor: pointer;
+}
+
+.error {
+  margin-top: 14px;
+  color: #9b2525;
+  font-weight: 700;
+}
+
+.state-card {
+  margin-top: 18px;
+  padding: 16px;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 14px 0 0;
+}
+
+dt {
+  color: #667066;
+  font-size: 13px;
+}
+
+dd {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+}
