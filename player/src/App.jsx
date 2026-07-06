@@ -7,6 +7,7 @@ const SERVER_URL =
   import.meta.env.VITE_SERVER_URL ||
   `${window.location.protocol}//${window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname}:3000`;
 const BOARD_SIZE = 6;
+const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
 
 const emptyDraft = () => ({ walls: [], startPoint: null, endPoint: null });
 const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
@@ -64,7 +65,9 @@ const SetupBoard = ({ state, onSubmit }) => {
     if (endKey === `${x}:${y}`) classes.push("is-end");
 
     for (const side of WALL_SIDES) {
-      if (hasWall(draft.walls, BOARD_SIZE, x, y, side)) classes.push(`wall-${side}`);
+      if (draft.walls.some((wall) => wall.x === x && wall.y === y && wall.side === side)) {
+        classes.push(`wall-${side}`);
+      }
     }
 
     return classes.join(" ");
@@ -202,7 +205,7 @@ export default function App() {
     <main>
       <section className="panel">
         <p>Player screen</p>
-        <h1>Mê Cung Tri Thức</h1>
+        <h1>{APP_TITLE}</h1>
         <div className={socketStatus === "connected" ? "connection online" : "connection"}>
           Server: {socketStatus}
         </div>

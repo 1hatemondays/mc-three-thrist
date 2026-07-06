@@ -7,6 +7,7 @@ const SERVER_URL =
   import.meta.env.VITE_SERVER_URL ||
   `${window.location.protocol}//${window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname}:3000`;
 const BOARD_SIZE = 6;
+const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
 
 const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
 
@@ -35,7 +36,9 @@ const Board = ({ team, submitted }) => {
           if (key === endKey) classes.push("end");
           if (key === positionKey) classes.push("active");
           for (const side of WALL_SIDES) {
-            if (hasWall(team.walls || [], BOARD_SIZE, x, y, side)) classes.push(`wall-${side}`);
+            if (team.walls?.some((wall) => wall.x === x && wall.y === y && wall.side === side)) {
+              classes.push(`wall-${side}`);
+            }
           }
 
           return (
@@ -71,7 +74,7 @@ export default function App() {
       <header className="topbar">
         <div>
           <p>Host screen</p>
-          <h1>Mê Cung Tri Thức</h1>
+          <h1>{APP_TITLE}</h1>
         </div>
         <span>
           {state ? `${submitted.size}/${teams.length} maze setups` : "Connecting..."}
