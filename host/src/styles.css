@@ -1,4 +1,4 @@
-* {
+﻿* {
   box-sizing: border-box;
 }
 
@@ -25,6 +25,7 @@ main {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  gap: 18px;
   margin-bottom: 20px;
   padding: 18px 20px;
 }
@@ -42,6 +43,13 @@ main {
 .topbar h1 {
   font-size: clamp(32px, 5vw, 64px);
   line-height: 1;
+}
+
+.topbar > span,
+.status {
+  border: 1px solid #bdb3a2;
+  padding: 8px 10px;
+  white-space: nowrap;
 }
 
 .layout {
@@ -67,6 +75,25 @@ main {
   gap: 12px;
 }
 
+.team-card small {
+  display: block;
+  margin-top: 3px;
+  color: #667066;
+}
+
+.status {
+  align-self: flex-start;
+  color: #8a6b2e;
+  background: #f8ebc4;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.status.ready {
+  color: #1f5f42;
+  background: #d5eadc;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -76,12 +103,41 @@ main {
 }
 
 .cell {
+  display: grid;
+  place-items: center;
   border: 1px solid #cfc5b4;
+  color: #17201a;
   background: #eee5d4;
+  font-weight: 900;
+}
+
+.cell.start {
+  background: #b9dfc5;
+}
+
+.cell.end {
+  background: #f4bf9d;
 }
 
 .cell.active {
-  background: #2f7d57;
+  outline: 3px solid #2f7d57;
+  outline-offset: -5px;
+}
+
+.wall-top {
+  border-top: 5px solid #17201a;
+}
+
+.wall-right {
+  border-right: 5px solid #17201a;
+}
+
+.wall-bottom {
+  border-bottom: 5px solid #17201a;
+}
+
+.wall-left {
+  border-left: 5px solid #17201a;
 }
 
 .leaderboard {
@@ -90,6 +146,10 @@ main {
 
 .leaderboard h2 {
   margin: 0 0 14px;
+}
+
+.setup-title {
+  padding-top: 18px;
 }
 
 .rank {

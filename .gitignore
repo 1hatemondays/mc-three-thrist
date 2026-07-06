@@ -1,5 +1,7 @@
 node_modules/
 dist/
+build-check/
+.playwright-mcp/
 
 .env
 .env.*

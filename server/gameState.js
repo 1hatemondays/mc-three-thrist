@@ -1,4 +1,5 @@
 import { config } from "./config.js";
+import { getSetupSummary } from "./setupLogic.js";
 
 const makeTeam = (index) => ({
   id: `team${index + 1}`,
@@ -19,6 +20,10 @@ export const gameState = {
     boardSize: 6
   },
   teams: Array.from({ length: config.teamCount }, (_, index) => makeTeam(index)),
+  setup: {
+    submissions: {},
+    complete: false
+  },
   round: {
     roundNumber: 1,
     phase: "movement",
@@ -28,6 +33,8 @@ export const gameState = {
 };
 
 export const findTeam = (teamId) => gameState.teams.find((team) => team.id === teamId);
+
+export const normalizeTeamId = (teamId) => String(teamId || "").replace(/\s+/g, "").toLowerCase();
 
 export const getHostState = () => gameState;
 
@@ -48,6 +55,7 @@ export const getPlayerState = (teamId) => {
       supportItems: team.supportItems
     },
     leaderboard: gameState.teams.map(({ id, name, hp, score }) => ({ id, name, hp, score })),
-    round: gameState.round
+    round: gameState.round,
+    setup: getSetupSummary(gameState, teamId)
   };
 };

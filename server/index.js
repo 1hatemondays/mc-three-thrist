@@ -4,7 +4,7 @@ import http from "node:http";
 import { Server } from "socket.io";
 import { EVENTS, ROOMS } from "../shared/constants.js";
 import { config } from "./config.js";
-import { findTeam, getHostState, getPlayerState } from "./gameState.js";
+import { findTeam, getHostState, getPlayerState, normalizeTeamId } from "./gameState.js";
 import { registerAuctionHandlers } from "./handlers/auction.js";
 import { registerCombatHandlers } from "./handlers/combat.js";
 import { registerMovementHandlers } from "./handlers/movement.js";
@@ -18,6 +18,22 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
+
+app.get("/", (req, res) => {
+  const host = req.hostname === "0.0.0.0" ? "localhost" : req.hostname;
+  res.type("html").send(`<!doctype html>
+<html>
+  <body>
+    <h1>Mê Cung Tri Thức server</h1>
+    <p>Open the game UI here:</p>
+    <ul>
+      <li><a href="http://${host}:5174/">Player app</a></li>
+      <li><a href="http://${host}:5173/">Host app</a></li>
+    </ul>
+    <p>Server health: <a href="/health">/health</a></p>
+  </body>
+</html>`);
+});
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true, teams: getHostState().config.teamCount });
@@ -34,7 +50,7 @@ io.on("connection", (socket) => {
   }
 
   socket.on(EVENTS.TEAM_JOIN, ({ teamId } = {}) => {
-    const id = String(teamId || "").trim().toLowerCase();
+    const id = normalizeTeamId(teamId);
     const team = findTeam(id);
 
     if (!team) {
