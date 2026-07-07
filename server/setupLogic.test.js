@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   applyMazeSubmission,
+  getHostSetupPreviewMap,
   getSetupSummary,
   validateMazeSubmission
 } from "./setupLogic.js";
@@ -45,7 +46,7 @@ test("validates one complete 6x6 maze setup submission", () => {
       startPoint: { x: 0, y: 0 },
       endPoint: { x: 5, y: 5 }
     }).error,
-    /20 walls/
+    /20 interior walls/i
   );
 });
 
@@ -59,6 +60,17 @@ test("counts opposite sides of the same edge as one wall", () => {
 
   assert.equal(result.ok, true);
   assert.equal(result.maze.walls.length, 20);
+});
+
+test("requires exactly 20 interior walls and does not count border walls", () => {
+  const result = validateMazeSubmission({
+    boardSize: 6,
+    walls: [{ x: 0, y: 0, side: "top" }, ...walls.slice(0, 19)],
+    startPoint: { x: 0, y: 0 },
+    endPoint: { x: 5, y: 5 }
+  });
+
+  assert.match(result.error, /20 interior walls/i);
 });
 
 test("rejects a maze that fully encloses any cell", () => {
@@ -97,4 +109,22 @@ test("assigns a submitted maze to the next team without leaking hidden fields", 
   assert.equal(summary.assignedBoardReady, true);
   assert.equal("walls" in summary, false);
   assert.equal("endPoint" in summary, false);
+});
+
+test("builds host setup previews keyed by the submitting team", () => {
+  const state = makeState();
+
+  applyMazeSubmission(state, "team1", {
+    walls,
+    startPoint: { x: 0, y: 1 },
+    endPoint: { x: 5, y: 4 }
+  });
+
+  const previews = getHostSetupPreviewMap(state);
+
+  assert.deepEqual(previews.team1.startPoint, { x: 0, y: 1 });
+  assert.deepEqual(previews.team1.endPoint, { x: 5, y: 4 });
+  assert.equal(previews.team1.targetTeamId, "team2");
+  assert.deepEqual(previews.team1.walls, state.teams[1].walls);
+  assert.equal(previews.team2, undefined);
 });

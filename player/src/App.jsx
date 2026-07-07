@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { io } from "socket.io-client";
 import { EVENTS } from "../../shared/constants.js";
-import { WALL_COUNT, WALL_SIDES, hasEnclosedCell, uniqueWalls, wallKey } from "../../shared/maze.js";
+import { WALL_COUNT, hasEnclosedCell, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
 
 const SERVER_URL =
   import.meta.env.VITE_SERVER_URL ||
@@ -12,11 +12,49 @@ const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
 const emptyDraft = () => ({ walls: [], startPoint: null, endPoint: null });
 const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
 const normalizeTeamCode = (value) => value.replace(/\s+/g, "").toLowerCase();
+const INTERIOR_EDGES = [
+  ...Array.from({ length: BOARD_SIZE }, (_, y) =>
+    Array.from({ length: BOARD_SIZE - 1 }, (_, index) => ({
+      x: index + 1,
+      y,
+      side: "left",
+      orientation: "vertical"
+    }))
+  ).flat(),
+  ...Array.from({ length: BOARD_SIZE - 1 }, (_, index) =>
+    Array.from({ length: BOARD_SIZE }, (_, x) => ({
+      x,
+      y: index + 1,
+      side: "top",
+      orientation: "horizontal"
+    }))
+  ).flat()
+];
+const BORDER_SEGMENTS = [
+  ...Array.from({ length: BOARD_SIZE }, (_, x) => ({ x, y: 0, side: "top", orientation: "horizontal" })),
+  ...Array.from({ length: BOARD_SIZE }, (_, x) => ({
+    x,
+    y: BOARD_SIZE - 1,
+    side: "bottom",
+    orientation: "horizontal"
+  })),
+  ...Array.from({ length: BOARD_SIZE }, (_, y) => ({ x: 0, y, side: "left", orientation: "vertical" })),
+  ...Array.from({ length: BOARD_SIZE }, (_, y) => ({
+    x: BOARD_SIZE - 1,
+    y,
+    side: "right",
+    orientation: "vertical"
+  }))
+];
+
+const edgeGridPosition = (edge) =>
+  edge.orientation === "vertical"
+    ? { gridColumn: edge.side === "left" ? edge.x * 2 + 1 : BOARD_SIZE * 2 + 1, gridRow: edge.y * 2 + 2 }
+    : { gridColumn: edge.x * 2 + 2, gridRow: edge.side === "top" ? edge.y * 2 + 1 : BOARD_SIZE * 2 + 1 };
 
 const SetupBoard = ({ state, onSubmit }) => {
   const [draft, setDraft] = useState(emptyDraft);
   const [mode, setMode] = useState("wall");
-  const [wallSide, setWallSide] = useState("top");
   const setup = state.setup;
   const submitted = Boolean(setup?.mySubmission);
   const startKey = pointKey(draft.startPoint);
@@ -38,11 +76,20 @@ const SetupBoard = ({ state, onSubmit }) => {
 
     if (mode === "end") {
       setDraft((current) => ({ ...current, endPoint: { x, y } }));
-      return;
     }
+  };
 
-    const nextWall = { x, y, side: wallSide };
-    const key = wallKey(nextWall, BOARD_SIZE);
+  const cellClass = (x, y) => {
+    const classes = ["setup-cell"];
+    if (startKey === `${x}:${y}`) classes.push("is-start");
+    if (endKey === `${x}:${y}`) classes.push("is-end");
+    return classes.join(" ");
+  };
+
+  const toggleEdge = (edge) => {
+    if (submitted || mode !== "wall") return;
+
+    const key = wallKey(edge, BOARD_SIZE);
 
     setDraft((current) => {
       const exists = current.walls.some((wall) => wallKey(wall, BOARD_SIZE) === key);
@@ -52,25 +99,13 @@ const SetupBoard = ({ state, onSubmit }) => {
 
       if (current.walls.length >= WALL_COUNT) return current;
 
-      const nextWalls = uniqueWalls([...current.walls, nextWall], BOARD_SIZE);
+      const nextWalls = uniqueWalls([...current.walls, edge], BOARD_SIZE).filter((wall) =>
+        isInteriorWall(wall, BOARD_SIZE)
+      );
       if (hasEnclosedCell(nextWalls, BOARD_SIZE)) return current;
 
       return { ...current, walls: nextWalls };
     });
-  };
-
-  const cellClass = (x, y) => {
-    const classes = ["setup-cell"];
-    if (startKey === `${x}:${y}`) classes.push("is-start");
-    if (endKey === `${x}:${y}`) classes.push("is-end");
-
-    for (const side of WALL_SIDES) {
-      if (draft.walls.some((wall) => wall.x === x && wall.y === y && wall.side === side)) {
-        classes.push(`wall-${side}`);
-      }
-    }
-
-    return classes.join(" ");
   };
 
   return (
@@ -96,21 +131,6 @@ const SetupBoard = ({ state, onSubmit }) => {
         ))}
       </div>
 
-      {mode === "wall" && (
-        <div className="toolbar side-toolbar" aria-label="Wall side">
-          {WALL_SIDES.map((side) => (
-            <button
-              className={wallSide === side ? "tool active" : "tool"}
-              key={side}
-              onClick={() => setWallSide(side)}
-              type="button"
-            >
-              {side}
-            </button>
-          ))}
-        </div>
-      )}
-
       <div className="setup-board" aria-label="Maze setup board">
         {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
           const x = index % BOARD_SIZE;
@@ -118,19 +138,50 @@ const SetupBoard = ({ state, onSubmit }) => {
           return (
             <button
               className={cellClass(x, y)}
-              disabled={submitted}
+              disabled={submitted || mode === "wall"}
               key={`${x}:${y}`}
               onClick={() => selectCell(x, y)}
+              style={{ gridColumn: x * 2 + 2, gridRow: y * 2 + 2 }}
               type="button"
             >
               {startKey === `${x}:${y}` ? "S" : endKey === `${x}:${y}` ? "E" : ""}
             </button>
           );
         })}
+
+        {BORDER_SEGMENTS.map((edge) => (
+          <div
+            aria-hidden="true"
+            className={`setup-edge border ${edge.orientation}`}
+            key={`border-${edge.side}-${edge.x}-${edge.y}`}
+            style={edgeGridPosition(edge)}
+          />
+        ))}
+
+        {INTERIOR_EDGES.map((edge) => {
+          const active = draft.walls.some((wall) => wallKey(wall, BOARD_SIZE) === wallKey(edge, BOARD_SIZE));
+          return (
+            <button
+              aria-label={`Toggle ${edge.orientation} wall at ${edge.x},${edge.y}`}
+              className={`setup-edge ${edge.orientation}${active ? " active" : ""}`}
+              disabled={submitted || mode !== "wall"}
+              key={`edge-${edge.side}-${edge.x}-${edge.y}`}
+              onClick={() => toggleEdge(edge)}
+              style={edgeGridPosition(edge)}
+              type="button"
+            />
+          );
+        })}
       </div>
 
       <div className="setup-actions">
-        <span>{submitted ? "Maze submitted. Waiting for other teams." : "Pick start, end, and exactly 20 walls."}</span>
+        <span>
+          {submitted
+            ? "Maze submitted. Waiting for other teams."
+            : mode === "wall"
+              ? "Click the shared gaps to toggle exactly 20 interior walls."
+              : "Pick the start and end cells for the next team."}
+        </span>
         <button disabled={!canSubmit} onClick={() => onSubmit(draft)} type="button">
           Submit maze
         </button>

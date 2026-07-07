@@ -1,6 +1,14 @@
 export const WALL_COUNT = 20;
 export const WALL_SIDES = ["top", "right", "bottom", "left"];
 
+export const isBorderWall = ({ x, y, side }, boardSize) =>
+  (side === "top" && y === 0) ||
+  (side === "left" && x === 0) ||
+  (side === "right" && x === boardSize - 1) ||
+  (side === "bottom" && y === boardSize - 1);
+
+export const isInteriorWall = (wall, boardSize) => !isBorderWall(wall, boardSize);
+
 export const canonicalWall = ({ x, y, side }, boardSize) => {
   if (side === "bottom" && y + 1 < boardSize) return { x, y: y + 1, side: "top" };
   if (side === "right" && x + 1 < boardSize) return { x: x + 1, y, side: "left" };

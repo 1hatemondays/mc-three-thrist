@@ -211,10 +211,6 @@ dd {
   margin-top: 16px;
 }
 
-.side-toolbar {
-  margin-top: 9px;
-}
-
 .tool {
   min-height: 40px;
   padding: 0 13px;
@@ -230,8 +226,8 @@ dd {
 
 .setup-board {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 5px;
+  grid-template-columns: 14px repeat(5, minmax(0, 1fr) 14px) minmax(0, 1fr) 14px;
+  grid-template-rows: 14px repeat(5, minmax(0, 1fr) 14px) minmax(0, 1fr) 14px;
   margin-top: 18px;
   aspect-ratio: 1;
   padding: 8px;
@@ -256,6 +252,10 @@ dd {
   box-shadow: none;
 }
 
+.setup-cell:disabled {
+  opacity: 1;
+}
+
 .setup-cell.is-start {
   background: var(--mint);
 }
@@ -264,20 +264,36 @@ dd {
   background: #ffd0bd;
 }
 
-.wall-top {
-  border-top: 6px solid var(--line);
+.setup-edge {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(29, 51, 41, 0.16);
+  box-shadow: none;
 }
 
-.wall-right {
-  border-right: 6px solid var(--line);
+.setup-edge.horizontal {
+  min-width: 0;
 }
 
-.wall-bottom {
-  border-bottom: 6px solid var(--line);
+.setup-edge.vertical {
+  min-width: 0;
 }
 
-.wall-left {
-  border-left: 6px solid var(--line);
+.setup-edge:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: rgba(240, 185, 75, 0.85);
+}
+
+.setup-edge.active,
+.setup-edge.border {
+  background: var(--line);
+}
+
+.setup-edge:disabled:not(.border) {
+  cursor: default;
+  opacity: 1;
 }
 
 .setup-actions {

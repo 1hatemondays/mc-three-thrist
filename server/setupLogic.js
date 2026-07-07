@@ -1,4 +1,4 @@
-import { WALL_COUNT, WALL_SIDES, hasEnclosedCell, uniqueWalls } from "../shared/maze.js";
+import { WALL_COUNT, WALL_SIDES, hasEnclosedCell, isInteriorWall, uniqueWalls } from "../shared/maze.js";
 
 const SIDES = new Set(WALL_SIDES);
 
@@ -39,19 +39,20 @@ export const validateMazeSubmission = ({ boardSize, walls, startPoint, endPoint 
   }
 
   const cleanWalls = uniqueWalls(walls, boardSize);
+  const interiorWalls = cleanWalls.filter((wall) => isInteriorWall(wall, boardSize));
 
-  if (cleanWalls.length !== WALL_COUNT) {
-    return { ok: false, error: `Maze setup requires exactly ${WALL_COUNT} walls.` };
+  if (interiorWalls.length !== WALL_COUNT) {
+    return { ok: false, error: `Maze setup requires exactly ${WALL_COUNT} interior walls.` };
   }
 
-  if (hasEnclosedCell(cleanWalls, boardSize)) {
+  if (hasEnclosedCell(interiorWalls, boardSize)) {
     return { ok: false, error: "A cell cannot be fully enclosed by walls." };
   }
 
   return {
     ok: true,
     maze: {
-      walls: cleanWalls,
+      walls: interiorWalls,
       startPoint: cleanPoint(startPoint),
       endPoint: cleanPoint(endPoint)
     }
@@ -90,6 +91,26 @@ export const applyMazeSubmission = (state, sourceTeamId, payload) => {
   state.setup.complete = Object.keys(state.setup.submissions).length === state.teams.length;
 
   return { ok: true, targetTeamId: targetTeam.id };
+};
+
+export const getHostSetupPreviewMap = (state) => {
+  const previews = {};
+
+  for (const [sourceTeamId, submission] of Object.entries(state.setup?.submissions || {})) {
+    const targetTeam = state.teams.find((team) => team.id === submission.targetTeamId);
+    if (!targetTeam) continue;
+
+    previews[sourceTeamId] = {
+      sourceTeamId,
+      targetTeamId: submission.targetTeamId,
+      walls: targetTeam.walls,
+      startPoint: targetTeam.startPoint,
+      endPoint: targetTeam.endPoint,
+      position: targetTeam.position
+    };
+  }
+
+  return previews;
 };
 
 export const getSetupSummary = (state, teamId) => {

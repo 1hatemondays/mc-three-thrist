@@ -1,5 +1,5 @@
 import { config } from "./config.js";
-import { getSetupSummary } from "./setupLogic.js";
+import { getHostSetupPreviewMap, getSetupSummary } from "./setupLogic.js";
 
 const makeTeam = (index) => ({
   id: `team${index + 1}`,
@@ -36,7 +36,13 @@ export const findTeam = (teamId) => gameState.teams.find((team) => team.id === t
 
 export const normalizeTeamId = (teamId) => String(teamId || "").replace(/\s+/g, "").toLowerCase();
 
-export const getHostState = () => gameState;
+export const getHostState = () => ({
+  ...gameState,
+  setup: {
+    ...gameState.setup,
+    previews: getHostSetupPreviewMap(gameState)
+  }
+});
 
 export const getPlayerState = (teamId) => {
   const team = findTeam(teamId);

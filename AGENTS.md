@@ -69,7 +69,7 @@ Three independent components communicating over Socket.io (realtime WebSocket):
   position: { x: 0, y: 0 },
   startPoint: { x, y },
   endPoint: { x, y },        // this team's own end point (set by the opposing team), hidden from itself
-  walls: [ {x, y, side} ],   // 20 walls placed by the OPPOSING team for this team's board
+  walls: [ {x, y, side} ],   // 20 INTERIOR walls placed by the opposing team; outer border walls are implicit
   discoveredCells: [ {x,y} ],// cells already visited/known — only this part is sent to the client
   supportItems: []            // support items won via auction
 }
@@ -85,7 +85,7 @@ Three independent components communicating over Socket.io (realtime WebSocket):
 
 ## 5. Game flow
 
-1. **Setup**: All teams log into the player app with a team code. Each team places 20 walls and picks a start/end point for a 6x6 board — this board is assigned by the server to an OPPONENT team, not to the team that created it. (Pairing logic must work for any team count, not just 4 — e.g. pair teams in a rotation or round-robin depending on N.)
+1. **Setup**: All teams log into the player app with a team code. Each team places exactly **20 interior walls** and picks a start/end point for a 6x6 board. The **outer border is always walled by default** and does **not** count toward the 20-wall limit. Wall placement should be **click-based on the shared edge lines between cells**, and clicking the same interior edge again should toggle that wall off so teams can easily fix layouts. The board a team creates is assigned by the server to an OPPONENT team, not to the team that created it. (Pairing logic must work for any team count, not just 4 — e.g. pair teams in a rotation or round-robin depending on N.)
 2. **Round start**: The server sends each team the 6x6 board it received from its opponent, but with walls and end point hidden.
 3. **Each turn (round)**:
    - Each team picks a direction (client sends `move:choose`).
@@ -121,6 +121,8 @@ Three independent components communicating over Socket.io (realtime WebSocket):
 - Each socket handler should be its own file; avoid one giant `index.js`.
 - Use shared constants for event names (`shared/constants.js`), never hardcode the same string in multiple places.
 - Keep team count as a runtime config value (set once at session setup based on actual class size), not a hardcoded constant anywhere in game logic, pairing, or UI layout.
+- Maze setup rules are: **20 interior walls only**, **implicit outer border walls**, and **edge-click toggling** in the player UI.
+- During setup review on the host screen, a team card should show the maze **submitted by that team**, while also indicating which opponent that maze will be assigned to.
 - Implement in this order: maze setup → movement + questions → leaderboard → auction → combat. Only build auction/combat once the core loop is stable.
 
 ## 8. Out of scope
