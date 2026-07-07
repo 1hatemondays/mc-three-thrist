@@ -17,3 +17,18 @@ export const ROOMS = {
   HOSTS: "hosts",
   team: (teamId) => `team:${teamId}`
 };
+
+export const ROUND_PHASES = {
+  MOVEMENT: "movement",
+  AUCTION: "auction",
+  COMBAT: "combat"
+};
+
+export const DIRECTIONS = {
+  UP: "up",
+  RIGHT: "right",
+  DOWN: "down",
+  LEFT: "left"
+};
+
+export const MOVE_SCORE = 10;

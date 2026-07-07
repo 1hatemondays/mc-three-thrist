@@ -17,24 +17,24 @@ const cleanPoint = ({ x, y }) => ({ x, y });
 
 export const validateMazeSubmission = ({ boardSize, walls, startPoint, endPoint }) => {
   if (!isPoint(startPoint, boardSize)) {
-    return { ok: false, error: "Start point must be inside the board." };
+    return { ok: false, error: "Ô xuất phát phải nằm trong bàn chơi." };
   }
 
   if (!isPoint(endPoint, boardSize)) {
-    return { ok: false, error: "End point must be inside the board." };
+    return { ok: false, error: "Ô đích phải nằm trong bàn chơi." };
   }
 
   if (samePoint(startPoint, endPoint)) {
-    return { ok: false, error: "Start and end point must be different." };
+    return { ok: false, error: "Ô xuất phát và ô đích phải khác nhau." };
   }
 
   if (!Array.isArray(walls)) {
-    return { ok: false, error: `Maze setup requires exactly ${WALL_COUNT} walls.` };
+    return { ok: false, error: `Mê cung cần đúng ${WALL_COUNT} tường.` };
   }
 
   for (const wall of walls) {
     if (!isPoint(wall, boardSize) || !SIDES.has(wall.side)) {
-      return { ok: false, error: "Every wall must have x, y, and a valid side." };
+      return { ok: false, error: "Mỗi tường phải có x, y và cạnh hợp lệ." };
     }
   }
 
@@ -42,11 +42,11 @@ export const validateMazeSubmission = ({ boardSize, walls, startPoint, endPoint 
   const interiorWalls = cleanWalls.filter((wall) => isInteriorWall(wall, boardSize));
 
   if (interiorWalls.length !== WALL_COUNT) {
-    return { ok: false, error: `Maze setup requires exactly ${WALL_COUNT} interior walls.` };
+    return { ok: false, error: `Mê cung cần đúng ${WALL_COUNT} tường nội bộ.` };
   }
 
   if (hasEnclosedCell(interiorWalls, boardSize)) {
-    return { ok: false, error: "A cell cannot be fully enclosed by walls." };
+    return { ok: false, error: "Không được bao kín hoàn toàn một ô bằng tường." };
   }
 
   return {
@@ -63,11 +63,11 @@ export const applyMazeSubmission = (state, sourceTeamId, payload) => {
   const sourceIndex = state.teams.findIndex((team) => team.id === sourceTeamId);
 
   if (sourceIndex === -1) {
-    return { ok: false, error: "Join a team before submitting a maze." };
+    return { ok: false, error: "Hãy vào đội trước khi nộp mê cung." };
   }
 
   if (state.teams.length < 2) {
-    return { ok: false, error: "Maze setup needs at least 2 teams." };
+    return { ok: false, error: "Thiết lập mê cung cần ít nhất 2 đội." };
   }
 
   const validated = validateMazeSubmission({

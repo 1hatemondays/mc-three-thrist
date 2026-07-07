@@ -1,11 +1,34 @@
 import { EVENTS } from "../../shared/constants.js";
+import { gameState } from "../gameState.js";
+import { answerQuestion, chooseMoveQuestion, stripQuestionAnswer } from "../movementLogic.js";
+import { questionBank } from "../questionBank.js";
+import { emitAllStates, emitPlayerError, emitRoundResult } from "../socketState.js";
 
-export const registerMovementHandlers = (_io, socket) => {
-  socket.on(EVENTS.MOVE_CHOOSE, (_payload) => {
-    // TODO: validate direction, check hidden walls server-side, choose a question, and emit round:question.
+export const registerMovementHandlers = (io, socket) => {
+  socket.on(EVENTS.MOVE_CHOOSE, (payload = {}) => {
+    const result = chooseMoveQuestion(gameState, socket.data.teamId, payload, questionBank);
+
+    if (!result.ok) {
+      emitPlayerError(socket, result.error);
+      return;
+    }
+
+    socket.emit(EVENTS.ROUND_QUESTION, {
+      direction: result.direction,
+      question: stripQuestionAnswer(result.question)
+    });
+    emitAllStates(io);
   });
 
-  socket.on(EVENTS.QUESTION_ANSWER, (_payload) => {
-    // TODO: grade answer server-side, update position/score only when movement and answer are valid.
+  socket.on(EVENTS.QUESTION_ANSWER, (payload = {}) => {
+    const result = answerQuestion(gameState, socket.data.teamId, payload);
+
+    if (!result.ok) {
+      emitPlayerError(socket, result.error);
+      return;
+    }
+
+    emitRoundResult(io, result.result);
+    emitAllStates(io);
   });
 };

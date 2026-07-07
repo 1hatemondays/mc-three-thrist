@@ -63,7 +63,7 @@ const Board = ({ cardLabel, metaLabel, submitted, team }) => {
           <strong>{cardLabel}</strong>
           <small>{metaLabel}</small>
         </div>
-        <span className={submitted ? "status ready" : "status"}>{submitted ? "Submitted" : "Pending"}</span>
+        <span className={submitted ? "status ready" : "status"}>{submitted ? "Đã nộp" : "Đang chờ"}</span>
       </header>
 
       <div className="board" aria-label={`${cardLabel} maze`}>
@@ -131,11 +131,11 @@ export default function App() {
     <main>
       <header className="topbar">
         <div>
-          <p>Host screen</p>
+          <p>Màn hình host</p>
           <h1>{APP_TITLE}</h1>
         </div>
         <span>
-          {state ? `${submitted.size}/${teams.length} maze setups` : "Connecting..."}
+          {state ? `${submitted.size}/${teams.length} đội đã nộp mê cung` : "Đang kết nối..."}
         </span>
       </header>
 
@@ -147,7 +147,7 @@ export default function App() {
                 <Board
                   cardLabel={team.name}
                   key={team.id}
-                  metaLabel={team.startPoint ? "Board ready" : "Waiting for maze"}
+                  metaLabel={team.startPoint ? "Đã sẵn sàng" : "Đang chờ mê cung"}
                   submitted={submitted.has(team.id)}
                   team={team}
                 />
@@ -163,8 +163,8 @@ export default function App() {
                 key={team.id}
                 metaLabel={
                   preview
-                    ? `Builds ${targetName || preview.targetTeamId}`
-                    : "Waiting for submission"
+                    ? `Tạo mê cung cho ${targetName || preview.targetTeamId}`
+                    : "Đang chờ nộp"
                 }
                 submitted={submitted.has(team.id)}
                 team={preview || { ...team, walls: [], startPoint: null, endPoint: null }}
@@ -174,19 +174,19 @@ export default function App() {
         </div>
 
         <aside className="leaderboard">
-          <h2>Leaderboard</h2>
+          <h2>Bảng điểm</h2>
           {teams.map((team) => (
             <div className="rank" key={team.id}>
               <span>{team.name}</span>
-              <strong>{team.score} pts / {team.hp} HP</strong>
+              <strong>{team.score} điểm / {team.hp} máu</strong>
             </div>
           ))}
 
-          <h2 className="setup-title">Setup</h2>
+          <h2 className="setup-title">Thiết lập</h2>
           {teams.map((team) => (
             <div className="rank" key={`${team.id}-setup`}>
               <span>{team.name}</span>
-              <strong>{submitted.has(team.id) ? "Submitted" : "Pending"}</strong>
+              <strong>{submitted.has(team.id) ? "Đã nộp" : "Đang chờ"}</strong>
             </div>
           ))}
         </aside>

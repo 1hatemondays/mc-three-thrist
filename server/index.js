@@ -22,15 +22,15 @@ app.use(express.json());
 app.get("/", (req, res) => {
   const host = req.hostname === "0.0.0.0" ? "localhost" : req.hostname;
   res.type("html").send(`<!doctype html>
-<html>
+<html lang="vi">
   <body>
-    <h1>Mê Cung Tri Thức server</h1>
-    <p>Open the game UI here:</p>
+    <h1>Mê Cung Tri Thức - máy chủ</h1>
+    <p>Mở giao diện trò chơi tại đây:</p>
     <ul>
-      <li><a href="http://${host}:5174/">Player app</a></li>
-      <li><a href="http://${host}:5173/">Host app</a></li>
+      <li><a href="http://${host}:5174/">Màn hình đội chơi</a></li>
+      <li><a href="http://${host}:5173/">Màn hình host</a></li>
     </ul>
-    <p>Server health: <a href="/health">/health</a></p>
+    <p>Kiểm tra máy chủ: <a href="/health">/health</a></p>
   </body>
 </html>`);
 });
@@ -55,7 +55,7 @@ io.on("connection", (socket) => {
 
     if (!team) {
       socket.emit(EVENTS.GAME_STATE, {
-        error: "Unknown team code",
+        error: "Mã đội không tồn tại",
         allowedTeamIds: getHostState().teams.map(({ id }) => id)
       });
       return;
@@ -74,5 +74,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(config.port, config.host, () => {
-  console.log(`Server listening on http://${config.host}:${config.port}`);
+  console.log(`Máy chủ đang chạy tại http://${config.host}:${config.port}`);
 });

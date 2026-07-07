@@ -1,9 +1,10 @@
 import { config } from "./config.js";
+import { getPlayerRoundState } from "./movementLogic.js";
 import { getHostSetupPreviewMap, getSetupSummary } from "./setupLogic.js";
 
 const makeTeam = (index) => ({
   id: `team${index + 1}`,
-  name: `Team ${index + 1}`,
+  name: `Đội ${index + 1}`,
   hp: 100,
   score: 0,
   position: { x: 0, y: 0 },
@@ -61,7 +62,7 @@ export const getPlayerState = (teamId) => {
       supportItems: team.supportItems
     },
     leaderboard: gameState.teams.map(({ id, name, hp, score }) => ({ id, name, hp, score })),
-    round: gameState.round,
+    round: getPlayerRoundState(gameState.round, teamId),
     setup: getSetupSummary(gameState, teamId)
   };
 };

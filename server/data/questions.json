@@ -1,1 +1,87 @@
-[]
+[
+  {
+    "id": "mln122-001",
+    "text": "Theo kinh tế chính trị Mác - Lênin, hàng hóa có hai thuộc tính cơ bản nào?",
+    "choices": ["Giá cả và lợi nhuận", "Giá trị sử dụng và giá trị", "Tiền lương và địa tô", "Cung và cầu"],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-002",
+    "text": "Lượng giá trị của hàng hóa được đo bằng yếu tố nào?",
+    "choices": [
+      "Thời gian lao động xã hội cần thiết",
+      "Số tiền người mua sẵn sàng trả",
+      "Khối lượng vật chất của hàng hóa",
+      "Mức độ khan hiếm tuyệt đối"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-003",
+    "text": "Giá trị thặng dư trong chủ nghĩa tư bản chủ yếu có nguồn gốc từ đâu?",
+    "choices": [
+      "Trao đổi ngang giá giữa các nhà tư bản",
+      "Máy móc tự tạo ra giá trị mới",
+      "Lao động không được trả công của công nhân làm thuê",
+      "Thuế của nhà nước"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "mln122-004",
+    "text": "Công thức chung của tư bản là gì?",
+    "choices": ["H - T - H", "T - H - T'", "H - H - T", "T - T - H"],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-005",
+    "text": "Tư bản bất biến là bộ phận tư bản dùng để mua yếu tố nào?",
+    "choices": ["Sức lao động", "Tư liệu sản xuất", "Hàng hóa tiêu dùng", "Dịch vụ tài chính"],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-006",
+    "text": "Tư bản khả biến là bộ phận tư bản dùng để mua yếu tố nào?",
+    "choices": ["Sức lao động", "Máy móc", "Nguyên vật liệu", "Nhà xưởng"],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-007",
+    "text": "Cạnh tranh trong nền kinh tế thị trường có vai trò tích cực nào?",
+    "choices": [
+      "Xóa bỏ hoàn toàn phân hóa giàu nghèo",
+      "Thúc đẩy đổi mới kỹ thuật và nâng cao hiệu quả",
+      "Làm cho mọi doanh nghiệp có lợi nhuận bằng nhau",
+      "Loại bỏ hoàn toàn khủng hoảng kinh tế"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-008",
+    "text": "Quy luật giá trị yêu cầu sản xuất và trao đổi hàng hóa dựa trên cơ sở nào?",
+    "choices": [
+      "Mệnh lệnh hành chính",
+      "Thời gian lao động xã hội cần thiết",
+      "Sở thích cá nhân của người bán",
+      "Mức thuế suất hiện hành"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-009",
+    "text": "Tiền tệ thực hiện chức năng thước đo giá trị khi nào?",
+    "choices": [
+      "Khi biểu hiện giá trị hàng hóa thành giá cả",
+      "Khi được cất giữ trong két",
+      "Khi dùng để thanh toán nợ sau mua bán",
+      "Khi chuyển từ nước này sang nước khác"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-010",
+    "text": "Trong sản xuất hàng hóa, lao động cụ thể tạo ra yếu tố nào của hàng hóa?",
+    "choices": ["Giá trị sử dụng", "Giá trị", "Giá trị thặng dư", "Lợi tức"],
+    "correctIndex": 0
+  }
+]

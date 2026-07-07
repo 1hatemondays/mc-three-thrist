@@ -1,22 +1,7 @@
-﻿import { EVENTS, ROOMS } from "../../shared/constants.js";
-import { gameState, getHostState, getPlayerState } from "../gameState.js";
+import { EVENTS } from "../../shared/constants.js";
+import { gameState } from "../gameState.js";
 import { applyMazeSubmission } from "../setupLogic.js";
-
-const emitAllStates = (io) => {
-  io.to(ROOMS.HOSTS).emit(EVENTS.GAME_STATE, getHostState());
-
-  for (const team of gameState.teams) {
-    io.to(ROOMS.team(team.id)).emit(EVENTS.GAME_STATE, getPlayerState(team.id));
-  }
-};
-
-const emitPlayerError = (socket, message) => {
-  const teamId = socket.data.teamId;
-  socket.emit(EVENTS.GAME_STATE, {
-    ...(teamId ? getPlayerState(teamId) : {}),
-    error: message
-  });
-};
+import { emitAllStates, emitPlayerError } from "../socketState.js";
 
 export const registerSetupHandlers = (io, socket) => {
   socket.on(EVENTS.SETUP_SUBMIT_MAZE, (payload = {}) => {

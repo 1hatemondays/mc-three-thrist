@@ -46,7 +46,7 @@ test("validates one complete 6x6 maze setup submission", () => {
       startPoint: { x: 0, y: 0 },
       endPoint: { x: 5, y: 5 }
     }).error,
-    /20 interior walls/i
+    /20 tường nội bộ/i
   );
 });
 
@@ -70,7 +70,7 @@ test("requires exactly 20 interior walls and does not count border walls", () =>
     endPoint: { x: 5, y: 5 }
   });
 
-  assert.match(result.error, /20 interior walls/i);
+  assert.match(result.error, /20 tường nội bộ/i);
 });
 
 test("rejects a maze that fully encloses any cell", () => {
@@ -86,7 +86,7 @@ test("rejects a maze that fully encloses any cell", () => {
       startPoint: { x: 0, y: 0 },
       endPoint: { x: 5, y: 5 }
     }).error,
-    /fully enclosed/
+    /bao kín/
   );
 });
 
