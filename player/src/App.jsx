@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { DIRECTIONS, EVENTS, ROUND_PHASES } from "../../shared/constants.js";
-import { WALL_COUNT, hasEnclosedCell, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
+import { WALL_COUNT, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
 
 const SERVER_URL =
   import.meta.env.VITE_SERVER_URL ||
@@ -78,19 +78,24 @@ const formatBlockedReason = (reason) => {
 const SetupBoard = ({ state, onSubmit }) => {
   const [draft, setDraft] = useState(emptyDraft);
   const [mode, setMode] = useState("wall");
+  const [draftError, setDraftError] = useState("");
   const setup = state.setup;
   const submitted = Boolean(setup?.mySubmission);
   const startKey = pointKey(draft.startPoint);
   const endKey = pointKey(draft.endPoint);
-  const canSubmit =
-    !submitted && draft.walls.length === WALL_COUNT && draft.startPoint && draft.endPoint && startKey !== endKey;
+  const endpointsReady = Boolean(draft.startPoint && draft.endPoint && startKey !== endKey);
+  const mazeConnected = isMazeConnected(draft.walls, BOARD_SIZE);
+  const canSubmit = !submitted && draft.walls.length === WALL_COUNT && endpointsReady && mazeConnected;
+  const waitingForHostStart = setup?.complete && !setup?.started;
 
   useEffect(() => {
     setDraft(emptyDraft());
+    setDraftError("");
   }, [state.team.id]);
 
   const selectCell = (x, y) => {
     if (submitted) return;
+    setDraftError("");
 
     if (mode === "start") {
       setDraft((current) => ({ ...current, startPoint: { x, y } }));
@@ -113,22 +118,35 @@ const SetupBoard = ({ state, onSubmit }) => {
     if (submitted || mode !== "wall") return;
 
     const key = wallKey(edge, BOARD_SIZE);
+    const exists = draft.walls.some((wall) => wallKey(wall, BOARD_SIZE) === key);
 
-    setDraft((current) => {
-      const exists = current.walls.some((wall) => wallKey(wall, BOARD_SIZE) === key);
-      if (exists) {
-        return { ...current, walls: current.walls.filter((wall) => wallKey(wall, BOARD_SIZE) !== key) };
-      }
+    if (exists) {
+      setDraft({ ...draft, walls: draft.walls.filter((wall) => wallKey(wall, BOARD_SIZE) !== key) });
+      setDraftError("");
+      return;
+    }
 
-      if (current.walls.length >= WALL_COUNT) return current;
+    if (draft.walls.length >= WALL_COUNT) {
+      setDraftError(`Ch\u1ec9 \u0111\u01b0\u1ee3c \u0111\u1eb7t \u0111\u00fang ${WALL_COUNT} t\u01b0\u1eddng n\u1ed9i b\u1ed9.`);
+      return;
+    }
 
-      const nextWalls = uniqueWalls([...current.walls, edge], BOARD_SIZE).filter((wall) =>
-        isInteriorWall(wall, BOARD_SIZE)
-      );
-      if (hasEnclosedCell(nextWalls, BOARD_SIZE)) return current;
+    const nextWalls = uniqueWalls([...draft.walls, edge], BOARD_SIZE).filter((wall) =>
+      isInteriorWall(wall, BOARD_SIZE)
+    );
 
-      return { ...current, walls: nextWalls };
-    });
+    if (hasEnclosedCell(nextWalls, BOARD_SIZE)) {
+      setDraftError("T\u01b0\u1eddng n\u00e0y bao k\u00edn ho\u00e0n to\u00e0n m\u1ed9t \u00f4. H\u00e3y m\u1edf \u00edt nh\u1ea5t m\u1ed9t c\u1ea1nh cho \u00f4 \u0111\u00f3.");
+      return;
+    }
+
+    if (!isMazeConnected(nextWalls, BOARD_SIZE)) {
+      setDraftError("T\u01b0\u1eddng n\u00e0y ch\u1eb7n t\u00e1ch m\u1ed9t khu v\u1ef1c kh\u1ecfi m\u00ea cung. H\u00e3y \u0111\u1ec3 m\u1ecdi \u00f4 c\u00f2n th\u00f4ng nhau.");
+      return;
+    }
+
+    setDraft({ ...draft, walls: nextWalls });
+    setDraftError("");
   };
 
   return (
@@ -198,12 +216,18 @@ const SetupBoard = ({ state, onSubmit }) => {
       </div>
 
       <div className="setup-actions">
-        <span>
-          {submitted
-            ? "Đã nộp mê cung. Chờ các đội còn lại."
-            : mode === "wall"
-              ? "Bấm vào cạnh giữa các ô để đặt đúng 20 tường nội bộ."
-              : "Chọn ô xuất phát và ô đích cho đội kế tiếp."}
+        <span className={draftError ? "setup-error" : ""}>
+          {draftError
+            ? draftError
+            : submitted
+              ? waitingForHostStart
+                ? "\u0110\u1ee7 m\u00ea cung r\u1ed3i. Ch\u1edd host b\u1ea5m B\u1eaft \u0111\u1ea7u."
+                : "\u0110\u00e3 n\u1ed9p m\u00ea cung. Ch\u1edd c\u00e1c \u0111\u1ed9i c\u00f2n l\u1ea1i."
+              : !mazeConnected
+                ? "M\u00ea cung ph\u1ea3i li\u00ean th\u00f4ng, kh\u00f4ng \u0111\u01b0\u1ee3c ch\u1eb7n t\u00e1ch khu v\u1ef1c."
+                : mode === "wall"
+                  ? "B\u1ea5m v\u00e0o c\u1ea1nh gi\u1eefa c\u00e1c \u00f4 \u0111\u1ec3 \u0111\u1eb7t \u0111\u00fang 20 t\u01b0\u1eddng n\u1ed9i b\u1ed9."
+                  : "Ch\u1ecdn \u00f4 xu\u1ea5t ph\u00e1t v\u00e0 \u00f4 \u0111\u00edch cho \u0111\u1ed9i k\u1ebf ti\u1ebfp."}
         </span>
         <button disabled={!canSubmit} onClick={() => onSubmit(draft)} type="button">
           Nộp mê cung
@@ -508,7 +532,7 @@ export default function App() {
               </dl>
             </div>
 
-            {!state.setup?.complete ? (
+            {!state.setup?.started ? (
               <SetupBoard state={state} onSubmit={submitMaze} />
             ) : (
               <GameplayPanel

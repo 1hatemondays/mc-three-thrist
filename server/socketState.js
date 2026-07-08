@@ -9,6 +9,13 @@ export const emitAllStates = (io) => {
   }
 };
 
+export const emitHostError = (socket, message) => {
+  socket.emit(EVENTS.GAME_STATE, {
+    ...getHostState(),
+    error: message
+  });
+};
+
 export const emitPlayerError = (socket, message) => {
   const teamId = socket.data.teamId;
   socket.emit(EVENTS.GAME_STATE, {

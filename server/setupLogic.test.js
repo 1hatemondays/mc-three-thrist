@@ -2,17 +2,57 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   applyMazeSubmission,
+  configureTeamCount,
   getHostSetupPreviewMap,
   getSetupSummary,
+  startGame,
   validateMazeSubmission
 } from "./setupLogic.js";
 
 const walls = [
-  ...Array.from({ length: 6 }, (_, x) => ({ x, y: 1, side: "top" })),
-  ...Array.from({ length: 6 }, (_, x) => ({ x, y: 3, side: "top" })),
-  ...Array.from({ length: 6 }, (_, x) => ({ x, y: 5, side: "top" })),
+  { x: 4, y: 0, side: "left" },
+  { x: 2, y: 2, side: "left" },
+  { x: 5, y: 3, side: "left" },
+  { x: 0, y: 5, side: "top" },
+  { x: 1, y: 2, side: "left" },
+  { x: 2, y: 0, side: "left" },
+  { x: 4, y: 5, side: "top" },
+  { x: 5, y: 1, side: "left" },
+  { x: 2, y: 4, side: "top" },
+  { x: 5, y: 1, side: "top" },
   { x: 2, y: 1, side: "left" },
-  { x: 4, y: 3, side: "left" }
+  { x: 5, y: 5, side: "top" },
+  { x: 4, y: 1, side: "left" },
+  { x: 1, y: 3, side: "left" },
+  { x: 3, y: 0, side: "left" },
+  { x: 2, y: 3, side: "left" },
+  { x: 4, y: 3, side: "left" },
+  { x: 2, y: 5, side: "top" },
+  { x: 3, y: 5, side: "top" },
+  { x: 1, y: 2, side: "top" }
+];
+
+const blockedPathWalls = [
+  { x: 1, y: 0, side: "left" },
+  { x: 1, y: 1, side: "left" },
+  { x: 1, y: 2, side: "left" },
+  { x: 1, y: 3, side: "left" },
+  { x: 1, y: 4, side: "left" },
+  { x: 1, y: 5, side: "left" },
+  { x: 4, y: 0, side: "left" },
+  { x: 3, y: 0, side: "left" },
+  { x: 3, y: 5, side: "left" },
+  { x: 2, y: 1, side: "top" },
+  { x: 2, y: 2, side: "left" },
+  { x: 2, y: 4, side: "top" },
+  { x: 3, y: 1, side: "left" },
+  { x: 3, y: 3, side: "top" },
+  { x: 5, y: 2, side: "top" },
+  { x: 5, y: 0, side: "left" },
+  { x: 3, y: 2, side: "top" },
+  { x: 5, y: 3, side: "top" },
+  { x: 3, y: 4, side: "top" },
+  { x: 2, y: 2, side: "top" }
 ];
 
 const makeState = () => ({
@@ -25,7 +65,38 @@ const makeState = () => ({
     walls: [],
     discoveredCells: []
   })),
-  setup: { submissions: {}, complete: false }
+  setup: { submissions: {}, complete: false, started: false }
+});
+
+test("configures any classroom team count before setup starts", () => {
+  const state = makeState();
+
+  const result = configureTeamCount(state, { teamCount: 6 });
+
+  assert.equal(result.ok, true);
+  assert.equal(state.config.teamCount, 6);
+  assert.deepEqual(state.teams.map((team) => team.id), ["team1", "team2", "team3", "team4", "team5", "team6"]);
+  assert.deepEqual(state.setup, { submissions: {}, complete: false, started: false });
+});
+
+test("starts the game only after every team has submitted a maze", () => {
+  const state = makeState();
+
+  assert.match(startGame(state).error, /ch\u01b0a \u0111\u1ee7/i);
+
+  for (const team of state.teams) {
+    applyMazeSubmission(state, team.id, {
+      walls,
+      startPoint: { x: 0, y: 0 },
+      endPoint: { x: 5, y: 5 }
+    });
+  }
+
+  const result = startGame(state);
+
+  assert.equal(result.ok, true);
+  assert.equal(state.setup.complete, true);
+  assert.equal(state.setup.started, true);
 });
 
 test("validates one complete 6x6 maze setup submission", () => {
@@ -53,7 +124,7 @@ test("validates one complete 6x6 maze setup submission", () => {
 test("counts opposite sides of the same edge as one wall", () => {
   const result = validateMazeSubmission({
     boardSize: 6,
-    walls: [{ x: 0, y: 0, side: "bottom" }, ...walls],
+    walls: [{ x: 3, y: 0, side: "right" }, ...walls],
     startPoint: { x: 0, y: 0 },
     endPoint: { x: 5, y: 5 }
   });
@@ -75,8 +146,9 @@ test("requires exactly 20 interior walls and does not count border walls", () =>
 
 test("rejects a maze that fully encloses any cell", () => {
   const boxedTopLeft = [
-    ...walls.slice(0, 19),
-    { x: 1, y: 0, side: "left" }
+    { x: 1, y: 0, side: "left" },
+    { x: 0, y: 1, side: "top" },
+    ...walls.slice(0, 18)
   ];
 
   assert.match(
@@ -88,6 +160,30 @@ test("rejects a maze that fully encloses any cell", () => {
     }).error,
     /bao kín/
   );
+});
+
+test("rejects a maze that blocks every path from start to end", () => {
+  const result = validateMazeSubmission({
+    boardSize: 6,
+    walls: blockedPathWalls,
+    startPoint: { x: 0, y: 0 },
+    endPoint: { x: 5, y: 5 }
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.error, /li\u00ean th\u00f4ng/i);
+});
+
+test("rejects a maze that disconnects any board area before start and end matter", () => {
+  const result = validateMazeSubmission({
+    boardSize: 6,
+    walls: blockedPathWalls,
+    startPoint: { x: 1, y: 0 },
+    endPoint: { x: 5, y: 5 }
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.error, /li\u00ean th\u00f4ng/i);
 });
 
 test("assigns a submitted maze to the next team without leaking hidden fields", () => {

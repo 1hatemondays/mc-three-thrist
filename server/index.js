@@ -29,6 +29,7 @@ app.get("/", (req, res) => {
     <ul>
       <li><a href="http://${host}:5174/">Màn hình đội chơi</a></li>
       <li><a href="http://${host}:5173/">Màn hình host</a></li>
+      <li><a href="http://${host}:5173/guide">M\u00e0n h\u00ecnh d\u1eabn tr\u00f2 ch\u01a1i</a></li>
     </ul>
     <p>Kiểm tra máy chủ: <a href="/health">/health</a></p>
   </body>
@@ -45,6 +46,7 @@ const emitHostState = () => {
 
 io.on("connection", (socket) => {
   if (socket.handshake.auth?.role === "host") {
+    socket.data.role = "host";
     socket.join(ROOMS.HOSTS);
     socket.emit(EVENTS.GAME_STATE, getHostState());
   }

@@ -33,6 +33,35 @@ export const hasWall = (walls, boardSize, x, y, side) => {
   return walls.some((wall) => wallKey(wall, boardSize) === key);
 };
 
+const PATH_STEPS = [
+  { dx: 0, dy: -1, side: "top" },
+  { dx: 1, dy: 0, side: "right" },
+  { dx: 0, dy: 1, side: "bottom" },
+  { dx: -1, dy: 0, side: "left" }
+];
+
+export const isMazeConnected = (walls, boardSize) => {
+  const queue = [{ x: 0, y: 0 }];
+  const seen = new Set(["0:0"]);
+
+  for (let index = 0; index < queue.length; index += 1) {
+    const point = queue[index];
+
+    for (const step of PATH_STEPS) {
+      const next = { x: point.x + step.dx, y: point.y + step.dy };
+      const key = `${next.x}:${next.y}`;
+      const outside = next.x < 0 || next.y < 0 || next.x >= boardSize || next.y >= boardSize;
+
+      if (outside || seen.has(key) || hasWall(walls, boardSize, point.x, point.y, step.side)) continue;
+
+      seen.add(key);
+      queue.push(next);
+    }
+  }
+
+  return seen.size === boardSize * boardSize;
+};
+
 export const hasEnclosedCell = (walls, boardSize) => {
   for (let y = 0; y < boardSize; y += 1) {
     for (let x = 0; x < boardSize; x += 1) {

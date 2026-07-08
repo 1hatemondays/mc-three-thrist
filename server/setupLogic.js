@@ -1,4 +1,4 @@
-import { WALL_COUNT, WALL_SIDES, hasEnclosedCell, isInteriorWall, uniqueWalls } from "../shared/maze.js";
+import { WALL_COUNT, WALL_SIDES, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls } from "../shared/maze.js";
 
 const SIDES = new Set(WALL_SIDES);
 
@@ -14,6 +14,54 @@ const isPoint = (point, boardSize) =>
 const samePoint = (a, b) => a.x === b.x && a.y === b.y;
 
 const cleanPoint = ({ x, y }) => ({ x, y });
+
+const makeTeam = (index) => ({
+  id: `team${index + 1}`,
+  name: `Đội ${index + 1}`,
+  hp: 100,
+  score: 0,
+  position: { x: 0, y: 0 },
+  startPoint: null,
+  endPoint: null,
+  walls: [],
+  discoveredCells: [{ x: 0, y: 0 }],
+  supportItems: []
+});
+
+const makeRound = () => ({
+  roundNumber: 1,
+  phase: "movement",
+  pendingAnswers: {},
+  currentQuestion: null
+});
+
+export const configureTeamCount = (state, payload = {}) => {
+  const teamCount = Number(payload.teamCount);
+
+  if (!Number.isInteger(teamCount) || teamCount < 2) {
+    return { ok: false, error: "Số đội phải là số nguyên từ 2 trở lên." };
+  }
+
+  if (state.setup?.started || Object.keys(state.setup?.submissions || {}).length > 0) {
+    return { ok: false, error: "Chỉ được đổi số đội trước khi có đội nộp mê cung." };
+  }
+
+  state.config.teamCount = teamCount;
+  state.teams = Array.from({ length: teamCount }, (_, index) => makeTeam(index));
+  state.setup = { submissions: {}, complete: false, started: false };
+  state.round = makeRound();
+
+  return { ok: true };
+};
+
+export const startGame = (state) => {
+  if (!state.setup?.complete || !state.teams.every((team) => team.startPoint)) {
+    return { ok: false, error: "Chưa đủ mê cung để bắt đầu." };
+  }
+
+  state.setup.started = true;
+  return { ok: true };
+};
 
 export const validateMazeSubmission = ({ boardSize, walls, startPoint, endPoint }) => {
   if (!isPoint(startPoint, boardSize)) {
@@ -49,6 +97,10 @@ export const validateMazeSubmission = ({ boardSize, walls, startPoint, endPoint 
     return { ok: false, error: "Không được bao kín hoàn toàn một ô bằng tường." };
   }
 
+  if (!isMazeConnected(interiorWalls, boardSize)) {
+    return { ok: false, error: "Mê cung phải liên thông, không được chặn tách bất kỳ khu vực nào." };
+  }
+
   return {
     ok: true,
     maze: {
@@ -68,6 +120,10 @@ export const applyMazeSubmission = (state, sourceTeamId, payload) => {
 
   if (state.teams.length < 2) {
     return { ok: false, error: "Thiết lập mê cung cần ít nhất 2 đội." };
+  }
+
+  if (state.setup?.started) {
+    return { ok: false, error: "Tr\u00f2 ch\u01a1i \u0111\u00e3 b\u1eaft \u0111\u1ea7u, kh\u00f4ng th\u1ec3 n\u1ed9p l\u1ea1i m\u00ea cung." };
   }
 
   const validated = validateMazeSubmission({
@@ -120,6 +176,7 @@ export const getSetupSummary = (state, teamId) => {
 
   return {
     complete: Boolean(state.setup?.complete),
+    started: Boolean(state.setup?.started),
     submittedTeamIds: Object.keys(submissions),
     mySubmission: Boolean(submissions[teamId]),
     assignedBoardReady: Boolean(team?.startPoint),

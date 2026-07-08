@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { EVENTS } from "../../shared/constants.js";
 import { hasWall } from "../../shared/maze.js";
@@ -9,7 +9,9 @@ const SERVER_URL =
 const BOARD_SIZE = 6;
 const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
 
+const TEAM_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#f4e06d", "#8bd6e8", "#f7a6c8"];
 const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
+const teamColor = (index) => TEAM_COLORS[index % TEAM_COLORS.length];
 const INTERIOR_EDGES = [
   ...Array.from({ length: BOARD_SIZE }, (_, y) =>
     Array.from({ length: BOARD_SIZE - 1 }, (_, index) => ({
@@ -108,36 +110,156 @@ const Board = ({ cardLabel, metaLabel, submitted, team }) => {
   );
 };
 
+const GuideScreen = ({ state }) => {
+  const teams = state?.teams || [];
+  const round = state?.round;
+  const setupStarted = Boolean(state?.setup?.started);
+
+  return (
+    <main className="guide-screen">
+      <header className="guide-top">
+        <div>
+          <p>{"M\u00e0n d\u1eabn tr\u00f2 ch\u01a1i"}</p>
+          <h1>{APP_TITLE}</h1>
+        </div>
+        <strong>
+          {state
+            ? setupStarted
+              ? "V\u00f2ng " + (round?.roundNumber || 1)
+              : "\u0110ang thi\u1ebft l\u1eadp"
+            : "\u0110ang k\u1ebft n\u1ed1i..."}
+        </strong>
+      </header>
+
+      <section className="guide-layout">
+        <div className="guide-map" aria-label={"B\u1ea3n \u0111\u1ed3 ch\u00ednh 6x6"}>
+          {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
+            const x = index % BOARD_SIZE;
+            const y = Math.floor(index / BOARD_SIZE);
+            const cellTeams = teams.filter((team) => team.position?.x === x && team.position?.y === y);
+
+            return (
+              <div className="guide-cell" key={x + ":" + y}>
+                <span className="guide-coord">{x + 1}.{y + 1}</span>
+                <div className="guide-markers">
+                  {cellTeams.map((team) => {
+                    const realIndex = teams.findIndex((item) => item.id === team.id);
+                    return (
+                      <span
+                        className="team-marker"
+                        key={team.id}
+                        style={{ "--team-color": teamColor(realIndex) }}
+                        title={team.name}
+                      >
+                        {realIndex + 1}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <aside className="guide-panel">
+          <h2>{"V\u1ecb tr\u00ed \u0111\u1ed9i"}</h2>
+          {teams.map((team, index) => (
+            <div className="guide-team" key={team.id}>
+              <span className="team-marker" style={{ "--team-color": teamColor(index) }}>
+                {index + 1}
+              </span>
+              <div>
+                <strong>{team.name}</strong>
+                <small>
+                  ({(team.position?.x ?? 0) + 1}, {(team.position?.y ?? 0) + 1}) / {team.score} {"\u0111i\u1ec3m"}
+                </small>
+              </div>
+            </div>
+          ))}
+        </aside>
+      </section>
+    </main>
+  );
+};
+
 export default function App() {
   const [state, setState] = useState(null);
+  const [teamCountDraft, setTeamCountDraft] = useState("4");
+  const socketRef = useRef(null);
 
   useEffect(() => {
     const socket = io(SERVER_URL, { auth: { role: "host" } });
+    socketRef.current = socket;
 
     socket.on(EVENTS.GAME_STATE, (nextState) => {
       console.log("host game:state", nextState);
       setState(nextState);
+      if (nextState?.config?.teamCount) setTeamCountDraft(String(nextState.config.teamCount));
     });
 
-    return () => socket.disconnect();
+    return () => {
+      socketRef.current = null;
+      socket.disconnect();
+    };
   }, []);
 
   const teams = state?.teams || [];
   const submitted = new Set(Object.keys(state?.setup?.submissions || {}));
   const setupPreviews = state?.setup?.previews || {};
-  const isSetupReview = !state?.setup?.complete;
+  const setupStarted = Boolean(state?.setup?.started);
+  const isSetupReview = !setupStarted;
+  const canConfigureTeams = Boolean(state && !setupStarted && submitted.size === 0);
+  const canStartGame = Boolean(state?.setup?.complete && !setupStarted);
+  const isGuideScreen = window.location.pathname.replace(/\/+$/, "") === "/guide";
+
+  const updateTeamCount = (event) => {
+    event.preventDefault();
+    socketRef.current?.emit(EVENTS.SETUP_SET_TEAM_COUNT, { teamCount: Number(teamCountDraft) });
+  };
+
+  const startGame = () => {
+    socketRef.current?.emit(EVENTS.SETUP_START_GAME);
+  };
+
+  if (isGuideScreen) return <GuideScreen state={state} />;
 
   return (
     <main>
       <header className="topbar">
         <div>
-          <p>Màn hình host</p>
+          <p>{"M\u00e0n h\u00ecnh host"}</p>
           <h1>{APP_TITLE}</h1>
         </div>
+
+        <form className="admin-controls" onSubmit={updateTeamCount}>
+          <label htmlFor="teamCount">{"S\u1ed1 \u0111\u1ed9i"}</label>
+          <input
+            disabled={!canConfigureTeams}
+            id="teamCount"
+            min="2"
+            onChange={(event) => setTeamCountDraft(event.target.value)}
+            type="number"
+            value={teamCountDraft}
+          />
+          <button disabled={!canConfigureTeams} type="submit">
+            {"C\u1eadp nh\u1eadt"}
+          </button>
+          <button disabled={!canStartGame} onClick={startGame} type="button">
+            {"B\u1eaft \u0111\u1ea7u"}
+          </button>
+          <a className="guide-link" href="/guide" rel="noreferrer" target="_blank">
+            {"M\u00e0n d\u1eabn"}
+          </a>
+        </form>
+
         <span>
-          {state ? `${submitted.size}/${teams.length} đội đã nộp mê cung` : "Đang kết nối..."}
+          {state
+            ? submitted.size + "/" + teams.length + " \u0111\u1ed9i \u0111\u00e3 n\u1ed9p m\u00ea cung"
+            : "\u0110ang k\u1ebft n\u1ed1i..."}
         </span>
       </header>
+
+      {state?.error && <div className="host-error">{state.error}</div>}
 
       <section className="layout">
         <div className="maps">
@@ -147,7 +269,7 @@ export default function App() {
                 <Board
                   cardLabel={team.name}
                   key={team.id}
-                  metaLabel={team.startPoint ? "Đã sẵn sàng" : "Đang chờ mê cung"}
+                  metaLabel={team.startPoint ? "\u0110\u00e3 s\u1eb5n s\u00e0ng" : "\u0110ang ch\u1edd m\u00ea cung"}
                   submitted={submitted.has(team.id)}
                   team={team}
                 />
@@ -163,8 +285,8 @@ export default function App() {
                 key={team.id}
                 metaLabel={
                   preview
-                    ? `Tạo mê cung cho ${targetName || preview.targetTeamId}`
-                    : "Đang chờ nộp"
+                    ? "T\u1ea1o m\u00ea cung cho " + (targetName || preview.targetTeamId)
+                    : "\u0110ang ch\u1edd n\u1ed9p"
                 }
                 submitted={submitted.has(team.id)}
                 team={preview || { ...team, walls: [], startPoint: null, endPoint: null }}
@@ -174,19 +296,29 @@ export default function App() {
         </div>
 
         <aside className="leaderboard">
-          <h2>Bảng điểm</h2>
+          <h2>{"B\u1ea3ng \u0111i\u1ec3m"}</h2>
           {teams.map((team) => (
             <div className="rank" key={team.id}>
               <span>{team.name}</span>
-              <strong>{team.score} điểm / {team.hp} máu</strong>
+              <strong>{team.score} {"\u0111i\u1ec3m"} / {team.hp} {"m\u00e1u"}</strong>
             </div>
           ))}
 
-          <h2 className="setup-title">Thiết lập</h2>
+          <h2 className="setup-title">{"Thi\u1ebft l\u1eadp"}</h2>
+          <div className="rank">
+            <span>{"Tr\u1ea1ng th\u00e1i"}</span>
+            <strong>
+              {setupStarted
+                ? "\u0110ang ch\u01a1i"
+                : state?.setup?.complete
+                  ? "Ch\u1edd b\u1eaft \u0111\u1ea7u"
+                  : "\u0110ang n\u1ed9p m\u00ea cung"}
+            </strong>
+          </div>
           {teams.map((team) => (
-            <div className="rank" key={`${team.id}-setup`}>
+            <div className="rank" key={team.id + "-setup"}>
               <span>{team.name}</span>
-              <strong>{submitted.has(team.id) ? "Đã nộp" : "Đang chờ"}</strong>
+              <strong>{submitted.has(team.id) ? "\u0110\u00e3 n\u1ed9p" : "\u0110ang ch\u1edd"}</strong>
             </div>
           ))}
         </aside>

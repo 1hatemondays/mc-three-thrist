@@ -1,9 +1,35 @@
 import { EVENTS } from "../../shared/constants.js";
 import { gameState } from "../gameState.js";
-import { applyMazeSubmission } from "../setupLogic.js";
-import { emitAllStates, emitPlayerError } from "../socketState.js";
+import { applyMazeSubmission, configureTeamCount, startGame } from "../setupLogic.js";
+import { emitAllStates, emitHostError, emitPlayerError } from "../socketState.js";
 
 export const registerSetupHandlers = (io, socket) => {
+  socket.on(EVENTS.SETUP_SET_TEAM_COUNT, (payload = {}) => {
+    if (socket.data.role !== "host") return;
+
+    const result = configureTeamCount(gameState, payload);
+
+    if (!result.ok) {
+      emitHostError(socket, result.error);
+      return;
+    }
+
+    emitAllStates(io);
+  });
+
+  socket.on(EVENTS.SETUP_START_GAME, () => {
+    if (socket.data.role !== "host") return;
+
+    const result = startGame(gameState);
+
+    if (!result.ok) {
+      emitHostError(socket, result.error);
+      return;
+    }
+
+    emitAllStates(io);
+  });
+
   socket.on(EVENTS.SETUP_SUBMIT_MAZE, (payload = {}) => {
     const result = applyMazeSubmission(gameState, socket.data.teamId, payload);
 

@@ -36,7 +36,7 @@ export const normalizeDirection = (direction) => String(direction || "").trim().
 
 const findTeam = (state, teamId) => state.teams.find((team) => team.id === teamId);
 
-const isSetupReady = (state) => state.setup?.complete && state.teams.every((team) => team.startPoint);
+const isSetupReady = (state) => state.setup?.started && state.teams.every((team) => team.startPoint);
 
 const chooseQuestion = (questions, random = Math.random) => {
   if (!Array.isArray(questions) || questions.length === 0) {
@@ -52,7 +52,7 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
   if (!team) return { ok: false, error: "Hãy vào đội trước khi chọn hướng đi." };
 
   if (!isSetupReady(state)) {
-    return { ok: false, error: "Phần di chuyển bắt đầu sau khi tất cả đội nộp mê cung." };
+    return { ok: false, error: "Phần di chuyển bắt đầu sau khi host bấm Bắt đầu." };
   }
 
   if (state.round.phase !== ROUND_PHASES.MOVEMENT) {

@@ -1,6 +1,8 @@
 export const EVENTS = {
   TEAM_JOIN: "team:join",
   SETUP_SUBMIT_MAZE: "setup:submitMaze",
+  SETUP_SET_TEAM_COUNT: "setup:setTeamCount",
+  SETUP_START_GAME: "setup:startGame",
   MOVE_CHOOSE: "move:choose",
   QUESTION_ANSWER: "question:answer",
   AUCTION_BID: "auction:bid",

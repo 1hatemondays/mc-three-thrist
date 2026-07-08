@@ -33,13 +33,23 @@ const makeTeam = (id, position = { x: 0, y: 0 }) => ({
 const makeState = () => ({
   config: { boardSize: 6, teamCount: 2 },
   teams: [makeTeam("team1"), makeTeam("team2", { x: 0, y: 1 })],
-  setup: { submissions: { team1: {}, team2: {} }, complete: true },
+  setup: { submissions: { team1: {}, team2: {} }, complete: true, started: true },
   round: {
     roundNumber: 1,
     phase: ROUND_PHASES.MOVEMENT,
     pendingAnswers: {},
     currentQuestion: null
   }
+});
+
+test("prevents movement before the host starts the game", () => {
+  const state = makeState();
+  state.setup.started = false;
+
+  assert.match(
+    chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0).error,
+    /b\u1eaft \u0111\u1ea7u/i
+  );
 });
 
 test("chooses a movement question without exposing the correct answer publicly", () => {

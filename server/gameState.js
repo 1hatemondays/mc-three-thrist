@@ -23,7 +23,8 @@ export const gameState = {
   teams: Array.from({ length: config.teamCount }, (_, index) => makeTeam(index)),
   setup: {
     submissions: {},
-    complete: false
+    complete: false,
+    started: false
   },
   round: {
     roundNumber: 1,
