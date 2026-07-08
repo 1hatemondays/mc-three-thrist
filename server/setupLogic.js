@@ -1,4 +1,5 @@
 import { WALL_COUNT, WALL_SIDES, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls } from "../shared/maze.js";
+import { refreshRoundEventTiles } from "./eventLogic.js";
 
 const SIDES = new Set(WALL_SIDES);
 
@@ -25,14 +26,21 @@ const makeTeam = (index) => ({
   endPoint: null,
   walls: [],
   discoveredCells: [{ x: 0, y: 0 }],
-  supportItems: []
+  supportItems: [],
+  effects: {}
 });
 
 const makeRound = () => ({
   roundNumber: 1,
   phase: "movement",
   pendingAnswers: {},
-  currentQuestion: null
+  currentQuestion: null,
+  eventTiles: [],
+  pendingEvents: {},
+  auction: { bids: {}, result: null },
+  combat: null,
+  traps: [],
+  messages: {}
 });
 
 export const configureTeamCount = (state, payload = {}) => {
@@ -55,11 +63,20 @@ export const configureTeamCount = (state, payload = {}) => {
 };
 
 export const startGame = (state) => {
+  if (state.setup?.started) return { ok: true };
+
   if (!state.setup?.complete || !state.teams.every((team) => team.startPoint)) {
     return { ok: false, error: "Chưa đủ mê cung để bắt đầu." };
   }
 
+  state.round = state.round || makeRound();
+  state.round.pendingEvents = state.round.pendingEvents || {};
+  state.round.eventTiles = state.round.eventTiles || [];
+  state.round.auction = state.round.auction || { bids: {}, result: null };
+  state.round.traps = state.round.traps || [];
+  state.round.messages = state.round.messages || {};
   state.setup.started = true;
+  refreshRoundEventTiles(state);
   return { ok: true };
 };
 

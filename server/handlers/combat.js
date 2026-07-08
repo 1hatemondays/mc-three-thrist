@@ -1,7 +1,18 @@
 import { EVENTS } from "../../shared/constants.js";
+import { submitCombatBet } from "../combatLogic.js";
+import { gameState } from "../gameState.js";
+import { emitAllStates, emitPlayerError } from "../socketState.js";
 
-export const registerCombatHandlers = (_io, socket) => {
-  socket.on(EVENTS.COMBAT_BET, (_payload) => {
-    // TODO: validate combat bet, resolve opponent betting result, then apply HP/turn effects server-side.
+export const registerCombatHandlers = (io, socket) => {
+  socket.on(EVENTS.COMBAT_BET, (payload = {}) => {
+    const result = submitCombatBet(gameState, socket.data.teamId, payload);
+
+    if (!result.ok) {
+      emitPlayerError(socket, result.error);
+      return;
+    }
+
+    if (result.resolved) io.emit(EVENTS.COMBAT_RESULT, result.result);
+    emitAllStates(io);
   });
 };

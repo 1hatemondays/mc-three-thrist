@@ -1,5 +1,8 @@
 import { DIRECTIONS, MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
 import { hasWall } from "../shared/maze.js";
+import { applyEventTileEffect, findEventTileAt, getPlayerPendingEvent } from "./eventLogic.js";
+import { maybeFinishMovementRound } from "./roundFlow.js";
+import { applyTrapAtPosition } from "./supportLogic.js";
 
 const DIRECTION_RULES = {
   [DIRECTIONS.UP]: { dx: 0, dy: -1, side: "top" },
@@ -21,6 +24,7 @@ export const getPlayerRoundState = (round, teamId) => {
   return {
     roundNumber: round.roundNumber,
     phase: round.phase,
+    pendingEvent: getPlayerPendingEvent(round, teamId),
     currentQuestion: pending && !pending.answered ? stripQuestionAnswer(pending.question) : null,
     pendingAnswer: pending
       ? {
@@ -57,6 +61,10 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
 
   if (state.round.phase !== ROUND_PHASES.MOVEMENT) {
     return { ok: false, error: "Hiện chưa mở phần di chuyển." };
+  }
+
+  if (state.round.pendingEvents?.[teamId]) {
+    return { ok: false, error: "H?y x? l? s? ki?n hi?n t?i tr??c khi ?i ti?p." };
   }
 
   const existing = state.round.pendingAnswers[teamId];
@@ -141,11 +149,23 @@ export const answerQuestion = (state, teamId, payload) => {
   const movement = previewMove(team, state.config.boardSize, pending.direction);
   const correct = answerIndex === pending.question.correctIndex;
   const success = correct && !movement.blocked;
+  let scoreDelta = 0;
+  let event = null;
+  let trap = null;
 
   if (success) {
     team.position = movement.newPosition;
-    team.score += MOVE_SCORE;
+    const moveScore = team.effects?.doubleScore ? MOVE_SCORE * 2 : MOVE_SCORE;
+    if (team.effects?.doubleScore) team.effects.doubleScore = false;
+    team.score += moveScore;
+    scoreDelta = moveScore;
     addDiscoveredCell(team, movement.newPosition);
+    trap = applyTrapAtPosition(state, teamId);
+    scoreDelta += trap?.scoreDelta || 0;
+
+    const eventTile = findEventTileAt(state.round.eventTiles, team.position);
+    event = applyEventTileEffect(state, teamId, eventTile);
+    scoreDelta += event?.scoreDelta || 0;
   }
 
   const result = {
@@ -156,19 +176,27 @@ export const answerQuestion = (state, teamId, payload) => {
     blockedReason: movement.reason,
     success,
     newPosition: team.position,
-    scoreDelta: success ? MOVE_SCORE : 0
+    scoreDelta,
+    event,
+    trap
   };
 
-  pending.answered = true;
-  pending.result = result;
+  const turnEnded = !success;
+  let roundComplete = false;
 
-  if (allTeamsDone(state)) {
-    state.round.phase = ROUND_PHASES.AUCTION;
+  if (turnEnded) {
+    pending.answered = true;
+    pending.result = result;
+
+    roundComplete = maybeFinishMovementRound(state);
+  } else {
+    delete state.round.pendingAnswers[teamId];
+    state.round.currentQuestion = null;
   }
 
   return {
     ok: true,
     result,
-    roundComplete: state.round.phase === ROUND_PHASES.AUCTION
+    roundComplete
   };
 };

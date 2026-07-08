@@ -7,8 +7,10 @@ import { config } from "./config.js";
 import { findTeam, getHostState, getPlayerState, normalizeTeamId } from "./gameState.js";
 import { registerAuctionHandlers } from "./handlers/auction.js";
 import { registerCombatHandlers } from "./handlers/combat.js";
+import { registerEventHandlers } from "./handlers/event.js";
 import { registerMovementHandlers } from "./handlers/movement.js";
 import { registerSetupHandlers } from "./handlers/setup.js";
+import { registerSupportHandlers } from "./handlers/support.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -73,6 +75,8 @@ io.on("connection", (socket) => {
   registerMovementHandlers(io, socket);
   registerAuctionHandlers(io, socket);
   registerCombatHandlers(io, socket);
+  registerEventHandlers(io, socket);
+  registerSupportHandlers(io, socket);
 });
 
 server.listen(config.port, config.host, () => {

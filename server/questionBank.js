@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 const QUESTIONS_PATH = new URL("./data/questions.json", import.meta.url);
+const HARD_QUESTIONS_PATH = new URL("./data/hardQuestions.json", import.meta.url);
 
 export const loadQuestionBank = () => {
   const raw = fs.readFileSync(QUESTIONS_PATH, "utf8");
@@ -14,3 +15,4 @@ export const loadQuestionBank = () => {
 };
 
 export const questionBank = loadQuestionBank();
+export const hardQuestionBank = JSON.parse(fs.readFileSync(HARD_QUESTIONS_PATH, "utf8"));

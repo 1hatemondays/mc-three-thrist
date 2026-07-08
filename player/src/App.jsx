@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { DIRECTIONS, EVENTS, ROUND_PHASES } from "../../shared/constants.js";
+import { SUPPORT_ITEM_TYPES } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
 
 const SERVER_URL =
@@ -242,11 +243,11 @@ const GameplayBoard = ({ team }) => {
   const positionKey = pointKey(team.position);
 
   return (
-    <div className="game-board" aria-label="Bàn mê cung đã khám phá">
+    <div className="game-board" aria-label="B\u00e0n m\u00ea cung \u0111\u00e3 kh\u00e1m ph\u00e1">
       {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
         const x = index % BOARD_SIZE;
         const y = Math.floor(index / BOARD_SIZE);
-        const key = `${x}:${y}`;
+        const key = x + ":" + y;
         const known = discovered.has(key);
         const current = key === positionKey;
         const classes = ["game-cell"];
@@ -255,7 +256,7 @@ const GameplayBoard = ({ team }) => {
 
         return (
           <div className={classes.join(" ")} key={key}>
-            {current ? "Bạn" : known ? "" : "?"}
+            {current ? "B\u1ea1n" : known ? "" : "?"}
           </div>
         );
       })}
@@ -307,31 +308,220 @@ const ResultCard = ({ result }) => {
   if (!result) return null;
 
   const title = result.success
-    ? "Đúng. Đội đã di chuyển."
+    ? "\u0110\u00fang. \u0110\u1ed9i \u0111\u00e3 di chuy\u1ec3n."
     : result.blocked
-      ? `${result.correct ? "Đúng" : "Sai"}, nhưng bị chặn.`
-      : "Sai đáp án.";
+      ? (result.correct ? "\u0110\u00fang" : "Sai") + ", nh\u01b0ng b\u1ecb ch\u1eb7n."
+      : "Sai \u0111\u00e1p \u00e1n.";
+  const event = result.event;
 
   return (
-    <section className={`game-card result-card ${result.success ? "success" : "miss"}`}>
+    <section className={"game-card result-card " + (result.success ? "success" : "miss")}>
       <div>
-        <p>Kết quả lượt</p>
+        <p>{"K\u1ebft qu\u1ea3 l\u01b0\u1ee3t"}</p>
         <h2>{title}</h2>
       </div>
       <dl className="result-grid">
         <div>
-          <dt>Đáp án</dt>
-          <dd>{result.correct ? "Đúng" : "Sai"}</dd>
+          <dt>{"\u0110\u00e1p \u00e1n"}</dt>
+          <dd>{result.correct ? "\u0110\u00fang" : "Sai"}</dd>
         </div>
         <div>
-          <dt>Đường đi</dt>
-          <dd>{result.blocked ? formatBlockedReason(result.blockedReason) : "Thông"}</dd>
+          <dt>{"\u0110\u01b0\u1eddng \u0111i"}</dt>
+          <dd>{result.blocked ? formatBlockedReason(result.blockedReason) : "Th\u00f4ng"}</dd>
         </div>
         <div>
-          <dt>Điểm</dt>
+          <dt>{"\u0110i\u1ec3m"}</dt>
           <dd>+{result.scoreDelta}</dd>
         </div>
       </dl>
+      {event && (
+        <div className="event-result">
+          <span className="game-event" style={{ "--event-color": event.color }}>
+            {event.symbol}
+          </span>
+          <div>
+            <strong>{event.name}</strong>
+            <small>{event.message || "\u0110\u00e3 k\u00edch ho\u1ea1t \u00f4 s\u1ef1 ki\u1ec7n."}</small>
+            {event.item && <small>{"V\u1eadt ph\u1ea9m: " + event.item.name}</small>}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+};
+
+const PendingEventCard = ({ event, onResolve }) => {
+  if (!event) return null;
+
+  if (event.question) {
+    return (
+      <section className="game-card pending-event-card">
+        <div className="section-head">
+          <p>{"Sự kiện"}</p>
+          <h2>{event.name}</h2>
+        </div>
+        <div className="pending-event-body">
+          <span className="game-event" style={{ "--event-color": event.color }}>
+            {event.symbol}
+          </span>
+          <p>{event.question.text}</p>
+        </div>
+        <div className="choices compact-choices">
+          {event.question.choices.map((choice, index) => (
+            <button key={event.question.id + choice} onClick={() => onResolve({ answerIndex: index })} type="button">
+              <strong>{String.fromCharCode(65 + index)}</strong>
+              <span>{choice}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="game-card pending-event-card">
+      <div className="section-head">
+        <p>{"Sự kiện"}</p>
+        <h2>{event.name}</h2>
+      </div>
+      <div className="pending-event-body">
+        <span className="game-event" style={{ "--event-color": event.color }}>
+          {event.symbol}
+        </span>
+        <p>{"Chọn đội để trao đổi vị trí, hoặc bỏ qua sự kiện này."}</p>
+      </div>
+      <div className="event-actions">
+        {(event.options || []).map((option) => (
+          <button key={option.id} onClick={() => onResolve({ action: "swap", targetTeamId: option.id })} type="button">
+            {option.name}
+          </button>
+        ))}
+        <button className="secondary-button" onClick={() => onResolve({ action: "skip" })} type="button">
+          {"Bỏ qua"}
+        </button>
+      </div>
+    </section>
+  );
+};
+
+const NoticePanel = ({ messages = [] }) => {
+  if (!messages.length) return null;
+
+  return (
+    <section className="notice-stack" aria-label="Thông báo">
+      {messages.map((message) => (
+        <article className="notice-box" key={message.id || message.title + message.text}>
+          <strong>{message.title}</strong>
+          <span>{message.text}</span>
+        </article>
+      ))}
+    </section>
+  );
+};
+
+const AuctionPanel = ({ auction, active, onBid }) => {
+  const items = auction?.items || [];
+  const [itemId, setItemId] = useState(items[0]?.type || "");
+  const selected = items.find((item) => item.type === itemId) || items[0];
+  const [amount, setAmount] = useState(selected?.minPrice || 0);
+
+  useEffect(() => {
+    if (!items.length) return;
+    const next = items.find((item) => item.type === itemId) || items[0];
+    setItemId(next.type);
+    setAmount(next.minPrice);
+  }, [active, items.length]);
+
+  useEffect(() => {
+    if (selected) setAmount(selected.minPrice);
+  }, [itemId]);
+
+  if (!active && !auction?.result) return null;
+
+  return (
+    <section className="game-card auction-panel">
+      <div className="section-head">
+        <p>{"Đấu giá kín"}</p>
+        <h2>{active ? "Chọn vật phẩm muốn đấu" : "Kết quả đấu giá"}</h2>
+      </div>
+
+      {active && (
+        <>
+          <div className="auction-progress">
+            {auction.submittedCount}/{auction.totalTeams} {"đội đã gửi giá"}
+          </div>
+          <div className="auction-items">
+            {items.map((item) => (
+              <button
+                className={item.type === itemId ? "auction-item-card active" : "auction-item-card"}
+                disabled={Boolean(auction.myBid)}
+                key={item.type}
+                onClick={() => setItemId(item.type)}
+                type="button"
+              >
+                <span style={{ "--item-color": item.color }}>{item.symbol}</span>
+                <strong>{item.name}</strong>
+                <small>{"Khởi điểm " + item.minPrice + " điểm"}</small>
+              </button>
+            ))}
+          </div>
+          {auction.myBid ? (
+            <div className="notice-box compact">
+              <strong>{"Đã gửi giá"}</strong>
+              <span>{auction.myBid.skipped ? "Đội đã bỏ qua vòng đấu giá." : "Giá đã được niêm phong, chờ các đội khác."}</span>
+            </div>
+          ) : (
+            <div className="bid-box">
+              <label htmlFor="auctionAmount">{"Giá đấu"}</label>
+              <input id="auctionAmount" min={selected?.minPrice || 0} onChange={(event) => setAmount(event.target.value)} type="number" value={amount} />
+              <button onClick={() => onBid({ itemId, amount: Number(amount) })} type="button">{"Gửi giá"}</button>
+              <button className="secondary-button" onClick={() => onBid({ skip: true })} type="button">{"Bỏ qua"}</button>
+            </div>
+          )}
+        </>
+      )}
+
+      {auction?.result?.winners?.length ? (
+        <div className="result-list">
+          {auction.result.winners.map((winner) => (
+            <div className="leader-row" key={winner.teamId + winner.itemId}>
+              <span>{winner.teamName}</span>
+              <strong>{winner.itemName} / {winner.amount} điểm</strong>
+            </div>
+          ))}
+        </div>
+      ) : auction?.result ? (
+        <p className="empty-note">{"Không có đội nào thắng vật phẩm."}</p>
+      ) : null}
+    </section>
+  );
+};
+
+const CombatPanel = ({ combat, active, onBet }) => {
+  const [amount, setAmount] = useState(0);
+  if (!combat || (!active && !combat.result)) return null;
+
+  return (
+    <section className="game-card combat-panel">
+      <div className="section-head">
+        <p>{"Đối kháng"}</p>
+        <h2>{combat.result ? "Kết quả đối kháng" : combat.involved ? "Đặt điểm kín" : "Đang đối kháng"}</h2>
+      </div>
+      {active && combat.involved && !combat.submitted && (
+        <div className="bid-box">
+          <label htmlFor="combatAmount">{"Điểm đặt"}</label>
+          <input id="combatAmount" min="0" onChange={(event) => setAmount(event.target.value)} type="number" value={amount} />
+          <button onClick={() => onBet({ amount: Number(amount) })} type="button">{"Gửi điểm"}</button>
+        </div>
+      )}
+      {active && combat.involved && combat.submitted && <p className="empty-note">{"Đã gửi điểm. Chờ đối thủ."}</p>}
+      {active && !combat.involved && <p className="empty-note">{"Hai đội đang đặt điểm kín."}</p>}
+      {combat.result && (
+        <div className="notice-box compact">
+          <strong>{combat.result.winnerName + " thắng"}</strong>
+          <span>{combat.result.shielded ? "Lá chắn đã chặn sát thương." : combat.result.loserName + " mất " + combat.result.hpLoss + " máu."}</span>
+        </div>
+      )}
     </section>
   );
 };
@@ -355,7 +545,55 @@ const Leaderboard = ({ teams }) => {
   );
 };
 
-const GameplayPanel = ({ state, lastResult, onChooseDirection, onAnswer }) => {
+const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
+  const opponents = teams.filter((team) => team.id !== currentTeamId);
+  const [targets, setTargets] = useState({});
+  const [traps, setTraps] = useState({});
+
+  const trapDraft = (item) => traps[item.instanceId] || { x: 1, y: 1 };
+  const targetDraft = (item) => targets[item.instanceId] || opponents[0]?.id || "";
+
+  return (
+    <div className="support-inventory">
+      <h3>{"Vật phẩm hỗ trợ"}</h3>
+      {items.length ? (
+        <div className="support-list rich">
+          {items.map((item) => (
+            <article className="support-item-card" key={item.instanceId || item.type}>
+              <span className="support-token" style={{ "--item-color": item.color }}>{item.symbol}</span>
+              <div>
+                <strong>{item.name}</strong>
+                <small>{item.description}</small>
+              </div>
+              {item.type === SUPPORT_ITEM_TYPES.SHIELD ? (
+                <em>{"Tự kích hoạt"}</em>
+              ) : item.type === SUPPORT_ITEM_TYPES.FREEZE_OPPONENT ? (
+                <div className="item-use-row">
+                  <select value={targetDraft(item)} onChange={(event) => setTargets({ ...targets, [item.instanceId]: event.target.value })}>
+                    {opponents.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
+                  </select>
+                  <button onClick={() => onUse({ itemInstanceId: item.instanceId, targetTeamId: targetDraft(item) })} type="button">{"Dùng"}</button>
+                </div>
+              ) : item.type === SUPPORT_ITEM_TYPES.TRAP ? (
+                <div className="item-use-row trap-row">
+                  <input min="1" max="6" type="number" value={trapDraft(item).x} onChange={(event) => setTraps({ ...traps, [item.instanceId]: { ...trapDraft(item), x: event.target.value } })} />
+                  <input min="1" max="6" type="number" value={trapDraft(item).y} onChange={(event) => setTraps({ ...traps, [item.instanceId]: { ...trapDraft(item), y: event.target.value } })} />
+                  <button onClick={() => onUse({ itemInstanceId: item.instanceId, x: Number(trapDraft(item).x) - 1, y: Number(trapDraft(item).y) - 1 })} type="button">{"Đặt"}</button>
+                </div>
+              ) : (
+                <button onClick={() => onUse({ itemInstanceId: item.instanceId })} type="button">{"Dùng"}</button>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p>{"Chưa có vật phẩm."}</p>
+      )}
+    </div>
+  );
+};
+
+const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onAnswer, onCombatBet, onResolveEvent }) => {
   const round = state.round;
   const pending = round?.pendingAnswer;
   const question = round?.currentQuestion;
@@ -370,16 +608,16 @@ const GameplayPanel = ({ state, lastResult, onChooseDirection, onAnswer }) => {
       <div className="game-main">
         <section className="game-card map-card">
           <div className="section-head">
-          <p>Vòng {round?.roundNumber || 1} / {phaseLabels[round?.phase] || "Di chuyển"}</p>
-          <h2>Mê cung đã khám phá</h2>
+            <p>{"V\u00f2ng " + (round?.roundNumber || 1) + " / " + (phaseLabels[round?.phase] || "Di chuy\u1ec3n")}</p>
+            <h2>{"M\u00ea cung \u0111\u00e3 kh\u00e1m ph\u00e1"}</h2>
           </div>
           <GameplayBoard team={state.team} />
         </section>
 
         <section className="game-card move-card">
           <div className="section-head">
-            <p>Di chuyển</p>
-            <h2>{canChooseDirection ? "Chọn hướng đi" : "Trạng thái lượt"}</h2>
+            <p>{"Di chuy\u1ec3n"}</p>
+            <h2>{canChooseDirection ? "Ch\u1ecdn h\u01b0\u1edbng \u0111i" : "Tr\u1ea1ng th\u00e1i l\u01b0\u1ee3t"}</h2>
           </div>
           <DirectionControls
             disabled={!canChooseDirection}
@@ -387,17 +625,21 @@ const GameplayPanel = ({ state, lastResult, onChooseDirection, onAnswer }) => {
             pendingDirection={pending?.direction}
           />
           <div className="turn-note">
-            {canChooseDirection && "Chọn một hướng để nhận câu hỏi."}
-            {waitingForAnswer && `Đã khóa hướng: ${directionLabels[pending.direction]}. Trả lời để di chuyển.`}
-            {waitingForOthers && "Đã xong lượt. Đang chờ các đội còn lại."}
-            {round?.phase === ROUND_PHASES.AUCTION && "Đã chuyển sang phần đấu giá. Giao diện đặt giá sẽ được thêm ở mốc sau."}
-            {round?.phase === ROUND_PHASES.COMBAT && "Đã chuyển sang phần chiến đấu."}
+            {canChooseDirection && "Ch\u1ecdn m\u1ed9t h\u01b0\u1edbng \u0111\u1ec3 nh\u1eadn c\u00e2u h\u1ecfi."}
+            {waitingForAnswer && "\u0110\u00e3 kh\u00f3a h\u01b0\u1edbng: " + directionLabels[pending.direction] + ". Tr\u1ea3 l\u1eddi \u0111\u1ec3 di chuy\u1ec3n."}
+            {waitingForOthers && "\u0110\u00e3 xong l\u01b0\u1ee3t. \u0110ang ch\u1edd c\u00e1c \u0111\u1ed9i c\u00f2n l\u1ea1i."}
+            {round?.phase === ROUND_PHASES.AUCTION && "Đang mở vòng đấu giá kín."}
+            {round?.phase === ROUND_PHASES.COMBAT && "Đang mở đối kháng kín."}
           </div>
         </section>
       </div>
 
       <QuestionCard answered={Boolean(pending?.answered)} onAnswer={onAnswer} question={question} />
+      <NoticePanel messages={round?.messages || []} />
+      <AuctionPanel active={round?.phase === ROUND_PHASES.AUCTION} auction={round?.auction} onBid={onAuctionBid} />
+      <CombatPanel active={round?.phase === ROUND_PHASES.COMBAT} combat={round?.combat} onBet={onCombatBet} />
       <ResultCard result={result} />
+      <PendingEventCard event={round?.pendingEvent} onResolve={onResolveEvent} />
       <Leaderboard teams={state.leaderboard || []} />
     </section>
   );
@@ -486,6 +728,22 @@ export default function App() {
     socket.emit(EVENTS.QUESTION_ANSWER, { answerIndex });
   };
 
+  const resolveEvent = (payload) => {
+    socket.emit(EVENTS.EVENT_RESOLVE, payload);
+  };
+
+  const submitAuctionBid = (payload) => {
+    socket.emit(EVENTS.AUCTION_BID, payload);
+  };
+
+  const submitCombatBet = (payload) => {
+    socket.emit(EVENTS.COMBAT_BET, payload);
+  };
+
+  const useSupport = (payload) => {
+    socket.emit(EVENTS.SUPPORT_USE, payload);
+  };
+
   const visibleError = localError || state?.error;
 
   return (
@@ -530,6 +788,12 @@ export default function App() {
                   <dd>{state.team.position.x}, {state.team.position.y}</dd>
                 </div>
               </dl>
+              <SupportInventory
+                currentTeamId={state.team.id}
+                items={state.team.supportItems || []}
+                onUse={useSupport}
+                teams={state.teams || []}
+              />
             </div>
 
             {!state.setup?.started ? (
@@ -538,7 +802,10 @@ export default function App() {
               <GameplayPanel
                 lastResult={lastResult}
                 onAnswer={answerQuestion}
+                onAuctionBid={submitAuctionBid}
                 onChooseDirection={chooseDirection}
+                onCombatBet={submitCombatBet}
+                onResolveEvent={resolveEvent}
                 state={state}
               />
             )}

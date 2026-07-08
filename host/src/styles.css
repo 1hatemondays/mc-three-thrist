@@ -429,3 +429,68 @@ main {
     grid-template-columns: 1fr;
   }
 }
+
+
+.event-marker {
+  display: grid;
+  place-items: center;
+  width: clamp(28px, 3vw, 42px);
+  aspect-ratio: 1;
+  border: 2px solid var(--line);
+  color: var(--ink);
+  background: var(--event-color, var(--gold));
+  box-shadow: 3px 3px 0 rgba(16, 23, 19, 0.72);
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-weight: 1000;
+}
+
+
+.board-cell {
+  position: relative;
+}
+
+.board-event {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: clamp(24px, 2.4vw, 34px);
+}
+
+.host-boxes {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.host-box {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid rgba(29, 51, 41, 0.16);
+  background: var(--paper);
+}
+
+.host-box p {
+  margin: 0;
+  color: var(--jade);
+  font-size: 12px;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.host-box strong {
+  font-size: 18px;
+}
+
+.host-box small {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.auction-box {
+  background: #fff4d8;
+}
+
+.combat-box {
+  background: #ffe5dc;
+}

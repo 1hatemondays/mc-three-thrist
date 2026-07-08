@@ -99,6 +99,30 @@ test("starts the game only after every team has submitted a maze", () => {
   assert.equal(state.setup.started, true);
 });
 
+test("does not reroll event tiles after the game already started", () => {
+  const state = makeState();
+  const fixedTiles = [{ type: "duel", x: 2, y: 2 }];
+
+  state.setup.complete = true;
+  state.setup.started = true;
+  state.round = {
+    roundNumber: 1,
+    phase: "movement",
+    pendingAnswers: {},
+    currentQuestion: null,
+    eventTiles: fixedTiles,
+    pendingEvents: {}
+  };
+  for (const team of state.teams) {
+    team.startPoint = { x: 0, y: 0 };
+  }
+
+  const result = startGame(state);
+
+  assert.equal(result.ok, true);
+  assert.strictEqual(state.round.eventTiles, fixedTiles);
+});
+
 test("validates one complete 6x6 maze setup submission", () => {
   assert.equal(
     validateMazeSubmission({

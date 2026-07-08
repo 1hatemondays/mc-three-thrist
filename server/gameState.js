@@ -1,5 +1,7 @@
 import { config } from "./config.js";
 import { getPlayerRoundState } from "./movementLogic.js";
+import { getHostAuctionState, getPlayerAuctionState } from "./auctionLogic.js";
+import { getHostCombatState, getPlayerCombatState } from "./combatLogic.js";
 import { getHostSetupPreviewMap, getSetupSummary } from "./setupLogic.js";
 
 const makeTeam = (index) => ({
@@ -30,7 +32,9 @@ export const gameState = {
     roundNumber: 1,
     phase: "movement",
     pendingAnswers: {},
-    currentQuestion: null
+    currentQuestion: null,
+    eventTiles: [],
+    pendingEvents: {}
   }
 };
 

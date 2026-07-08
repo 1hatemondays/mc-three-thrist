@@ -7,6 +7,8 @@ export const EVENTS = {
   QUESTION_ANSWER: "question:answer",
   AUCTION_BID: "auction:bid",
   COMBAT_BET: "combat:bet",
+  EVENT_RESOLVE: "event:resolve",
+  SUPPORT_USE: "support:use",
   GAME_STATE: "game:state",
   ROUND_QUESTION: "round:question",
   ROUND_RESULT: "round:result",

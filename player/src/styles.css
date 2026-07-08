@@ -551,3 +551,260 @@ dd {
     min-height: 62px;
   }
 }
+
+
+
+.game-event {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  max-width: 82%;
+  aspect-ratio: 1;
+  border: 2px solid var(--line);
+  color: var(--ink);
+  background: var(--event-color, var(--gold));
+  box-shadow: 2px 2px 0 rgba(16, 23, 19, 0.72);
+  font-size: 12px;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+
+.event-result,
+.pending-event-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(29, 51, 41, 0.14);
+  background: var(--paper);
+}
+
+.event-result {
+  grid-column: 1 / -1;
+}
+
+.event-result strong,
+.event-result small {
+  display: block;
+}
+
+.event-result small,
+.pending-event-body p,
+.support-inventory p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.pending-event-card {
+  border-color: rgba(240, 185, 75, 0.55);
+  background: #fff2c8;
+}
+
+.event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.secondary-button {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.support-inventory {
+  margin-top: 16px;
+}
+
+.support-inventory h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.support-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.support-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 7px;
+  align-items: center;
+  padding: 7px 9px;
+  border: 1px solid rgba(29, 51, 41, 0.2);
+  background: var(--paper);
+  font-weight: 900;
+}
+
+.support-item strong {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  aspect-ratio: 1;
+  border: 2px solid var(--line);
+  background: var(--item-color, var(--gold));
+  font-size: 11px;
+}
+
+.support-item small {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.notice-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.notice-box {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(29, 51, 41, 0.18);
+  background: #fff4d8;
+  font-weight: 900;
+}
+
+.notice-box span,
+.empty-note {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.notice-box.compact {
+  margin-top: 14px;
+}
+
+.auction-panel,
+.combat-panel {
+  border-color: rgba(240, 185, 75, 0.5);
+  background: #fff7dd;
+}
+
+.auction-progress {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(29, 51, 41, 0.16);
+  background: var(--paper);
+  font-weight: 900;
+}
+
+.auction-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.auction-item-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
+  min-height: 78px;
+  padding: 10px;
+  color: var(--ink);
+  background: var(--paper);
+  text-align: left;
+}
+
+.auction-item-card.active {
+  background: var(--mint);
+}
+
+.auction-item-card span,
+.support-token {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  aspect-ratio: 1;
+  border: 2px solid var(--line);
+  background: var(--item-color, var(--gold));
+  font-size: 12px;
+  font-weight: 1000;
+}
+
+.auction-item-card small {
+  grid-column: 2;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.bid-box,
+.item-use-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 14px;
+}
+
+.bid-box label {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.result-list {
+  margin-top: 12px;
+}
+
+.compact-choices button {
+  min-height: 52px;
+}
+
+.support-list.rich {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.support-item-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid rgba(29, 51, 41, 0.18);
+  background: var(--paper);
+}
+
+.support-item-card > button,
+.support-item-card em,
+.support-item-card .item-use-row {
+  grid-column: 1 / -1;
+}
+
+.support-item-card small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.support-item-card em {
+  color: var(--jade);
+  font-weight: 900;
+  font-style: normal;
+}
+
+.item-use-row select,
+.item-use-row input {
+  min-height: 42px;
+}
+
+.trap-row {
+  grid-template-columns: 76px 76px auto;
+}
+
+@media (max-width: 560px) {
+  .bid-box,
+  .item-use-row,
+  .trap-row {
+    grid-template-columns: 1fr;
+  }
+}

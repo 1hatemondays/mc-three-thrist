@@ -1,0 +1,14 @@
+[
+  {
+    "id": "hard-001",
+    "text": "Trong lý luận giá trị thặng dư, điều kiện nào làm cho sức lao động trở thành hàng hóa?",
+    "choices": ["Người lao động sở hữu tư liệu sản xuất", "Người lao động tự do thân thể nhưng không có tư liệu sản xuất", "Nhà nước định giá tiền lương", "Tiền tệ biến mất khỏi lưu thông"],
+    "correctIndex": 1
+  },
+  {
+    "id": "hard-002",
+    "text": "Tỉ suất giá trị thặng dư phản ánh quan hệ nào?",
+    "choices": ["Giá trị thặng dư so với tư bản khả biến", "Lợi nhuận so với tổng tư bản", "Giá cả so với cung cầu", "Tiền công so với địa tô"],
+    "correctIndex": 0
+  }
+]

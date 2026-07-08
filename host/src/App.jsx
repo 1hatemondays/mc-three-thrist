@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { EVENTS } from "../../shared/constants.js";
+import { getEventTileMeta } from "../../shared/gameContent.js";
 import { hasWall } from "../../shared/maze.js";
 
 const SERVER_URL =
@@ -52,7 +53,7 @@ const edgeGridPosition = (edge) =>
     ? { gridColumn: edge.side === "left" ? edge.x * 2 + 1 : BOARD_SIZE * 2 + 1, gridRow: edge.y * 2 + 2 }
     : { gridColumn: edge.x * 2 + 2, gridRow: edge.side === "top" ? edge.y * 2 + 1 : BOARD_SIZE * 2 + 1 };
 
-const Board = ({ cardLabel, metaLabel, submitted, team }) => {
+const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
   const startKey = pointKey(team.startPoint);
   const endKey = pointKey(team.endPoint);
   const positionKey = pointKey(team.position);
@@ -73,6 +74,8 @@ const Board = ({ cardLabel, metaLabel, submitted, team }) => {
           const x = index % BOARD_SIZE;
           const y = Math.floor(index / BOARD_SIZE);
           const key = `${x}:${y}`;
+          const eventTile = eventTiles.find((tile) => tile.x === x && tile.y === y);
+          const eventMeta = eventTile ? getEventTileMeta(eventTile.type) : null;
           const classes = ["board-cell"];
           if (key === startKey) classes.push("start");
           if (key === endKey) classes.push("end");
@@ -80,6 +83,11 @@ const Board = ({ cardLabel, metaLabel, submitted, team }) => {
 
           return (
             <div className={classes.join(" ")} key={key} style={{ gridColumn: x * 2 + 2, gridRow: y * 2 + 2 }}>
+              {eventMeta && (
+                <span className="event-marker board-event" style={{ "--event-color": eventMeta.color }} title={eventMeta.name}>
+                  {eventMeta.symbol}
+                </span>
+              )}
               {key === startKey ? "S" : key === endKey ? "E" : ""}
             </div>
           );
@@ -182,6 +190,44 @@ const GuideScreen = ({ state }) => {
   );
 };
 
+const HostRoundBoxes = ({ round }) => {
+  if (!round) return null;
+  const auction = round.auction;
+  const combat = round.combat;
+
+  return (
+    <div className="host-boxes">
+      <section className="host-box">
+        <p>{"Pha hiện tại"}</p>
+        <strong>{round.phase === "auction" ? "Đấu giá kín" : round.phase === "combat" ? "Đối kháng" : "Di chuyển"}</strong>
+        <small>{"Vòng " + (round.roundNumber || 1)}</small>
+      </section>
+
+      {auction && (round.phase === "auction" || auction.result) && (
+        <section className="host-box auction-box">
+          <p>{"Đấu giá"}</p>
+          <strong>{auction.submittedCount + "/" + auction.totalTeams + " đội đã gửi"}</strong>
+          {auction.result?.winners?.length ? (
+            auction.result.winners.map((winner) => (
+              <small key={winner.teamId + winner.itemId}>{winner.teamName + " thắng " + winner.itemName}</small>
+            ))
+          ) : (
+            <small>{"Không hiển thị giá cho tới khi chốt."}</small>
+          )}
+        </section>
+      )}
+
+      {combat && (round.phase === "combat" || combat.result) && (
+        <section className="host-box combat-box">
+          <p>{"Đối kháng"}</p>
+          <strong>{combat.result ? combat.result.winnerName + " thắng" : combat.submittedCount + "/2 đội đã đặt"}</strong>
+          <small>{combat.result ? (combat.result.shielded ? "Lá chắn đã chặn sát thương" : combat.result.loserName + " mất " + combat.result.hpLoss + " máu") : "Điểm đặt đang được giữ kín."}</small>
+        </section>
+      )}
+    </div>
+  );
+};
+
 export default function App() {
   const [state, setState] = useState(null);
   const [teamCountDraft, setTeamCountDraft] = useState("4");
@@ -220,6 +266,7 @@ export default function App() {
   const startGame = () => {
     socketRef.current?.emit(EVENTS.SETUP_START_GAME);
   };
+
 
   if (isGuideScreen) return <GuideScreen state={state} />;
 
@@ -270,6 +317,7 @@ export default function App() {
                   cardLabel={team.name}
                   key={team.id}
                   metaLabel={team.startPoint ? "\u0110\u00e3 s\u1eb5n s\u00e0ng" : "\u0110ang ch\u1edd m\u00ea cung"}
+                  eventTiles={state?.round?.eventTiles || []}
                   submitted={submitted.has(team.id)}
                   team={team}
                 />
@@ -296,6 +344,8 @@ export default function App() {
         </div>
 
         <aside className="leaderboard">
+          <HostRoundBoxes round={state?.round} />
+
           <h2>{"B\u1ea3ng \u0111i\u1ec3m"}</h2>
           {teams.map((team) => (
             <div className="rank" key={team.id}>
