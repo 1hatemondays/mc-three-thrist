@@ -11,8 +11,44 @@ const BOARD_SIZE = 6;
 const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
 
 const TEAM_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#f4e06d", "#8bd6e8", "#f7a6c8"];
+const TEAM_ICONS = ["♠", "♥", "◆", "♣", "★", "✦", "●", "▲"];
+const CONFETTI_COUNT = 60;
+const CONFETTI_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#fff9e9"];
 const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
 const teamColor = (index) => TEAM_COLORS[index % TEAM_COLORS.length];
+const teamIcon = (index) => TEAM_ICONS[index % TEAM_ICONS.length];
+
+// Confetti tất định theo `seed` để mỗi lần thắng tạo lại một lớp mảnh giấy mới.
+const Confetti = ({ seed, count = CONFETTI_COUNT }) => {
+  if (!seed) return null;
+
+  const rand = (i, salt) => {
+    const v = Math.sin(i * 127.1 + salt * 311.7 + seed * 74.7) * 43758.5453;
+    return v - Math.floor(v);
+  };
+
+  const pieces = Array.from({ length: count }, (_, i) => (
+    <div
+      className="tv-confetti-piece"
+      key={seed + "-" + i}
+      style={{
+        left: (rand(i, 1) * 100).toFixed(1) + "%",
+        width: 7 + rand(i, 2) * 6,
+        height: 11 + rand(i, 3) * 8,
+        background: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        transform: "rotate(" + Math.round(rand(i, 4) * 360) + "deg)",
+        animation:
+          "evConf " + (1.5 + rand(i, 5) * 1.2).toFixed(2) + "s linear " + (rand(i, 6) * 0.7).toFixed(2) + "s forwards"
+      }}
+    />
+  ));
+
+  return (
+    <div className="tv-confetti" key={"conf-" + seed}>
+      {pieces}
+    </div>
+  );
+};
 const INTERIOR_EDGES = [
   ...Array.from({ length: BOARD_SIZE }, (_, y) =>
     Array.from({ length: BOARD_SIZE - 1 }, (_, index) => ({
@@ -118,10 +154,11 @@ const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
   );
 };
 
-const GuideScreen = ({ state }) => {
+const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
   const teams = state?.teams || [];
   const round = state?.round;
   const setupStarted = Boolean(state?.setup?.started);
+  const eventTiles = setupStarted ? round?.eventTiles || [] : [];
 
   return (
     <main className="guide-screen">
@@ -140,41 +177,69 @@ const GuideScreen = ({ state }) => {
       </header>
 
       <section className="guide-layout">
-        <div className="guide-map" aria-label={"B\u1ea3n \u0111\u1ed3 ch\u00ednh 6x6"}>
-          {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
-            const x = index % BOARD_SIZE;
-            const y = Math.floor(index / BOARD_SIZE);
-            const cellTeams = teams.filter((team) => team.position?.x === x && team.position?.y === y);
+        <div className="guide-map-wrap">
+          <div className="guide-map" aria-label={"B\u1ea3n \u0111\u1ed3 ch\u00ednh 6x6"}>
+            {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
+              const x = index % BOARD_SIZE;
+              const y = Math.floor(index / BOARD_SIZE);
+              const cellTeams = teams.filter((team) => team.position?.x === x && team.position?.y === y);
+              const eventTile = eventTiles.find((tile) => tile.x === x && tile.y === y);
+              const eventMeta = eventTile ? getEventTileMeta(eventTile.type) : null;
+              const bobDelay = ((index % 7) * 0.25).toFixed(2) + "s";
 
-            return (
-              <div className="guide-cell" key={x + ":" + y}>
-                <span className="guide-coord">{x + 1}.{y + 1}</span>
-                <div className="guide-markers">
-                  {cellTeams.map((team) => {
-                    const realIndex = teams.findIndex((item) => item.id === team.id);
-                    return (
-                      <span
-                        className="team-marker"
-                        key={team.id}
-                        style={{ "--team-color": teamColor(realIndex) }}
-                        title={team.name}
-                      >
-                        {realIndex + 1}
+              return (
+                <div className="guide-cell" key={x + ":" + y}>
+                  <span className="guide-coord">{x + 1}.{y + 1}</span>
+                  {eventMeta && !cellTeams.length && (
+                    <span className="guide-event-marker" style={{ animationDelay: bobDelay }} title={eventMeta.name}>
+                      <span className="guide-event-ring" style={{ borderColor: eventMeta.color, animationDelay: bobDelay }} />
+                      <span className="event-marker" style={{ "--event-color": eventMeta.color }}>
+                        {eventMeta.symbol}
                       </span>
-                    );
-                  })}
+                    </span>
+                  )}
+                  <div className="guide-markers">
+                    {cellTeams.map((team) => {
+                      const realIndex = teams.findIndex((item) => item.id === team.id);
+                      return (
+                        <span
+                          className="team-marker round bob"
+                          key={team.id}
+                          style={{ "--team-color": teamColor(realIndex), animationDelay: bobDelay }}
+                          title={team.name}
+                        >
+                          {teamIcon(realIndex)}
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+
+          <Confetti seed={confettiSeed} />
+          {flashSeed ? <div className="tv-flash" key={"flash-" + flashSeed} /> : null}
+
+          {banner && (
+            <div className="tv-banner" key={banner.key}>
+              <span className="tv-banner-icon" style={{ background: banner.color || "#f0b94b" }}>
+                {banner.symbol}
+              </span>
+              <div>
+                <strong>{banner.title}</strong>
+                <span>{banner.text}</span>
               </div>
-            );
-          })}
+            </div>
+          )}
         </div>
 
         <aside className="guide-panel">
           <h2>{"V\u1ecb tr\u00ed \u0111\u1ed9i"}</h2>
           {teams.map((team, index) => (
             <div className="guide-team" key={team.id}>
-              <span className="team-marker" style={{ "--team-color": teamColor(index) }}>
-                {index + 1}
+              <span className="team-marker round" style={{ "--team-color": teamColor(index) }}>
+                {teamIcon(index)}
               </span>
               <div>
                 <strong>{team.name}</strong>
@@ -231,19 +296,70 @@ const HostRoundBoxes = ({ round }) => {
 export default function App() {
   const [state, setState] = useState(null);
   const [teamCountDraft, setTeamCountDraft] = useState("4");
+  const [tvBanner, setTvBanner] = useState(null);
+  const [confettiSeed, setConfettiSeed] = useState(0);
+  const [flashSeed, setFlashSeed] = useState(0);
   const socketRef = useRef(null);
+  const teamsRef = useRef([]);
+  const bannerTimerRef = useRef(null);
 
   useEffect(() => {
     const socket = io(SERVER_URL, { auth: { role: "host" } });
     socketRef.current = socket;
 
-    socket.on(EVENTS.GAME_STATE, (nextState) => {
+    const showBanner = (banner, celebrate) => {
+      clearTimeout(bannerTimerRef.current);
+      setTvBanner({ ...banner, key: Date.now() });
+      if (celebrate) {
+        setConfettiSeed((n) => n + 1);
+        setFlashSeed((n) => n + 1);
+      }
+      bannerTimerRef.current = setTimeout(() => setTvBanner(null), 4300);
+    };
+
+    const onState = (nextState) => {
       console.log("host game:state", nextState);
       setState(nextState);
+      teamsRef.current = nextState?.teams || [];
       if (nextState?.config?.teamCount) setTeamCountDraft(String(nextState.config.teamCount));
-    });
+    };
+
+    const onRoundResult = (result) => {
+      if (!result?.event) return;
+      const team = teamsRef.current.find((item) => item.id === result.teamId);
+      const event = result.event;
+      showBanner({
+        title: (team?.name || "Một đội") + " kích hoạt " + event.name + "!",
+        text: event.message || event.name,
+        color: event.color,
+        symbol: event.symbol
+      });
+    };
+
+    const onCombatResult = (combat) => {
+      if (!combat) return;
+      showBanner(
+        {
+          title: (combat.winnerName || "Một đội") + " thắng đối kháng!",
+          text: combat.shielded
+            ? (combat.loserName || "Đối thủ") + " được lá chắn bảo vệ."
+            : (combat.loserName || "Đối thủ") + " mất " + (combat.hpLoss ?? 0) + " máu.",
+          color: "#ef8f6b",
+          symbol: "VS"
+        },
+        true
+      );
+    };
+
+    socket.on(EVENTS.GAME_STATE, onState);
+    socket.on(EVENTS.ROUND_RESULT, onRoundResult);
+    socket.on(EVENTS.COMBAT_RESULT, onCombatResult);
 
     return () => {
+      clearTimeout(bannerTimerRef.current);
+      socket.off(EVENTS.GAME_STATE, onState);
+      socket.off(EVENTS.ROUND_RESULT, onRoundResult);
+      socket.off(EVENTS.COMBAT_RESULT, onCombatResult);
       socketRef.current = null;
       socket.disconnect();
     };
@@ -268,7 +384,16 @@ export default function App() {
   };
 
 
-  if (isGuideScreen) return <GuideScreen state={state} />;
+  if (isGuideScreen) {
+    return (
+      <GuideScreen
+        banner={tvBanner}
+        confettiSeed={confettiSeed}
+        flashSeed={flashSeed}
+        state={state}
+      />
+    );
+  }
 
   return (
     <main>

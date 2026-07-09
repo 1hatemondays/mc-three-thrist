@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { DIRECTIONS, EVENTS, ROUND_PHASES } from "../../shared/constants.js";
-import { SUPPORT_ITEM_TYPES } from "../../shared/gameContent.js";
+import { SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
 
 const SERVER_URL =
@@ -645,11 +645,66 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
   );
 };
 
+const EVENT_TICKER_TEXT = "★ SỰ KIỆN ".repeat(8);
+const EVENT_FLIP_DELAY = 1200;
+
+const EventReveal = ({ reveal, onClose }) => {
+  const [flipped, setFlipped] = useState(false);
+
+  useEffect(() => {
+    if (!reveal) return undefined;
+    setFlipped(false);
+    const timer = setTimeout(() => setFlipped(true), EVENT_FLIP_DELAY);
+    return () => clearTimeout(timer);
+  }, [reveal?.nonce]);
+
+  if (!reveal) return null;
+
+  const meta = getEventTileMeta(reveal.event.type) || {};
+  const color = reveal.event.color || meta.color || "#f0b94b";
+  const symbol = reveal.event.symbol || meta.symbol || "?";
+  const name = reveal.event.name || meta.name || "Sự kiện";
+  const desc = meta.description || reveal.event.message || "Đã kích hoạt ô sự kiện.";
+
+  return (
+    <div className="event-overlay" role="dialog" aria-label={name}>
+      <div className="event-ticker">
+        <div className="event-ticker-track">
+          <span>{EVENT_TICKER_TEXT}</span>
+          <span>{EVENT_TICKER_TEXT}</span>
+        </div>
+      </div>
+      <div className="event-stage">
+        {!flipped ? (
+          <>
+            <div className="event-card waiting">
+              <span>?</span>
+            </div>
+            <p className="event-wait-note">{"Đội của bạn vừa trúng ô sự kiện..."}</p>
+          </>
+        ) : (
+          <>
+            <div className="event-card flipped" style={{ "--event-color": color }}>
+              <span className="event-card-icon">{symbol}</span>
+            </div>
+            <h2 className="event-name">{name}</h2>
+            <p className="event-desc">{desc}</p>
+            <button className="event-start" onClick={onClose} type="button">
+              {"Bắt đầu thử thách"}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [teamCode, setTeamCode] = useState("");
   const [state, setState] = useState(null);
   const [localError, setLocalError] = useState("");
   const [lastResult, setLastResult] = useState(null);
+  const [reveal, setReveal] = useState(null);
   const teamIdRef = useRef(null);
   const socket = useMemo(() => io(SERVER_URL, { autoConnect: false, reconnectionAttempts: 3 }), []);
   const [socketStatus, setSocketStatus] = useState(socket.connected ? "đã kết nối" : "đang kết nối");
@@ -667,6 +722,9 @@ export default function App() {
     const onRoundResult = (result) => {
       if (result?.teamId === teamIdRef.current) {
         setLastResult(result);
+        if (result.event) {
+          setReveal({ event: result.event, nonce: Date.now() });
+        }
       }
     };
     const onConnect = () => {
@@ -748,6 +806,7 @@ export default function App() {
 
   return (
     <main>
+      <EventReveal reveal={reveal} onClose={() => setReveal(null)} />
       <section className="panel">
         <p>Màn hình đội chơi</p>
         <h1>{APP_TITLE}</h1>

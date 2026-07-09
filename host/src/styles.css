@@ -494,3 +494,140 @@ main {
 .combat-box {
   background: #ffe5dc;
 }
+
+/* --- Màn TV sinh động: marker động, ô sự kiện, banner, ăn mừng --- */
+@keyframes evBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes evRing {
+  0% { transform: scale(0.7); opacity: 0.9; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+@keyframes evConf {
+  from { transform: translateY(-40px) rotate(0deg); }
+  to { transform: translateY(860px) rotate(720deg); }
+}
+
+@keyframes evBanner {
+  0% { transform: translateY(120%); }
+  10% { transform: translateY(0); }
+  88% { transform: translateY(0); }
+  100% { transform: translateY(120%); }
+}
+
+@keyframes evPop {
+  0% { transform: scale(0) rotate(-14deg); opacity: 0; }
+  60% { transform: scale(1.18) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes evFlash {
+  0% { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+
+.team-marker.round {
+  border-radius: 50%;
+  font-size: clamp(15px, 2vw, 22px);
+}
+
+.team-marker.bob {
+  animation: evBob 2.4s ease-in-out infinite;
+}
+
+.guide-map-wrap {
+  position: relative;
+  justify-self: center;
+  align-self: center;
+  width: min(100%, 78vh);
+  max-width: 980px;
+}
+
+.guide-map-wrap .guide-map {
+  width: 100%;
+  max-width: none;
+}
+
+.guide-event-marker {
+  position: relative;
+  display: grid;
+  place-items: center;
+  animation: evBob 2.4s ease-in-out infinite;
+}
+
+.guide-event-ring {
+  position: absolute;
+  inset: -6px;
+  border: 2px solid var(--gold);
+  animation: evRing 1.8s ease-out infinite;
+}
+
+.guide-event-marker .event-marker {
+  position: relative;
+}
+
+.tv-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 8;
+}
+
+.tv-confetti-piece {
+  position: absolute;
+  top: -30px;
+}
+
+.tv-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+  background: rgba(240, 185, 75, 0.55);
+  animation: evFlash 0.7s ease-out forwards;
+}
+
+.tv-banner {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border: 2px solid var(--line);
+  background: var(--gold);
+  box-shadow: 6px 6px 0 rgba(16, 23, 19, 0.86);
+  animation: evBanner 4.2s ease both;
+}
+
+.tv-banner-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  aspect-ratio: 1;
+  border: 2px solid var(--line);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 1000;
+  animation: evPop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) 0.15s both;
+}
+
+.tv-banner strong {
+  display: block;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 1000;
+}
+
+.tv-banner span {
+  color: rgba(16, 23, 19, 0.72);
+  font-size: 14px;
+  font-weight: 900;
+}
