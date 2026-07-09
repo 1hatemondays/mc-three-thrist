@@ -43,6 +43,10 @@ main {
   box-shadow: var(--shadow);
 }
 
+.panel.playing {
+  width: min(100%, 1080px);
+}
+
 .state-card,
 .setup-panel,
 .game-card {
@@ -319,6 +323,28 @@ dd {
   gap: 16px;
 }
 
+/* Bố cục 2 cột cho màn laptop: trạng thái lượt bên trái, tương tác bên phải */
+.gameplay.two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.gameplay-left,
+.gameplay-right {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+
+.gameplay-left > .game-card,
+.gameplay-right > .game-card,
+.gameplay-right > .notice-stack {
+  margin-top: 0;
+}
+
 .game-card {
   min-width: 0;
 }
@@ -529,6 +555,7 @@ dd {
   .join-row,
   .setup-actions,
   .game-main,
+  .gameplay.two-col,
   .result-card,
   dl {
     grid-template-columns: 1fr;
@@ -882,6 +909,7 @@ dd {
   gap: 18px;
   padding: 24px;
   text-align: center;
+  perspective: 1000px;
 }
 
 .event-card {
@@ -945,6 +973,32 @@ dd {
   font-size: 15px;
   font-weight: 800;
   animation: evRise 0.45s ease 0.32s both;
+}
+
+.event-outcome {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  box-shadow: 5px 5px 0 rgba(240, 185, 75, 0.5);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 900;
+  transform-origin: center;
+  animation: evFlip 0.5s ease 0.5s both;
+}
+
+.event-outcome-badge {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  aspect-ratio: 1;
+  border: 2px solid var(--line);
+  background: var(--event-color, var(--gold));
+  font-size: 12px;
+  font-weight: 1000;
 }
 
 .event-start {

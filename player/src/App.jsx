@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { DIRECTIONS, EVENTS, ROUND_PHASES } from "../../shared/constants.js";
-import { SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
+import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
 
 const SERVER_URL =
@@ -604,8 +604,8 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
   const canChooseDirection = movementOpen && !pending;
 
   return (
-    <section className="gameplay">
-      <div className="game-main">
+    <section className="gameplay two-col">
+      <div className="gameplay-left">
         <section className="game-card map-card">
           <div className="section-head">
             <p>{"V\u00f2ng " + (round?.roundNumber || 1) + " / " + (phaseLabels[round?.phase] || "Di chuy\u1ec3n")}</p>
@@ -634,13 +634,15 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
         </section>
       </div>
 
-      <QuestionCard answered={Boolean(pending?.answered)} onAnswer={onAnswer} question={question} />
-      <NoticePanel messages={round?.messages || []} />
-      <AuctionPanel active={round?.phase === ROUND_PHASES.AUCTION} auction={round?.auction} onBid={onAuctionBid} />
-      <CombatPanel active={round?.phase === ROUND_PHASES.COMBAT} combat={round?.combat} onBet={onCombatBet} />
-      <ResultCard result={result} />
-      <PendingEventCard event={round?.pendingEvent} onResolve={onResolveEvent} />
-      <Leaderboard teams={state.leaderboard || []} />
+      <div className="gameplay-right">
+        <QuestionCard answered={Boolean(pending?.answered)} onAnswer={onAnswer} question={question} />
+        <PendingEventCard event={round?.pendingEvent} onResolve={onResolveEvent} />
+        <AuctionPanel active={round?.phase === ROUND_PHASES.AUCTION} auction={round?.auction} onBid={onAuctionBid} />
+        <CombatPanel active={round?.phase === ROUND_PHASES.COMBAT} combat={round?.combat} onBet={onCombatBet} />
+        <ResultCard result={result} />
+        <NoticePanel messages={round?.messages || []} />
+        <Leaderboard teams={state.leaderboard || []} />
+      </div>
     </section>
   );
 };
@@ -660,11 +662,25 @@ const EventReveal = ({ reveal, onClose }) => {
 
   if (!reveal) return null;
 
-  const meta = getEventTileMeta(reveal.event.type) || {};
-  const color = reveal.event.color || meta.color || "#f0b94b";
-  const symbol = reveal.event.symbol || meta.symbol || "?";
-  const name = reveal.event.name || meta.name || "Sự kiện";
-  const desc = meta.description || reveal.event.message || "Đã kích hoạt ô sự kiện.";
+  const event = reveal.event;
+  const meta = getEventTileMeta(event.type) || {};
+  const color = event.color || meta.color || "#f0b94b";
+  const symbol = event.symbol || meta.symbol || "?";
+  const name = event.name || meta.name || "Sự kiện";
+  const desc = meta.description || event.message || "Đã kích hoạt ô sự kiện.";
+
+  // Với các sự kiện xử lý ngay (không có bước tiếp theo), hiện luôn kết quả trong thẻ.
+  let outcome = null;
+  if (event.item) {
+    outcome = { badge: { symbol: event.item.symbol, color: event.item.color }, text: "Nhận: " + event.item.name };
+  } else if (event.newPosition) {
+    outcome = { text: "Dịch chuyển tới (" + (event.newPosition.x + 1) + ", " + (event.newPosition.y + 1) + ")" };
+  } else if (event.opponentName) {
+    outcome = { text: "Đấu với " + event.opponentName };
+  }
+
+  const hasChallenge =
+    event.type === EVENT_TILE_TYPES.KNOWLEDGE || event.type === EVENT_TILE_TYPES.POSITION_SWAP;
 
   return (
     <div className="event-overlay" role="dialog" aria-label={name}>
@@ -689,8 +705,18 @@ const EventReveal = ({ reveal, onClose }) => {
             </div>
             <h2 className="event-name">{name}</h2>
             <p className="event-desc">{desc}</p>
+            {outcome && (
+              <div className="event-outcome">
+                {outcome.badge && (
+                  <span className="event-outcome-badge" style={{ "--event-color": outcome.badge.color }}>
+                    {outcome.badge.symbol}
+                  </span>
+                )}
+                <span>{outcome.text}</span>
+              </div>
+            )}
             <button className="event-start" onClick={onClose} type="button">
-              {"Bắt đầu thử thách"}
+              {hasChallenge ? "Bắt đầu thử thách" : "Tiếp tục"}
             </button>
           </>
         )}
@@ -807,7 +833,7 @@ export default function App() {
   return (
     <main>
       <EventReveal reveal={reveal} onClose={() => setReveal(null)} />
-      <section className="panel">
+      <section className={state?.setup?.started ? "panel playing" : "panel"}>
         <p>Màn hình đội chơi</p>
         <h1>{APP_TITLE}</h1>
         <div className={socketStatus === "đã kết nối" ? "connection online" : "connection"}>
