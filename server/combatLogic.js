@@ -7,6 +7,7 @@ const choose = (items, random = Math.random) => {
   return items[Math.min(Math.floor(random() * items.length), items.length - 1)];
 };
 const findTeam = (state, teamId) => state.teams.find((team) => team.id === teamId);
+const publicTeam = (team) => team && ({ id: team.id, name: team.name, hp: team.hp, score: team.score });
 
 export const startCombat = (state, attackerId, random = Math.random) => {
   const attacker = findTeam(state, attackerId);
@@ -32,12 +33,16 @@ export const getPlayerCombatState = (state, teamId) => {
   const combat = state.round.combat;
   if (!combat) return null;
   const involved = teamId === combat.attackerId || teamId === combat.defenderId;
+  const attacker = findTeam(state, combat.attackerId);
+  const defender = findTeam(state, combat.defenderId);
   const opponentId = teamId === combat.attackerId ? combat.defenderId : combat.attackerId;
   const opponent = findTeam(state, opponentId);
   return {
     active: state.round.phase === ROUND_PHASES.COMBAT,
     involved,
     opponentId: involved ? opponentId : null,
+    attacker: publicTeam(attacker),
+    defender: publicTeam(defender),
     opponentName: involved ? opponent?.name || opponentId : null,
     submitted: Boolean(combat.bets?.[teamId]),
     submittedCount: Object.keys(combat.bets || {}).length,
@@ -50,8 +55,8 @@ export const getHostCombatState = (state) => {
   if (!combat) return null;
   return {
     active: state.round.phase === ROUND_PHASES.COMBAT,
-    attackerId: combat.attackerId,
-    defenderId: combat.defenderId,
+    attacker: publicTeam(findTeam(state, combat.attackerId)),
+    defender: publicTeam(findTeam(state, combat.defenderId)),
     submittedCount: Object.keys(combat.bets || {}).length,
     result: publicCombatResult(combat)
   };

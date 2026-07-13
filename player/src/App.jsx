@@ -539,32 +539,165 @@ const AuctionPanel = ({ auction, active, onBid }) => {
   );
 };
 
-const CombatPanel = ({ combat, active, onBet }) => {
-  const [amount, setAmount] = useState(0);
-  if (!combat || (!active && !combat.result)) return null;
+const CombatTeamCard = ({ mark, role, team, result }) => {
+  const winner = result?.winnerId === team?.id;
+  const loser = result?.loserId === team?.id;
+  const hp = Math.max(0, Math.min(100, team?.hp || 0));
 
   return (
-    <section className="game-card combat-panel">
-      <div className="section-head">
-        <p>{"Đối kháng"}</p>
-        <h2>{combat.result ? "Kết quả đối kháng" : combat.involved ? "Đặt điểm kín" : "Đang đối kháng"}</h2>
+    <article className={"combat-team-card" + (winner ? " is-winner" : "") + (loser ? " is-loser" : "")}>
+      <div className="combat-team-top">
+        <span className="combat-team-mark">{mark}</span>
+        <span>{role}</span>
       </div>
+      <strong>{team?.name || "Đang chọn đội"}</strong>
+      <div className="combat-team-stats">
+        <span>{team?.score ?? 0} điểm</span>
+        <span>{hp} HP</span>
+      </div>
+      <div className="combat-hp" aria-label={(team?.name || "Đội") + " còn " + hp + " máu"}>
+        <span style={{ "--hp-width": hp + "%" }} />
+      </div>
+      {winner && <em>Thắng</em>}
+      {loser && <em>Thua</em>}
+    </article>
+  );
+};
+
+const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
+  const dialogRef = useRef(null);
+  const [amount, setAmount] = useState(0);
+  const myTeam = [combat?.attacker, combat?.defender].find((team) => team?.id === currentTeamId);
+  const maxBid = myTeam?.score || 0;
+  const bid = Number(amount);
+  const canSubmit = Number.isInteger(bid) && bid >= 0 && bid <= maxBid;
+
+  useEffect(() => {
+    setAmount(0);
+  }, [active, combat?.attacker?.id, combat?.defender?.id]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!active || !dialog || dialog.open) return undefined;
+    dialog.showModal();
+    return () => {
+      if (dialog.open) dialog.close();
+    };
+  }, [active]);
+
+  if (!combat || !active) return null;
+
+  const result = combat.result;
+  const title = result
+    ? "Kết quả đối kháng"
+    : combat.involved
+      ? "Khóa điểm, giành lợi thế"
+      : "Theo dõi trận đối kháng";
+
+  const setPreset = (ratio) => setAmount(Math.floor(maxBid * ratio));
+
+  return (
+    <dialog
+      aria-labelledby="combatTitle"
+      className="combat-modal"
+      onCancel={(event) => event.preventDefault()}
+      ref={dialogRef}
+    >
+    <section className="game-card combat-panel" aria-live="polite">
+      <header className="combat-head">
+        <div>
+          <p className="combat-kicker"><span>VS</span> Ô đối kháng · cược kín</p>
+          <h2 id="combatTitle">{title}</h2>
+        </div>
+        <span className="combat-status">
+          {result ? "Đã phân thắng bại" : combat.submittedCount + "/2 đã khóa"}
+        </span>
+      </header>
+
+      <div className="combat-arena">
+        <CombatTeamCard mark="ATK" role="Thách đấu" team={combat.attacker} result={result} />
+        <div className="combat-versus" aria-hidden="true">VS</div>
+        <CombatTeamCard mark="DEF" role="Phòng thủ" team={combat.defender} result={result} />
+      </div>
+
       {active && combat.involved && !combat.submitted && (
-        <div className="bid-box">
-          <label htmlFor="combatAmount">{"Điểm đặt"}</label>
-          <input id="combatAmount" min="0" onChange={(event) => setAmount(event.target.value)} type="number" value={amount} />
-          <button onClick={() => onBet({ amount: Number(amount) })} type="button">{"Gửi điểm"}</button>
+        <form
+          className="combat-bet"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (canSubmit) onBet({ amount: bid });
+          }}
+        >
+          <div className="combat-bet-copy">
+            <div>
+              <span>Lượt của đội bạn</span>
+              <strong>Đặt bao nhiêu điểm?</strong>
+            </div>
+            <small>Tối đa {maxBid} điểm</small>
+          </div>
+
+          <div className="combat-amount-row">
+            <label htmlFor="combatAmount">Mức cược</label>
+            <input
+              id="combatAmount"
+              inputMode="numeric"
+              max={maxBid}
+              min="0"
+              onChange={(event) => setAmount(event.target.value)}
+              step="1"
+              type="number"
+              value={amount}
+            />
+            <span>điểm</span>
+          </div>
+
+          <div className="combat-presets" aria-label="Chọn nhanh mức cược">
+            <button onClick={() => setPreset(0.25)} type="button">25%</button>
+            <button onClick={() => setPreset(0.5)} type="button">50%</button>
+            <button onClick={() => setPreset(1)} type="button">Tất tay</button>
+          </div>
+
+          <button className="combat-submit" disabled={!canSubmit} type="submit">
+            Khóa điểm cược
+          </button>
+          <p className="combat-rule">Điểm cược được giữ kín. Cược cao hơn thắng; hòa thì đội thách đấu thắng.</p>
+        </form>
+      )}
+
+      {active && (!combat.involved || combat.submitted) && (
+        <div className="combat-waiting">
+          <span className="combat-lock" aria-hidden="true">{combat.submitted ? "✓" : "•••"}</span>
+          <div>
+            <strong>{combat.submitted ? "Đã khóa điểm cược" : "Đang theo dõi trực tiếp"}</strong>
+            <p>
+              {combat.submitted
+                ? "Chờ đối thủ hoàn tất lựa chọn."
+                : "Hai đội đang đặt điểm; mức cược vẫn được niêm phong."}
+            </p>
+          </div>
+          <div className="combat-locks" aria-label={combat.submittedCount + " trên 2 đội đã đặt cược"}>
+            <span className={combat.submittedCount > 0 ? "locked" : ""} />
+            <span className={combat.submittedCount > 1 ? "locked" : ""} />
+          </div>
         </div>
       )}
-      {active && combat.involved && combat.submitted && <p className="empty-note">{"Đã gửi điểm. Chờ đối thủ."}</p>}
-      {active && !combat.involved && <p className="empty-note">{"Hai đội đang đặt điểm kín."}</p>}
-      {combat.result && (
-        <div className="notice-box compact">
-          <strong>{combat.result.winnerName + " thắng"}</strong>
-          <span>{combat.result.shielded ? "Lá chắn đã chặn sát thương." : combat.result.loserName + " mất " + combat.result.hpLoss + " máu."}</span>
+
+      {result && (
+        <div className={"combat-result" + (result.shielded ? " is-shielded" : "")}>
+          <span className="combat-result-seal">{result.shielded ? "SH" : "KO"}</span>
+          <div>
+            <small>Kết quả chung cuộc</small>
+            <strong>{result.winnerName} chiến thắng</strong>
+            <p>
+              {result.shielded
+                ? "Lá chắn của " + result.loserName + " đã chặn toàn bộ sát thương."
+                : result.loserName + " mất " + result.hpLoss + " HP."}
+            </p>
+          </div>
         </div>
       )}
     </section>
+    </dialog>
   );
 };
 
@@ -673,7 +806,12 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
         <QuestionCard answered={Boolean(pending?.answered)} onAnswer={onAnswer} question={question} />
         <PendingEventCard event={round?.pendingEvent} onResolve={onResolveEvent} />
         <AuctionPanel active={round?.phase === ROUND_PHASES.AUCTION} auction={round?.auction} onBid={onAuctionBid} />
-        <CombatPanel active={round?.phase === ROUND_PHASES.COMBAT} combat={round?.combat} onBet={onCombatBet} />
+        <CombatPanel
+          active={round?.phase === ROUND_PHASES.COMBAT}
+          combat={round?.combat}
+          currentTeamId={state.team.id}
+          onBet={onCombatBet}
+        />
         <ResultCard result={result} />
         <NoticePanel messages={round?.messages || []} />
         <Leaderboard teams={state.leaderboard || []} />
