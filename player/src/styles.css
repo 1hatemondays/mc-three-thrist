@@ -68,7 +68,7 @@ p {
 
 h1 {
   margin-top: 6px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Cambria, "Times New Roman", serif;
   font-size: clamp(42px, 8vw, 74px);
   font-weight: 900;
   line-height: 0.92;
@@ -928,7 +928,7 @@ dd {
 
 .event-card.waiting span {
   color: var(--paper);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Cambria, "Times New Roman", serif;
   font-size: 84px;
   font-weight: 900;
 }
@@ -960,7 +960,7 @@ dd {
 
 .event-name {
   color: var(--paper);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Cambria, "Times New Roman", serif;
   font-size: 40px;
   font-weight: 900;
   line-height: 0.94;
