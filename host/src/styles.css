@@ -501,6 +501,92 @@ main {
   background: #ffe5dc;
 }
 
+.combat-box {
+  position: relative;
+  overflow: hidden;
+  gap: 10px;
+  padding-top: 18px;
+  border: 2px solid var(--line);
+  background:
+    linear-gradient(90deg, rgba(239, 143, 107, 0.14) 1px, transparent 1px) 0 0 / 18px 18px,
+    #ffe5dc;
+  box-shadow: 4px 4px 0 rgba(29, 51, 41, 0.2);
+}
+
+.combat-box::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 6px;
+  background: repeating-linear-gradient(135deg, var(--coral) 0 14px, var(--gold) 14px 28px);
+  content: "";
+}
+
+.combat-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.combat-box-head span {
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  background: var(--gold);
+  font-size: 9px;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.combat-matchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+
+.combat-matchup strong {
+  overflow: hidden;
+  padding: 8px 6px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 14px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combat-matchup b {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--line);
+  box-shadow: 2px 2px 0 var(--gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+  transform: rotate(-6deg);
+}
+
+.combat-box-progress {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.combat-box-progress span {
+  height: 7px;
+  border: 1px solid var(--line);
+  background: transparent;
+}
+
+.combat-box-progress span.locked {
+  background: var(--jade);
+}
 /* --- Màn TV sinh động: marker động, ô sự kiện, banner, ăn mừng --- */
 @keyframes evBob {
   0%, 100% { transform: translateY(0); }

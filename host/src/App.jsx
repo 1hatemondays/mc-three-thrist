@@ -285,9 +285,28 @@ const HostRoundBoxes = ({ round }) => {
 
       {combat && (round.phase === "combat" || combat.result) && (
         <section className="host-box combat-box">
-          <p>{"Đối kháng"}</p>
-          <strong>{combat.result ? combat.result.winnerName + " thắng" : combat.submittedCount + "/2 đội đã đặt"}</strong>
-          <small>{combat.result ? (combat.result.shielded ? "Lá chắn đã chặn sát thương" : combat.result.loserName + " mất " + combat.result.hpLoss + " máu") : "Điểm đặt đang được giữ kín."}</small>
+          <div className="combat-box-head">
+            <p>Đối kháng trực tiếp</p>
+            <span>{combat.result ? "Kết quả" : combat.submittedCount + "/2 đã khóa"}</span>
+          </div>
+          <div className="combat-matchup">
+            <strong>{combat.attacker?.name || "Đội thách đấu"}</strong>
+            <b>VS</b>
+            <strong>{combat.defender?.name || "Đội phòng thủ"}</strong>
+          </div>
+          {!combat.result && (
+            <div className="combat-box-progress" aria-label={combat.submittedCount + " trên 2 đội đã đặt cược"}>
+              <span className={combat.submittedCount > 0 ? "locked" : ""} />
+              <span className={combat.submittedCount > 1 ? "locked" : ""} />
+            </div>
+          )}
+          <small>
+            {combat.result
+              ? combat.result.shielded
+                ? combat.result.winnerName + " thắng · lá chắn đã chặn sát thương"
+                : combat.result.winnerName + " thắng · " + combat.result.loserName + " mất " + combat.result.hpLoss + " HP"
+              : "Điểm cược đang được niêm phong."}
+          </small>
         </section>
       )}
     </div>

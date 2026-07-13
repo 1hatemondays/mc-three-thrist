@@ -3,7 +3,7 @@ import test from "node:test";
 import { ROUND_PHASES } from "../shared/constants.js";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES } from "../shared/gameContent.js";
 import { applyEventTileEffect } from "./eventLogic.js";
-import { submitCombatBet } from "./combatLogic.js";
+import { getHostCombatState, getPlayerCombatState, submitCombatBet } from "./combatLogic.js";
 
 const makeTeam = (id, score = 50) => ({
   id,
@@ -40,6 +40,13 @@ test("duel event opens real sealed combat and resolves HP loss", () => {
   assert.equal(state.round.phase, ROUND_PHASES.COMBAT);
   assert.equal(state.round.combat.attackerId, "team1");
   assert.equal(state.round.combat.defenderId, "team2");
+
+  const playerCombat = getPlayerCombatState(state, "team1");
+  const hostCombat = getHostCombatState(state);
+  assert.equal(playerCombat.opponentName, "team2");
+  assert.deepEqual(playerCombat.attacker, { id: "team1", name: "team1", hp: 100, score: 50 });
+  assert.equal("bets" in playerCombat, false);
+  assert.equal("bets" in hostCombat, false);
 
   assert.equal(submitCombatBet(state, "team1", { amount: 10 }).resolved, false);
   const result = submitCombatBet(state, "team2", { amount: 20 });

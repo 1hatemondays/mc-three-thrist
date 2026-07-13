@@ -44,6 +44,11 @@ export const normalizeTeamId = (teamId) => String(teamId || "").replace(/\s+/g, 
 
 export const getHostState = () => ({
   ...gameState,
+  round: {
+    ...gameState.round,
+    auction: getHostAuctionState(gameState),
+    combat: getHostCombatState(gameState)
+  },
   setup: {
     ...gameState.setup,
     previews: getHostSetupPreviewMap(gameState)
@@ -67,7 +72,12 @@ export const getPlayerState = (teamId) => {
       supportItems: team.supportItems
     },
     leaderboard: gameState.teams.map(({ id, name, hp, score }) => ({ id, name, hp, score })),
-    round: getPlayerRoundState(gameState.round, teamId),
+    round: {
+      ...getPlayerRoundState(gameState.round, teamId),
+      auction: getPlayerAuctionState(gameState, teamId),
+      combat: getPlayerCombatState(gameState, teamId),
+      messages: gameState.round.messages?.[teamId] || []
+    },
     setup: getSetupSummary(gameState, teamId)
   };
 };
