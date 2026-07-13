@@ -12,6 +12,8 @@ const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
 
 const TEAM_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#f4e06d", "#8bd6e8", "#f7a6c8"];
 const TEAM_ICONS = ["♠", "♥", "◆", "♣", "★", "✦", "●", "▲"];
+// Ô sự kiện trên màn TV hiển thị đồng nhất, không lộ loại — giữ tính bí ẩn.
+const MYSTERY_EVENT = { symbol: "?", color: "#d995ff" };
 const CONFETTI_COUNT = 60;
 const CONFETTI_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#fff9e9"];
 const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
@@ -184,17 +186,16 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
               const y = Math.floor(index / BOARD_SIZE);
               const cellTeams = teams.filter((team) => team.position?.x === x && team.position?.y === y);
               const eventTile = eventTiles.find((tile) => tile.x === x && tile.y === y);
-              const eventMeta = eventTile ? getEventTileMeta(eventTile.type) : null;
               const bobDelay = ((index % 7) * 0.25).toFixed(2) + "s";
 
               return (
                 <div className="guide-cell" key={x + ":" + y}>
                   <span className="guide-coord">{x + 1}.{y + 1}</span>
-                  {eventMeta && !cellTeams.length && (
-                    <span className="guide-event-marker" style={{ animationDelay: bobDelay }} title={eventMeta.name}>
-                      <span className="guide-event-ring" style={{ borderColor: eventMeta.color, animationDelay: bobDelay }} />
-                      <span className="event-marker" style={{ "--event-color": eventMeta.color }}>
-                        {eventMeta.symbol}
+                  {eventTile && !cellTeams.length && (
+                    <span className="guide-event-marker" style={{ animationDelay: bobDelay }} title="Ô sự kiện bí ẩn">
+                      <span className="guide-event-ring" style={{ borderColor: MYSTERY_EVENT.color, animationDelay: bobDelay }} />
+                      <span className="event-marker mystery" style={{ "--event-color": MYSTERY_EVENT.color }}>
+                        {MYSTERY_EVENT.symbol}
                       </span>
                     </span>
                   )}
