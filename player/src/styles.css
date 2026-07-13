@@ -367,93 +367,230 @@ dd {
   text-transform: uppercase;
 }
 
-.game-board {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 6px;
+.movement-viewport {
   margin-top: 16px;
-  padding: 10px;
+}
+
+.movement-scene {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
   border: 2px solid var(--line);
   background: #d8ccb2;
+}
+
+.movement-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.movement-grid-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 5px solid rgba(29, 51, 41, 0.2);
+  background: rgba(255, 249, 233, 0.9);
+}
+
+.movement-grid-cell.center {
+  background: rgba(255, 249, 233, 0.98);
+}
+
+.movement-grid-cell.outer {
+  overflow: hidden;
+}
+
+.movement-cell-fog {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 249, 233, 0.18), rgba(16, 23, 19, 0.08)),
+    rgba(255, 249, 233, 0.1);
+  opacity: 0.9;
+}
+
+.movement-fog {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.movement-fog::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 249, 233, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  mask-image: radial-gradient(circle at center, transparent 0 28%, #000 44%, #000 100%);
+  -webkit-mask-image: radial-gradient(circle at center, transparent 0 28%, #000 44%, #000 100%);
+}
+
+.movement-fog::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 0 30%,
+    rgba(255, 249, 233, 0.02) 40%,
+    rgba(16, 23, 19, 0.1) 64%,
+    rgba(8, 20, 14, 0.26) 100%
+  );
+}
+
+.movement-player-wrap {
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+}
+
+.movement-player {
+  width: clamp(108px, 31%, 148px);
   aspect-ratio: 1;
-}
-
-.game-cell {
-  display: grid;
-  place-items: center;
-  min-width: 0;
-  min-height: 0;
-  border: 1px solid rgba(29, 51, 41, 0.12);
-  color: rgba(16, 23, 19, 0.32);
-  background: rgba(16, 23, 19, 0.08);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.game-cell.known {
-  color: var(--ink);
-  background: var(--paper);
-}
-
-.game-cell.current {
-  color: #ffffff;
+  border: 3px solid var(--paper);
+  border-radius: 50%;
   background: var(--jade);
-  box-shadow: inset 0 0 0 4px var(--gold);
+  box-shadow:
+    0 0 0 6px rgba(240, 185, 75, 0.18),
+    0 0 30px rgba(240, 185, 75, 0.28);
 }
 
-.direction-pad {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-areas:
-    ". up ."
-    "left . right"
-    ". down .";
-  gap: 10px;
-  margin-top: 18px;
+.movement-zone {
+  position: absolute;
+  z-index: 2;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  color: var(--paper);
+  background: transparent;
+  box-shadow: none;
+  opacity: 1;
 }
 
-.direction-button {
+.movement-zone:hover:not(:disabled),
+.movement-zone:focus-visible:not(:disabled),
+.movement-zone.active {
+  transform: none;
+  box-shadow: none;
+}
+
+.movement-zone.up {
+  top: 0;
+  left: 22%;
+  right: 22%;
+  height: 28%;
+}
+
+.movement-zone.right {
+  top: 22%;
+  right: 0;
+  bottom: 22%;
+  width: 28%;
+}
+
+.movement-zone.down {
+  bottom: 0;
+  left: 22%;
+  right: 22%;
+  height: 28%;
+}
+
+.movement-zone.left {
+  top: 22%;
+  left: 0;
+  bottom: 22%;
+  width: 28%;
+}
+
+.movement-zone-indicator {
+  position: absolute;
   display: grid;
   place-items: center;
-  min-height: 72px;
-  padding: 8px;
-  color: var(--ink);
-  background: var(--paper);
+  gap: 6px;
+  color: var(--paper);
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
+  pointer-events: none;
 }
 
-.direction-button.up {
-  grid-area: up;
-}
-
-.direction-button.right {
-  grid-area: right;
-}
-
-.direction-button.down {
-  grid-area: down;
-}
-
-.direction-button.left {
-  grid-area: left;
-}
-
-.direction-button span {
-  font-size: 26px;
+.movement-zone-indicator strong {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(255, 249, 233, 0.42);
+  border-radius: 999px;
+  background: rgba(16, 23, 19, 0.48);
+  font-size: 20px;
   line-height: 1;
 }
 
-.direction-button small {
-  color: var(--muted);
+.movement-zone-indicator small {
+  color: var(--paper);
+  font-size: 12px;
   font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.direction-button.selected {
-  color: #ffffff;
-  background: var(--jade);
+.movement-zone.up .movement-zone-indicator {
+  top: 12%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.92);
 }
 
-.direction-button.selected small {
-  color: #ffffff;
+.movement-zone.right .movement-zone-indicator {
+  top: 50%;
+  right: 12%;
+  transform: translateY(-50%) scale(0.92);
+}
+
+.movement-zone.down .movement-zone-indicator {
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.92);
+}
+
+.movement-zone.left .movement-zone-indicator {
+  top: 50%;
+  left: 12%;
+  transform: translateY(-50%) scale(0.92);
+}
+
+.movement-zone:hover:not(:disabled) .movement-zone-indicator,
+.movement-zone:focus-visible:not(:disabled) .movement-zone-indicator,
+.movement-zone.active .movement-zone-indicator {
+  opacity: 1;
+}
+
+.movement-zone.up:hover:not(:disabled) .movement-zone-indicator,
+.movement-zone.up:focus-visible:not(:disabled) .movement-zone-indicator,
+.movement-zone.up.active .movement-zone-indicator,
+.movement-zone.down:hover:not(:disabled) .movement-zone-indicator,
+.movement-zone.down:focus-visible:not(:disabled) .movement-zone-indicator,
+.movement-zone.down.active .movement-zone-indicator {
+  transform: translateX(-50%) scale(1);
+}
+
+.movement-zone.right:hover:not(:disabled) .movement-zone-indicator,
+.movement-zone.right:focus-visible:not(:disabled) .movement-zone-indicator,
+.movement-zone.right.active .movement-zone-indicator,
+.movement-zone.left:hover:not(:disabled) .movement-zone-indicator,
+.movement-zone.left:focus-visible:not(:disabled) .movement-zone-indicator,
+.movement-zone.left.active .movement-zone-indicator {
+  transform: translateY(-50%) scale(1);
+}
+
+.movement-zone.active .movement-zone-indicator strong {
+  border-color: rgba(240, 185, 75, 0.72);
+  background: rgba(47, 138, 104, 0.9);
 }
 
 .turn-note {

@@ -238,49 +238,91 @@ const SetupBoard = ({ state, onSubmit }) => {
   );
 };
 
-const GameplayBoard = ({ team }) => {
-  const discovered = new Set((team.discoveredCells || []).map(pointKey));
-  const positionKey = pointKey(team.position);
+const MovementViewport = ({ disabled, pendingDirection, onChooseDirection, team }) => {
+  const [activeDirection, setActiveDirection] = useState(null);
+  const currentDirection = pendingDirection || activeDirection;
+  const directions = Object.values(DIRECTIONS);
+  const viewportCells = Array.from({ length: 9 }, (_, index) => {
+    const x = index % 3;
+    const y = Math.floor(index / 3);
+    return {
+      key: `${x}:${y}`,
+      center: x === 1 && y === 1
+    };
+  });
+
+  const clearDirection = (direction) => {
+    if (pendingDirection) return;
+    setActiveDirection((current) => (current === direction ? null : current));
+  };
+
+  const commitDirection = (direction) => {
+    setActiveDirection(direction);
+    onChooseDirection(direction);
+  };
+
+  const handlePointerDown = (event, direction) => {
+    if (disabled) return;
+
+    if (event.pointerType === "touch") {
+      if (activeDirection === direction) {
+        commitDirection(direction);
+      } else {
+        setActiveDirection(direction);
+      }
+      return;
+    }
+
+    commitDirection(direction);
+  };
 
   return (
-    <div className="game-board" aria-label="B\u00e0n m\u00ea cung \u0111\u00e3 kh\u00e1m ph\u00e1">
-      {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
-        const x = index % BOARD_SIZE;
-        const y = Math.floor(index / BOARD_SIZE);
-        const key = x + ":" + y;
-        const known = discovered.has(key);
-        const current = key === positionKey;
-        const classes = ["game-cell"];
-        if (known) classes.push("known");
-        if (current) classes.push("current");
+    <div className="movement-viewport" aria-label="Khung điều hướng di chuyển">
+      <div className="movement-scene">
+        <div className="movement-grid" aria-hidden="true">
+          {viewportCells.map((cell) => (
+            <div className={`movement-grid-cell${cell.center ? " center" : " outer"}`} key={cell.key}>
+              {cell.center ? (
+                <div className="movement-player-wrap">
+                  <div
+                    className="movement-player"
+                    aria-label={`Người chơi tại ô ${team.position.x + 1},${team.position.y + 1}`}
+                  />
+                </div>
+              ) : (
+                <div className="movement-cell-fog" />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="movement-fog" />
 
-        return (
-          <div className={classes.join(" ")} key={key}>
-            {current ? "B\u1ea1n" : known ? "" : "?"}
-          </div>
-        );
-      })}
+        {directions.map((direction) => {
+          const selected = currentDirection === direction;
+          return (
+            <button
+              aria-label={`Đi ${directionLabels[direction]}`}
+              className={`movement-zone ${direction}${selected ? " active" : ""}`}
+              disabled={disabled}
+              key={direction}
+              onBlur={() => clearDirection(direction)}
+              onFocus={() => !pendingDirection && setActiveDirection(direction)}
+              onPointerDown={(event) => handlePointerDown(event, direction)}
+              onPointerEnter={() => !disabled && !pendingDirection && setActiveDirection(direction)}
+              onPointerLeave={() => clearDirection(direction)}
+              type="button"
+            >
+              <span className="movement-zone-indicator">
+                <strong aria-hidden="true">{directionSymbols[direction]}</strong>
+                <small>{directionLabels[direction]}</small>
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
-
-const DirectionControls = ({ disabled, pendingDirection, onChooseDirection }) => (
-  <div className="direction-pad" aria-label="Điều khiển di chuyển">
-    {Object.values(DIRECTIONS).map((direction) => (
-      <button
-        aria-label={`Đi ${directionLabels[direction]}`}
-        className={`direction-button ${direction}${pendingDirection === direction ? " selected" : ""}`}
-        disabled={disabled}
-        key={direction}
-        onClick={() => onChooseDirection(direction)}
-        type="button"
-      >
-        <span aria-hidden="true">{directionSymbols[direction]}</span>
-        <small>{directionLabels[direction]}</small>
-      </button>
-    ))}
-  </div>
-);
 
 const QuestionCard = ({ question, answered, onAnswer }) => {
   if (!question) return null;
@@ -606,27 +648,20 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
   return (
     <section className="gameplay two-col">
       <div className="gameplay-left">
-        <section className="game-card map-card">
+        <section className="game-card movement-focus-card">
           <div className="section-head">
             <p>{"V\u00f2ng " + (round?.roundNumber || 1) + " / " + (phaseLabels[round?.phase] || "Di chuy\u1ec3n")}</p>
-            <h2>{"M\u00ea cung \u0111\u00e3 kh\u00e1m ph\u00e1"}</h2>
+            <h2>{"Khung di chuyển"}</h2>
           </div>
-          <GameplayBoard team={state.team} />
-        </section>
-
-        <section className="game-card move-card">
-          <div className="section-head">
-            <p>{"Di chuy\u1ec3n"}</p>
-            <h2>{canChooseDirection ? "Ch\u1ecdn h\u01b0\u1edbng \u0111i" : "Tr\u1ea1ng th\u00e1i l\u01b0\u1ee3t"}</h2>
-          </div>
-          <DirectionControls
+          <MovementViewport
             disabled={!canChooseDirection}
             onChooseDirection={onChooseDirection}
             pendingDirection={pending?.direction}
+            team={state.team}
           />
           <div className="turn-note">
-            {canChooseDirection && "Ch\u1ecdn m\u1ed9t h\u01b0\u1edbng \u0111\u1ec3 nh\u1eadn c\u00e2u h\u1ecfi."}
-            {waitingForAnswer && "\u0110\u00e3 kh\u00f3a h\u01b0\u1edbng: " + directionLabels[pending.direction] + ". Tr\u1ea3 l\u1eddi \u0111\u1ec3 di chuy\u1ec3n."}
+            {canChooseDirection && "Rê chuột vào cạnh để hiện hướng, hoặc chạm cạnh hai lần trên điện thoại để di chuyển."}
+            {waitingForAnswer && "\u0110\u00e3 khóa hướng: " + directionLabels[pending.direction] + ". Trả lời câu hỏi để thử di chuyển."}
             {waitingForOthers && "\u0110\u00e3 xong l\u01b0\u1ee3t. \u0110ang ch\u1edd c\u00e1c \u0111\u1ed9i c\u00f2n l\u1ea1i."}
             {round?.phase === ROUND_PHASES.AUCTION && "Đang mở vòng đấu giá kín."}
             {round?.phase === ROUND_PHASES.COMBAT && "Đang mở đối kháng kín."}

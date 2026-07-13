@@ -296,7 +296,6 @@ const HostRoundBoxes = ({ round }) => {
 
 export default function App() {
   const [state, setState] = useState(null);
-  const [teamCountDraft, setTeamCountDraft] = useState("4");
   const [tvBanner, setTvBanner] = useState(null);
   const [confettiSeed, setConfettiSeed] = useState(0);
   const [flashSeed, setFlashSeed] = useState(0);
@@ -322,7 +321,6 @@ export default function App() {
       console.log("host game:state", nextState);
       setState(nextState);
       teamsRef.current = nextState?.teams || [];
-      if (nextState?.config?.teamCount) setTeamCountDraft(String(nextState.config.teamCount));
     };
 
     const onRoundResult = (result) => {
@@ -371,14 +369,8 @@ export default function App() {
   const setupPreviews = state?.setup?.previews || {};
   const setupStarted = Boolean(state?.setup?.started);
   const isSetupReview = !setupStarted;
-  const canConfigureTeams = Boolean(state && !setupStarted && submitted.size === 0);
   const canStartGame = Boolean(state?.setup?.complete && !setupStarted);
   const isGuideScreen = window.location.pathname.replace(/\/+$/, "") === "/guide";
-
-  const updateTeamCount = (event) => {
-    event.preventDefault();
-    socketRef.current?.emit(EVENTS.SETUP_SET_TEAM_COUNT, { teamCount: Number(teamCountDraft) });
-  };
 
   const startGame = () => {
     socketRef.current?.emit(EVENTS.SETUP_START_GAME);
@@ -404,30 +396,19 @@ export default function App() {
           <h1>{APP_TITLE}</h1>
         </div>
 
-        <form className="admin-controls" onSubmit={updateTeamCount}>
-          <label htmlFor="teamCount">{"S\u1ed1 \u0111\u1ed9i"}</label>
-          <input
-            disabled={!canConfigureTeams}
-            id="teamCount"
-            min="2"
-            onChange={(event) => setTeamCountDraft(event.target.value)}
-            type="number"
-            value={teamCountDraft}
-          />
-          <button disabled={!canConfigureTeams} type="submit">
-            {"C\u1eadp nh\u1eadt"}
-          </button>
+        <div className="admin-controls">
+          <span className="joined-pill">{teams.length + " đội đã vào"}</span>
           <button disabled={!canStartGame} onClick={startGame} type="button">
             {"B\u1eaft \u0111\u1ea7u"}
           </button>
           <a className="guide-link" href="/guide" rel="noreferrer" target="_blank">
             {"M\u00e0n d\u1eabn"}
           </a>
-        </form>
+        </div>
 
         <span>
           {state
-            ? submitted.size + "/" + teams.length + " \u0111\u1ed9i \u0111\u00e3 n\u1ed9p m\u00ea cung"
+            ? teams.length + " đội đã vào / " + submitted.size + " đội đã nộp mê cung"
             : "\u0110ang k\u1ebft n\u1ed1i..."}
         </span>
       </header>

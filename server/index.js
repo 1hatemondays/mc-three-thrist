@@ -4,7 +4,7 @@ import http from "node:http";
 import { Server } from "socket.io";
 import { EVENTS, ROOMS } from "../shared/constants.js";
 import { config } from "./config.js";
-import { findTeam, getHostState, getPlayerState, normalizeTeamId } from "./gameState.js";
+import { ensureTeam, findTeam, gameState, getHostState, getPlayerState, normalizeTeamId } from "./gameState.js";
 import { registerAuctionHandlers } from "./handlers/auction.js";
 import { registerCombatHandlers } from "./handlers/combat.js";
 import { registerEventHandlers } from "./handlers/event.js";
@@ -39,7 +39,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, teams: getHostState().config.teamCount });
+  res.json({ ok: true, teams: getHostState().teams.length });
 });
 
 const emitHostState = () => {
@@ -55,15 +55,28 @@ io.on("connection", (socket) => {
 
   socket.on(EVENTS.TEAM_JOIN, ({ teamId } = {}) => {
     const id = normalizeTeamId(teamId);
-    const team = findTeam(id);
-
-    if (!team) {
+    if (!id) {
       socket.emit(EVENTS.GAME_STATE, {
-        error: "Mã đội không tồn tại",
-        allowedTeamIds: getHostState().teams.map(({ id }) => id)
+        error: "Nhập mã đội trước khi vào."
       });
       return;
     }
+
+    if (gameState.setup?.started && !findTeam(id)) {
+      socket.emit(EVENTS.GAME_STATE, {
+        error: "Trò chơi đã bắt đầu, không thể thêm đội mới."
+      });
+      return;
+    }
+
+    if (Object.keys(gameState.setup?.submissions || {}).length > 0 && !findTeam(id)) {
+      socket.emit(EVENTS.GAME_STATE, {
+        error: "Đã có đội nộp mê cung, không thể thêm đội mới nữa."
+      });
+      return;
+    }
+
+    const team = ensureTeam(gameState, id);
 
     socket.data.teamId = id;
     socket.join(ROOMS.team(id));

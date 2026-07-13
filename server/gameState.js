@@ -1,12 +1,18 @@
-import { config } from "./config.js";
 import { getPlayerRoundState } from "./movementLogic.js";
 import { getHostAuctionState, getPlayerAuctionState } from "./auctionLogic.js";
 import { getHostCombatState, getPlayerCombatState } from "./combatLogic.js";
 import { getHostSetupPreviewMap, getSetupSummary } from "./setupLogic.js";
 
-const makeTeam = (index) => ({
-  id: `team${index + 1}`,
-  name: `Đội ${index + 1}`,
+const teamNameFromId = (teamId, index) => {
+  const match = /^team(\d+)$/i.exec(teamId);
+  if (match) return `Đội ${match[1]}`;
+  if (index >= 0) return `Đội ${index + 1}`;
+  return teamId.toUpperCase();
+};
+
+const makeTeam = (teamId, index) => ({
+  id: teamId,
+  name: teamNameFromId(teamId, index),
   hp: 100,
   score: 0,
   position: { x: 0, y: 0 },
@@ -14,15 +20,16 @@ const makeTeam = (index) => ({
   endPoint: null,
   walls: [],
   discoveredCells: [{ x: 0, y: 0 }],
-  supportItems: []
+  supportItems: [],
+  effects: {}
 });
 
 export const gameState = {
   config: {
-    teamCount: config.teamCount,
+    teamCount: 0,
     boardSize: 6
   },
-  teams: Array.from({ length: config.teamCount }, (_, index) => makeTeam(index)),
+  teams: [],
   setup: {
     submissions: {},
     complete: false,
@@ -42,6 +49,16 @@ export const findTeam = (teamId) => gameState.teams.find((team) => team.id === t
 
 export const normalizeTeamId = (teamId) => String(teamId || "").replace(/\s+/g, "").toLowerCase();
 
+export const ensureTeam = (state, teamId) => {
+  const existing = state.teams.find((team) => team.id === teamId);
+  if (existing) return existing;
+
+  const team = makeTeam(teamId, state.teams.length);
+  state.teams.push(team);
+  state.config.teamCount = state.teams.length;
+  return team;
+};
+
 export const getHostState = () => ({
   ...gameState,
   setup: {
@@ -53,6 +70,12 @@ export const getHostState = () => ({
 export const getPlayerState = (teamId) => {
   const team = findTeam(teamId);
   if (!team) return null;
+  const round = {
+    ...getPlayerRoundState(gameState.round, teamId),
+    auction: getPlayerAuctionState(gameState, teamId),
+    combat: getPlayerCombatState(gameState, teamId),
+    messages: gameState.round.messages?.[teamId] || []
+  };
 
   return {
     config: gameState.config,
@@ -67,7 +90,7 @@ export const getPlayerState = (teamId) => {
       supportItems: team.supportItems
     },
     leaderboard: gameState.teams.map(({ id, name, hp, score }) => ({ id, name, hp, score })),
-    round: getPlayerRoundState(gameState.round, teamId),
+    round,
     setup: getSetupSummary(gameState, teamId)
   };
 };

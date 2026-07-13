@@ -221,31 +221,19 @@ main {
 
 .admin-controls {
   display: grid;
-  grid-template-columns: auto 96px auto auto auto;
+  grid-template-columns: auto auto auto;
   gap: 10px;
-  align-items: end;
-  min-width: min(100%, 460px);
+  align-items: center;
+  min-width: min(100%, 360px);
 }
 
-.admin-controls label {
-  align-self: center;
-  color: var(--gold);
-  font-weight: 900;
-}
-
-.admin-controls input,
 .admin-controls button,
-.guide-link {
+.guide-link,
+.joined-pill {
   min-height: 42px;
   border: 2px solid var(--line);
   font: inherit;
   font-weight: 900;
-}
-
-.admin-controls input {
-  min-width: 0;
-  padding: 0 10px;
-  background: var(--paper);
 }
 
 .admin-controls button,
@@ -259,8 +247,16 @@ main {
   text-decoration: none;
 }
 
-.admin-controls button:disabled,
-.admin-controls input:disabled {
+.joined-pill {
+  display: grid;
+  place-items: center;
+  padding: 0 14px;
+  color: var(--paper);
+  background: rgba(255, 249, 233, 0.08);
+  white-space: nowrap;
+}
+
+.admin-controls button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }

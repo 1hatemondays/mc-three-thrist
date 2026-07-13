@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   applyMazeSubmission,
-  configureTeamCount,
   getHostSetupPreviewMap,
   getSetupSummary,
   startGame,
@@ -68,17 +67,6 @@ const makeState = () => ({
   setup: { submissions: {}, complete: false, started: false }
 });
 
-test("configures any classroom team count before setup starts", () => {
-  const state = makeState();
-
-  const result = configureTeamCount(state, { teamCount: 6 });
-
-  assert.equal(result.ok, true);
-  assert.equal(state.config.teamCount, 6);
-  assert.deepEqual(state.teams.map((team) => team.id), ["team1", "team2", "team3", "team4", "team5", "team6"]);
-  assert.deepEqual(state.setup, { submissions: {}, complete: false, started: false });
-});
-
 test("starts the game only after every team has submitted a maze", () => {
   const state = makeState();
 
@@ -97,6 +85,34 @@ test("starts the game only after every team has submitted a maze", () => {
   assert.equal(result.ok, true);
   assert.equal(state.setup.complete, true);
   assert.equal(state.setup.started, true);
+});
+
+test("does not mark setup complete until every joined team submits", () => {
+  const state = {
+    config: { boardSize: 6, teamCount: 4 },
+    teams: ["team1", "team2", "team3", "team4"].map((id) => ({
+      id,
+      position: { x: 0, y: 0 },
+      startPoint: null,
+      endPoint: null,
+      walls: [],
+      discoveredCells: []
+    })),
+    setup: { submissions: {}, complete: false, started: false }
+  };
+
+  applyMazeSubmission(state, "team1", {
+    walls,
+    startPoint: { x: 0, y: 0 },
+    endPoint: { x: 5, y: 5 }
+  });
+  applyMazeSubmission(state, "team2", {
+    walls,
+    startPoint: { x: 0, y: 0 },
+    endPoint: { x: 5, y: 5 }
+  });
+
+  assert.equal(state.setup.complete, false);
 });
 
 test("does not reroll event tiles after the game already started", () => {
