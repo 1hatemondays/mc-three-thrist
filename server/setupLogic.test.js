@@ -226,7 +226,7 @@ test("rejects a maze that disconnects any board area before start and end matter
   assert.match(result.error, /li\u00ean th\u00f4ng/i);
 });
 
-test("assigns a submitted maze to the next team without leaking hidden fields", () => {
+test("randomly assigns completed maze submissions without self assignment or player leaks", () => {
   const state = makeState();
 
   const result = applyMazeSubmission(state, "team1", {
@@ -234,15 +234,30 @@ test("assigns a submitted maze to the next team without leaking hidden fields", 
     startPoint: { x: 0, y: 1 },
     endPoint: { x: 5, y: 4 }
   });
+  applyMazeSubmission(state, "team2", {
+    walls,
+    startPoint: { x: 1, y: 1 },
+    endPoint: { x: 4, y: 4 }
+  });
+  applyMazeSubmission(state, "team3", {
+    walls,
+    startPoint: { x: 2, y: 1 },
+    endPoint: { x: 3, y: 4 }
+  });
 
   assert.equal(result.ok, true);
-  assert.equal(result.targetTeamId, "team2");
-  assert.deepEqual(state.teams[1].position, { x: 0, y: 1 });
-  assert.deepEqual(state.teams[1].endPoint, { x: 5, y: 4 });
-  assert.equal(state.setup.submissions.team1.targetTeamId, "team2");
+  assert.equal("targetTeamId" in result, false);
+  assert.equal(state.setup.complete, true);
+
+  const assignedTargets = Object.values(state.setup.submissions).map((submission) => submission.targetTeamId);
+  assert.deepEqual(new Set(assignedTargets), new Set(["team1", "team2", "team3"]));
+  for (const submission of Object.values(state.setup.submissions)) {
+    assert.notEqual(submission.sourceTeamId, submission.targetTeamId);
+  }
 
   const summary = getSetupSummary(state, "team2");
   assert.equal(summary.assignedBoardReady, true);
+  assert.equal("assignedByTeamId" in summary, false);
   assert.equal("walls" in summary, false);
   assert.equal("endPoint" in summary, false);
 });
@@ -260,7 +275,8 @@ test("builds host setup previews keyed by the submitting team", () => {
 
   assert.deepEqual(previews.team1.startPoint, { x: 0, y: 1 });
   assert.deepEqual(previews.team1.endPoint, { x: 5, y: 4 });
-  assert.equal(previews.team1.targetTeamId, "team2");
-  assert.deepEqual(previews.team1.walls, state.teams[1].walls);
+  assert.equal("targetTeamId" in previews.team1, false);
+  assert.deepEqual(previews.team1.walls, walls);
+  assert.equal(state.teams[1].startPoint, null);
   assert.equal(previews.team2, undefined);
 });

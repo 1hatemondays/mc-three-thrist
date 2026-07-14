@@ -53,11 +53,11 @@ io.on("connection", (socket) => {
     socket.emit(EVENTS.GAME_STATE, getHostState());
   }
 
-  socket.on(EVENTS.TEAM_JOIN, ({ teamId } = {}) => {
+  socket.on(EVENTS.TEAM_JOIN, ({ teamId, teamName } = {}) => {
     const id = normalizeTeamId(teamId);
     if (!id) {
       socket.emit(EVENTS.GAME_STATE, {
-        error: "Nhập mã đội trước khi vào."
+        error: "Nhập tên đội trước khi vào."
       });
       return;
     }
@@ -76,7 +76,7 @@ io.on("connection", (socket) => {
       return;
     }
 
-    const team = ensureTeam(gameState, id);
+    const team = ensureTeam(gameState, id, teamName);
 
     socket.data.teamId = id;
     socket.join(ROOMS.team(id));

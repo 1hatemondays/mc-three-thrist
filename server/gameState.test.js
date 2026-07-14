@@ -17,12 +17,12 @@ test("creates dynamic teams on join and keeps the joined count in config", () =>
     round: {}
   };
 
-  const team1 = ensureTeam(state, "team1");
+  const team1 = ensureTeam(state, "team1", "Nhóm Alpha");
   const team7 = ensureTeam(state, "team7");
   const sameTeam1 = ensureTeam(state, "team1");
 
   assert.equal(team1.id, "team1");
-  assert.equal(team1.name, "Đội 1");
+  assert.equal(team1.name, "Nhóm Alpha");
   assert.equal(team7.id, "team7");
   assert.equal(team7.name, "Đội 7");
   assert.strictEqual(sameTeam1, team1);

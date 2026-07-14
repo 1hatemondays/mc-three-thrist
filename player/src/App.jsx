@@ -9,10 +9,34 @@ const SERVER_URL =
   `${window.location.protocol}//${window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname}:3000`;
 const BOARD_SIZE = 6;
 const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
+const TEAM_SESSION_KEY = "maze-of-knowledge:player-team";
 
 const emptyDraft = () => ({ walls: [], startPoint: null, endPoint: null });
 const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
 const normalizeTeamCode = (value) => value.replace(/\s+/g, "").toLowerCase();
+const boardPointKey = (x, y) => `${x}:${y}`;
+const revealedWallKey = (position, direction) => {
+  if (!position) return "";
+  if (direction === DIRECTIONS.UP) return `${position.x}:${position.y}:top`;
+  if (direction === DIRECTIONS.RIGHT) return `${position.x + 1}:${position.y}:left`;
+  if (direction === DIRECTIONS.DOWN) return `${position.x}:${position.y + 1}:top`;
+  if (direction === DIRECTIONS.LEFT) return `${position.x}:${position.y}:left`;
+  return "";
+};
+const loadSavedTeamSession = () => {
+  try {
+    return JSON.parse(window.localStorage.getItem(TEAM_SESSION_KEY) || "null");
+  } catch {
+    return null;
+  }
+};
+const saveTeamSession = (session) => {
+  try {
+    window.localStorage.setItem(TEAM_SESSION_KEY, JSON.stringify(session));
+  } catch {
+    // Ignore private-mode storage errors; active socket session still works.
+  }
+};
 const directionLabels = {
   [DIRECTIONS.UP]: "Lên",
   [DIRECTIONS.RIGHT]: "Phải",
@@ -24,6 +48,12 @@ const directionSymbols = {
   [DIRECTIONS.RIGHT]: "→",
   [DIRECTIONS.DOWN]: "↓",
   [DIRECTIONS.LEFT]: "←"
+};
+const directionVectors = {
+  [DIRECTIONS.UP]: { dx: 0, dy: -1 },
+  [DIRECTIONS.RIGHT]: { dx: 1, dy: 0 },
+  [DIRECTIONS.DOWN]: { dx: 0, dy: 1 },
+  [DIRECTIONS.LEFT]: { dx: -1, dy: 0 }
 };
 const phaseLabels = {
   [ROUND_PHASES.MOVEMENT]: "Di chuyển",
@@ -80,6 +110,8 @@ const SetupBoard = ({ state, onSubmit }) => {
   const [draft, setDraft] = useState(emptyDraft);
   const [mode, setMode] = useState("wall");
   const [draftError, setDraftError] = useState("");
+  const [wallWarning, setWallWarning] = useState(null);
+  const wallWarningTimerRef = useRef(null);
   const setup = state.setup;
   const submitted = Boolean(setup?.mySubmission);
   const startKey = pointKey(draft.startPoint);
@@ -92,7 +124,16 @@ const SetupBoard = ({ state, onSubmit }) => {
   useEffect(() => {
     setDraft(emptyDraft());
     setDraftError("");
+    setWallWarning(null);
   }, [state.team.id]);
+
+  useEffect(() => () => clearTimeout(wallWarningTimerRef.current), []);
+
+  const showWallWarning = (edgeKey, message) => {
+    clearTimeout(wallWarningTimerRef.current);
+    setWallWarning({ edgeKey, message, nonce: Date.now() });
+    wallWarningTimerRef.current = setTimeout(() => setWallWarning(null), 2000);
+  };
 
   const selectCell = (x, y) => {
     if (submitted) return;
@@ -124,6 +165,7 @@ const SetupBoard = ({ state, onSubmit }) => {
     if (exists) {
       setDraft({ ...draft, walls: draft.walls.filter((wall) => wallKey(wall, BOARD_SIZE) !== key) });
       setDraftError("");
+      setWallWarning(null);
       return;
     }
 
@@ -137,17 +179,18 @@ const SetupBoard = ({ state, onSubmit }) => {
     );
 
     if (hasEnclosedCell(nextWalls, BOARD_SIZE)) {
-      setDraftError("T\u01b0\u1eddng n\u00e0y bao k\u00edn ho\u00e0n to\u00e0n m\u1ed9t \u00f4. H\u00e3y m\u1edf \u00edt nh\u1ea5t m\u1ed9t c\u1ea1nh cho \u00f4 \u0111\u00f3.");
+      showWallWarning(key, "Không thể tạo đường kín. Hãy mở ít nhất một cạnh.");
       return;
     }
 
     if (!isMazeConnected(nextWalls, BOARD_SIZE)) {
-      setDraftError("T\u01b0\u1eddng n\u00e0y ch\u1eb7n t\u00e1ch m\u1ed9t khu v\u1ef1c kh\u1ecfi m\u00ea cung. H\u00e3y \u0111\u1ec3 m\u1ecdi \u00f4 c\u00f2n th\u00f4ng nhau.");
+      showWallWarning(key, "Không thể chặn kín đường đi. Mọi ô phải còn thông nhau.");
       return;
     }
 
     setDraft({ ...draft, walls: nextWalls });
     setDraftError("");
+    setWallWarning(null);
   };
 
   return (
@@ -201,11 +244,13 @@ const SetupBoard = ({ state, onSubmit }) => {
         ))}
 
         {INTERIOR_EDGES.map((edge) => {
-          const active = draft.walls.some((wall) => wallKey(wall, BOARD_SIZE) === wallKey(edge, BOARD_SIZE));
+          const edgeKey = wallKey(edge, BOARD_SIZE);
+          const active = draft.walls.some((wall) => wallKey(wall, BOARD_SIZE) === edgeKey);
+          const invalid = wallWarning?.edgeKey === edgeKey;
           return (
             <button
               aria-label={`Bật tắt tường ${edge.orientation} tại ${edge.x},${edge.y}`}
-              className={`setup-edge ${edge.orientation}${active ? " active" : ""}`}
+              className={`setup-edge ${edge.orientation}${active ? " active" : ""}${invalid ? " invalid" : ""}`}
               disabled={submitted || mode !== "wall"}
               key={`edge-${edge.side}-${edge.x}-${edge.y}`}
               onClick={() => toggleEdge(edge)}
@@ -214,6 +259,11 @@ const SetupBoard = ({ state, onSubmit }) => {
             />
           );
         })}
+        {wallWarning && (
+          <div className="setup-maze-warning" key={wallWarning.nonce} role="alert">
+            {wallWarning.message}
+          </div>
+        )}
       </div>
 
       <div className="setup-actions">
@@ -238,18 +288,79 @@ const SetupBoard = ({ state, onSubmit }) => {
   );
 };
 
-const MovementViewport = ({ disabled, pendingDirection, onChooseDirection, team }) => {
+const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDirection, team }) => {
   const [activeDirection, setActiveDirection] = useState(null);
+  const [moveFeedback, setMoveFeedback] = useState(null);
+  const [revealedWalls, setRevealedWalls] = useState(() => new Set());
+  const [extraKnownCells, setExtraKnownCells] = useState(() => new Set());
+  const feedbackTimerRef = useRef(null);
   const currentDirection = pendingDirection || activeDirection;
   const directions = Object.values(DIRECTIONS);
+  const currentPositionKey = boardPointKey(team.position.x, team.position.y);
+  const resultKey = lastResult
+    ? [
+        lastResult.teamId,
+        lastResult.direction,
+        lastResult.success ? "success" : "miss",
+        lastResult.blockedReason || "open",
+        lastResult.newPosition?.x,
+        lastResult.newPosition?.y,
+        lastResult.scoreDelta
+      ].join(":")
+    : "";
   const viewportCells = Array.from({ length: 9 }, (_, index) => {
     const x = index % 3;
     const y = Math.floor(index / 3);
+    const dx = x - 1;
+    const dy = y - 1;
     return {
       key: `${x}:${y}`,
-      center: x === 1 && y === 1
+      center: x === 1 && y === 1,
+      offsetKey: `${dx}:${dy}`
     };
   });
+
+  useEffect(() => () => clearTimeout(feedbackTimerRef.current), []);
+
+  useEffect(() => {
+    setRevealedWalls(new Set());
+    setExtraKnownCells(new Set());
+    setMoveFeedback(null);
+  }, [team.id]);
+
+  useEffect(() => {
+    if (!lastResult?.direction) return;
+
+    const vector = directionVectors[lastResult.direction];
+    if (!vector) return;
+
+    const isBlockedWall = lastResult.blocked && ["wall", "border"].includes(lastResult.blockedReason);
+    if (isBlockedWall) {
+      setRevealedWalls((current) => new Set(current).add(revealedWallKey(team.position, lastResult.direction)));
+      const targetX = team.position.x + vector.dx;
+      const targetY = team.position.y + vector.dy;
+      if (targetX >= 0 && targetY >= 0 && targetX < BOARD_SIZE && targetY < BOARD_SIZE) {
+        setExtraKnownCells((current) => new Set(current).add(boardPointKey(targetX, targetY)));
+      }
+    }
+
+    const feedback = {
+      key: resultKey + ":" + Date.now(),
+      direction: lastResult.direction,
+      type: lastResult.success ? "success" : isBlockedWall ? "blocked" : "miss",
+      knownCell:
+        lastResult.success
+          ? `${-vector.dx}:${-vector.dy}`
+          : isBlockedWall
+            ? `${vector.dx}:${vector.dy}`
+            : null,
+      wallDirection: isBlockedWall ? lastResult.direction : null
+    };
+
+    clearTimeout(feedbackTimerRef.current);
+    setMoveFeedback(feedback);
+    feedbackTimerRef.current = setTimeout(() => setMoveFeedback(null), 900);
+  }, [currentPositionKey, lastResult, resultKey]);
 
   const clearDirection = (direction) => {
     if (pendingDirection) return;
@@ -280,20 +391,36 @@ const MovementViewport = ({ disabled, pendingDirection, onChooseDirection, team 
     <div className="movement-viewport" aria-label="Khung điều hướng di chuyển">
       <div className="movement-scene">
         <div className="movement-grid" aria-hidden="true">
-          {viewportCells.map((cell) => (
-            <div className={`movement-grid-cell${cell.center ? " center" : " outer"}`} key={cell.key}>
-              {cell.center ? (
-                <div className="movement-player-wrap">
-                  <div
-                    className="movement-player"
-                    aria-label={`Người chơi tại ô ${team.position.x + 1},${team.position.y + 1}`}
-                  />
-                </div>
-              ) : (
-                <div className="movement-cell-fog" />
-              )}
-            </div>
+          {viewportCells.map((cell) => {
+            const [dx, dy] = cell.offsetKey.split(":").map(Number);
+            const actualKey = boardPointKey(team.position.x + dx, team.position.y + dy);
+            const discovered = team.discoveredCells?.some((point) => boardPointKey(point.x, point.y) === actualKey);
+            const known = cell.center || discovered || extraKnownCells.has(actualKey) || moveFeedback?.knownCell === cell.offsetKey;
+            return (
+              <div
+                className={`movement-grid-cell${cell.center ? " center" : " outer"}${known ? " known" : ""}`}
+                key={cell.key}
+              >
+                {!known && <div className="movement-cell-fog" />}
+              </div>
+            );
+          })}
+        </div>
+        {directions
+          .filter((direction) => revealedWalls.has(revealedWallKey(team.position, direction)) || moveFeedback?.wallDirection === direction)
+          .map((direction) => (
+            <div className={`movement-revealed-wall ${direction}`} aria-hidden="true" key={direction} />
           ))}
+        <div className="movement-player-wrap">
+          <div
+            className={[
+              "movement-player",
+              moveFeedback?.type === "success" ? `move-success-${moveFeedback.direction}` : "",
+              moveFeedback?.type === "blocked" ? `move-blocked-${moveFeedback.direction}` : ""
+            ].filter(Boolean).join(" ")}
+            key={moveFeedback?.key || "still"}
+            aria-label={`Người chơi tại ô ${team.position.x + 1},${team.position.y + 1}`}
+          />
         </div>
         <div className="movement-fog" />
 
@@ -788,6 +915,7 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
           </div>
           <MovementViewport
             disabled={!canChooseDirection}
+            lastResult={result}
             onChooseDirection={onChooseDirection}
             pendingDirection={pending?.direction}
             team={state.team}
@@ -899,13 +1027,15 @@ const EventReveal = ({ reveal, onClose }) => {
 };
 
 export default function App() {
-  const [teamCode, setTeamCode] = useState("");
+  const savedSession = useMemo(() => loadSavedTeamSession(), []);
+  const [teamName, setTeamName] = useState(savedSession?.teamName || "");
   const [state, setState] = useState(null);
   const [localError, setLocalError] = useState("");
   const [lastResult, setLastResult] = useState(null);
   const [reveal, setReveal] = useState(null);
-  const teamIdRef = useRef(null);
-  const socket = useMemo(() => io(SERVER_URL, { autoConnect: false, reconnectionAttempts: 3 }), []);
+  const teamIdRef = useRef(savedSession?.teamId || null);
+  const teamNameRef = useRef(savedSession?.teamName || "");
+  const socket = useMemo(() => io(SERVER_URL, { autoConnect: false }), []);
   const [socketStatus, setSocketStatus] = useState(socket.connected ? "đã kết nối" : "đang kết nối");
 
   useEffect(() => {
@@ -914,6 +1044,11 @@ export default function App() {
       setState(nextState);
       setLocalError("");
       teamIdRef.current = nextState?.team?.id || teamIdRef.current;
+      teamNameRef.current = nextState?.team?.name || teamNameRef.current;
+      if (nextState?.team?.id) {
+        saveTeamSession({ teamId: nextState.team.id, teamName: nextState.team.name });
+        setTeamName(nextState.team.name);
+      }
       if (nextState?.team && nextState.round?.pendingAnswer?.result) {
         setLastResult(nextState.round.pendingAnswer.result);
       }
@@ -929,6 +1064,9 @@ export default function App() {
     const onConnect = () => {
       setSocketStatus("đã kết nối");
       setLocalError("");
+      if (teamIdRef.current) {
+        socket.emit(EVENTS.TEAM_JOIN, { teamId: teamIdRef.current, teamName: teamNameRef.current });
+      }
     };
     const onDisconnect = () => setSocketStatus("mất kết nối");
     const onConnectError = () => {
@@ -955,7 +1093,7 @@ export default function App() {
 
   const joinTeam = (event) => {
     event.preventDefault();
-    const id = normalizeTeamCode(teamCode);
+    const id = normalizeTeamCode(teamName);
 
     if (!socket.connected) {
       setLocalError("Chưa kết nối máy chủ. Hãy chạy npm run dev rồi tải lại trang.");
@@ -963,13 +1101,25 @@ export default function App() {
     }
 
     if (!id) {
-      setLocalError("Nhập mã đội trước.");
+      setLocalError("Nhập tên đội trước.");
       return;
     }
 
     setLocalError("");
     setLastResult(null);
-    socket.emit(EVENTS.TEAM_JOIN, { teamId: id });
+    teamIdRef.current = id;
+    teamNameRef.current = teamName.trim();
+    saveTeamSession({ teamId: id, teamName: teamName.trim() });
+    socket.emit(EVENTS.TEAM_JOIN, { teamId: id, teamName });
+  };
+
+  const reconnect = () => {
+    setSocketStatus("đang kết nối");
+    setLocalError("");
+    socket.connect();
+    if (socket.connected && teamIdRef.current) {
+      socket.emit(EVENTS.TEAM_JOIN, { teamId: teamIdRef.current, teamName: teamNameRef.current });
+    }
   };
 
   const submitMaze = (draft) => {
@@ -1011,16 +1161,22 @@ export default function App() {
         <h1>{APP_TITLE}</h1>
         <div className={socketStatus === "đã kết nối" ? "connection online" : "connection"}>
           Máy chủ: {socketStatus}
+          {socketStatus !== "đã kết nối" && (
+            <button className="reconnect-button" onClick={reconnect} type="button">
+              Kết nối lại
+            </button>
+          )}
         </div>
 
         <form onSubmit={joinTeam}>
-          <label htmlFor="teamCode">Mã đội</label>
+          <label htmlFor="teamName">Tên đội</label>
           <div className="join-row">
             <input
-              id="teamCode"
-              placeholder="team1"
-              value={teamCode}
-              onChange={(event) => setTeamCode(event.target.value)}
+              id="teamName"
+              maxLength="40"
+              placeholder="Ví dụ: Chim Cánh Cụt"
+              value={teamName}
+              onChange={(event) => setTeamName(event.target.value)}
             />
             <button type="submit">Vào đội</button>
           </div>

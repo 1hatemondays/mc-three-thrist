@@ -451,7 +451,6 @@ export default function App() {
             }
 
             const preview = setupPreviews[team.id];
-            const targetName = teams.find((item) => item.id === preview?.targetTeamId)?.name;
 
             return (
               <Board
@@ -459,7 +458,7 @@ export default function App() {
                 key={team.id}
                 metaLabel={
                   preview
-                    ? "T\u1ea1o m\u00ea cung cho " + (targetName || preview.targetTeamId)
+                    ? "\u0110\u00e3 n\u1ed9p - chia ng\u1eabu nhi\u00ean khi \u0111\u1ee7 \u0111\u1ed9i"
                     : "\u0110ang ch\u1edd n\u1ed9p"
                 }
                 submitted={submitted.has(team.id)}

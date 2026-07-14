@@ -3,6 +3,8 @@ import { getHostAuctionState, getPlayerAuctionState } from "./auctionLogic.js";
 import { getHostCombatState, getPlayerCombatState } from "./combatLogic.js";
 import { getHostSetupPreviewMap, getSetupSummary } from "./setupLogic.js";
 
+const cleanTeamName = (teamName) => String(teamName || "").trim().replace(/\s+/g, " ").slice(0, 40);
+
 const teamNameFromId = (teamId, index) => {
   const match = /^team(\d+)$/i.exec(teamId);
   if (match) return `Đội ${match[1]}`;
@@ -10,9 +12,9 @@ const teamNameFromId = (teamId, index) => {
   return teamId.toUpperCase();
 };
 
-const makeTeam = (teamId, index) => ({
+const makeTeam = (teamId, index, teamName) => ({
   id: teamId,
-  name: teamNameFromId(teamId, index),
+  name: cleanTeamName(teamName) || teamNameFromId(teamId, index),
   hp: 100,
   score: 0,
   position: { x: 0, y: 0 },
@@ -49,11 +51,16 @@ export const findTeam = (teamId) => gameState.teams.find((team) => team.id === t
 
 export const normalizeTeamId = (teamId) => String(teamId || "").replace(/\s+/g, "").toLowerCase();
 
-export const ensureTeam = (state, teamId) => {
+export const ensureTeam = (state, teamId, teamName) => {
   const existing = state.teams.find((team) => team.id === teamId);
-  if (existing) return existing;
+  if (existing) {
+    const nextName = cleanTeamName(teamName);
+    const setupLocked = state.setup?.started || Object.keys(state.setup?.submissions || {}).length > 0;
+    if (nextName && !setupLocked) existing.name = nextName;
+    return existing;
+  }
 
-  const team = makeTeam(teamId, state.teams.length);
+  const team = makeTeam(teamId, state.teams.length, teamName);
   state.teams.push(team);
   state.config.teamCount = state.teams.length;
   return team;
@@ -75,13 +82,6 @@ export const getHostState = () => ({
 export const getPlayerState = (teamId) => {
   const team = findTeam(teamId);
   if (!team) return null;
-  const round = {
-    ...getPlayerRoundState(gameState.round, teamId),
-    auction: getPlayerAuctionState(gameState, teamId),
-    combat: getPlayerCombatState(gameState, teamId),
-    messages: gameState.round.messages?.[teamId] || []
-  };
-
   return {
     config: gameState.config,
     team: {

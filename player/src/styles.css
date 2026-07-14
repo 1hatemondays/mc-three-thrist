@@ -86,7 +86,9 @@ form {
 }
 
 .connection {
-  display: inline-block;
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
   margin-top: 18px;
   padding: 8px 12px;
   border: 1px solid #d2a067;
@@ -232,6 +234,7 @@ dd {
 }
 
 .setup-board {
+  position: relative;
   display: grid;
   grid-template-columns: 14px repeat(5, minmax(0, 1fr) 14px) minmax(0, 1fr) 14px;
   grid-template-rows: 14px repeat(5, minmax(0, 1fr) 14px) minmax(0, 1fr) 14px;
@@ -296,6 +299,68 @@ dd {
 .setup-edge.active,
 .setup-edge.border {
   background: var(--line);
+}
+
+.reconnect-button {
+  min-height: 28px;
+  padding: 0 10px;
+  border-color: currentColor;
+  color: inherit;
+  background: rgba(255, 249, 233, 0.72);
+  box-shadow: 2px 2px 0 rgba(124, 79, 45, 0.28);
+  font-size: 12px;
+}
+
+.setup-edge.invalid {
+  background: #e84a3a;
+  animation: wallFlash 0.22s ease-in-out 0s 6 alternate;
+}
+
+.setup-maze-warning {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: none;
+  padding: 14px 16px;
+  border: 2px solid #e84a3a;
+  color: #7a140c;
+  background: #fff1e7;
+  box-shadow: 5px 5px 0 rgba(29, 51, 41, 0.28);
+  font-size: clamp(15px, 3.8vw, 20px);
+  font-weight: 950;
+  text-align: center;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  animation: setupWarningPop 2s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes wallFlash {
+  from {
+    background: #e84a3a;
+  }
+  to {
+    background: #ffd7cf;
+  }
+}
+
+@keyframes setupWarningPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  12%,
+  78% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.98);
+  }
 }
 
 .setup-edge:disabled:not(.border) {
@@ -399,6 +464,10 @@ dd {
   background: rgba(255, 249, 233, 0.98);
 }
 
+.movement-grid-cell.known {
+  background: rgba(255, 249, 233, 0.98);
+}
+
 .movement-grid-cell.outer {
   overflow: hidden;
 }
@@ -443,11 +512,12 @@ dd {
 }
 
 .movement-player-wrap {
+  position: absolute;
+  z-index: 1;
+  inset: 33.333%;
   display: grid;
   place-items: center;
   pointer-events: none;
-  width: 100%;
-  height: 100%;
 }
 
 .movement-player {
@@ -459,6 +529,136 @@ dd {
   box-shadow:
     0 0 0 6px rgba(240, 185, 75, 0.18),
     0 0 30px rgba(240, 185, 75, 0.28);
+}
+
+.movement-revealed-wall {
+  position: absolute;
+  z-index: 1;
+  background: var(--line);
+  box-shadow: 0 0 0 3px rgba(240, 185, 75, 0.18);
+  animation: revealWall 0.34s ease both;
+  pointer-events: none;
+}
+
+.movement-revealed-wall.up,
+.movement-revealed-wall.down {
+  left: 33.333%;
+  width: 33.333%;
+  height: 7px;
+}
+
+.movement-revealed-wall.left,
+.movement-revealed-wall.right {
+  top: 33.333%;
+  width: 7px;
+  height: 33.333%;
+}
+
+.movement-revealed-wall.up {
+  top: calc(33.333% - 3.5px);
+}
+
+.movement-revealed-wall.right {
+  left: calc(66.666% - 3.5px);
+}
+
+.movement-revealed-wall.down {
+  top: calc(66.666% - 3.5px);
+}
+
+.movement-revealed-wall.left {
+  left: calc(33.333% - 3.5px);
+}
+
+.movement-player.move-success-up {
+  animation: moveSuccessUp 0.58s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.movement-player.move-success-right {
+  animation: moveSuccessRight 0.58s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.movement-player.move-success-down {
+  animation: moveSuccessDown 0.58s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.movement-player.move-success-left {
+  animation: moveSuccessLeft 0.58s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.movement-player.move-blocked-up {
+  animation: moveBlockedUp 0.66s cubic-bezier(0.22, 0.82, 0.34, 1) both;
+}
+
+.movement-player.move-blocked-right {
+  animation: moveBlockedRight 0.66s cubic-bezier(0.22, 0.82, 0.34, 1) both;
+}
+
+.movement-player.move-blocked-down {
+  animation: moveBlockedDown 0.66s cubic-bezier(0.22, 0.82, 0.34, 1) both;
+}
+
+.movement-player.move-blocked-left {
+  animation: moveBlockedLeft 0.66s cubic-bezier(0.22, 0.82, 0.34, 1) both;
+}
+
+@keyframes revealWall {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes moveSuccessUp {
+  from { transform: translateY(108%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes moveSuccessRight {
+  from { transform: translateX(-108%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes moveSuccessDown {
+  from { transform: translateY(-108%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes moveSuccessLeft {
+  from { transform: translateX(108%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes moveBlockedUp {
+  0% { transform: translateY(0); }
+  64% { transform: translateY(-58%) scale(0.98); }
+  76% { transform: translateY(-48%) scale(1.02); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes moveBlockedRight {
+  0% { transform: translateX(0); }
+  64% { transform: translateX(58%) scale(0.98); }
+  76% { transform: translateX(48%) scale(1.02); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes moveBlockedDown {
+  0% { transform: translateY(0); }
+  64% { transform: translateY(58%) scale(0.98); }
+  76% { transform: translateY(48%) scale(1.02); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes moveBlockedLeft {
+  0% { transform: translateX(0); }
+  64% { transform: translateX(-58%) scale(0.98); }
+  76% { transform: translateX(-48%) scale(1.02); }
+  100% { transform: translateX(0); }
 }
 
 .movement-zone {

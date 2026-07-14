@@ -30,6 +30,50 @@ const makeTeam = (index) => ({
   effects: {}
 });
 
+const cloneMaze = (maze) => ({
+  walls: maze.walls.map((wall) => ({ ...wall })),
+  startPoint: cleanPoint(maze.startPoint),
+  endPoint: cleanPoint(maze.endPoint)
+});
+
+const assignMazeToTeam = (team, maze) => {
+  team.walls = maze.walls.map((wall) => ({ ...wall }));
+  team.startPoint = cleanPoint(maze.startPoint);
+  team.endPoint = cleanPoint(maze.endPoint);
+  team.position = cleanPoint(maze.startPoint);
+  team.discoveredCells = [cleanPoint(maze.startPoint)];
+};
+
+const shuffle = (items, random = Math.random) => {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+export const finalizeMazeAssignments = (state, random = Math.random) => {
+  const submissions = state.setup?.submissions || {};
+  if (state.teams.length < 2 || Object.keys(submissions).length !== state.teams.length) {
+    return { ok: false, error: "Chưa đủ mê cung để chia ngẫu nhiên." };
+  }
+
+  const orderedSourceIds = shuffle(state.teams.map((team) => team.id), random);
+
+  orderedSourceIds.forEach((sourceTeamId, index) => {
+    const targetTeamId = orderedSourceIds[(index + 1) % orderedSourceIds.length];
+    const submission = submissions[sourceTeamId];
+    const targetTeam = state.teams.find((team) => team.id === targetTeamId);
+    if (!submission || !targetTeam) return;
+
+    assignMazeToTeam(targetTeam, submission.maze);
+    submission.targetTeamId = targetTeamId;
+  });
+
+  return { ok: true };
+};
+
 const makeRound = () => ({
   roundNumber: 1,
   phase: "movement",
@@ -143,6 +187,10 @@ export const applyMazeSubmission = (state, sourceTeamId, payload) => {
     return { ok: false, error: "Tr\u00f2 ch\u01a1i \u0111\u00e3 b\u1eaft \u0111\u1ea7u, kh\u00f4ng th\u1ec3 n\u1ed9p l\u1ea1i m\u00ea cung." };
   }
 
+  if (state.setup?.submissions?.[sourceTeamId]) {
+    return { ok: false, error: "Đội đã nộp mê cung rồi." };
+  }
+
   const validated = validateMazeSubmission({
     boardSize: state.config.boardSize,
     ...payload
@@ -150,36 +198,30 @@ export const applyMazeSubmission = (state, sourceTeamId, payload) => {
 
   if (!validated.ok) return validated;
 
-  const targetTeam = state.teams[(sourceIndex + 1) % state.teams.length];
-  targetTeam.walls = validated.maze.walls;
-  targetTeam.startPoint = validated.maze.startPoint;
-  targetTeam.endPoint = validated.maze.endPoint;
-  targetTeam.position = validated.maze.startPoint;
-  targetTeam.discoveredCells = [validated.maze.startPoint];
-
   state.setup.submissions[sourceTeamId] = {
     sourceTeamId,
-    targetTeamId: targetTeam.id
+    maze: cloneMaze(validated.maze)
   };
   state.setup.complete = Object.keys(state.setup.submissions).length === state.teams.length;
+  if (state.setup.complete) {
+    finalizeMazeAssignments(state);
+  }
 
-  return { ok: true, targetTeamId: targetTeam.id };
+  return { ok: true };
 };
 
 export const getHostSetupPreviewMap = (state) => {
   const previews = {};
 
   for (const [sourceTeamId, submission] of Object.entries(state.setup?.submissions || {})) {
-    const targetTeam = state.teams.find((team) => team.id === submission.targetTeamId);
-    if (!targetTeam) continue;
+    if (!submission.maze) continue;
 
     previews[sourceTeamId] = {
       sourceTeamId,
-      targetTeamId: submission.targetTeamId,
-      walls: targetTeam.walls,
-      startPoint: targetTeam.startPoint,
-      endPoint: targetTeam.endPoint,
-      position: targetTeam.position
+      walls: submission.maze.walls,
+      startPoint: submission.maze.startPoint,
+      endPoint: submission.maze.endPoint,
+      position: submission.maze.startPoint
     };
   }
 
@@ -188,7 +230,6 @@ export const getHostSetupPreviewMap = (state) => {
 
 export const getSetupSummary = (state, teamId) => {
   const submissions = state.setup?.submissions || {};
-  const assignedBy = Object.values(submissions).find((item) => item.targetTeamId === teamId);
   const team = state.teams.find((item) => item.id === teamId);
 
   return {
@@ -196,7 +237,6 @@ export const getSetupSummary = (state, teamId) => {
     started: Boolean(state.setup?.started),
     submittedTeamIds: Object.keys(submissions),
     mySubmission: Boolean(submissions[teamId]),
-    assignedBoardReady: Boolean(team?.startPoint),
-    assignedByTeamId: assignedBy?.sourceTeamId || null
+    assignedBoardReady: Boolean(team?.startPoint)
   };
 };
