@@ -37,6 +37,13 @@ const publicMeta = (meta) => ({
   lucideIcon: meta.lucideIcon
 });
 
+const consumeEventTile = (state, tile) => {
+  state.round.eventTiles = (state.round.eventTiles || []).filter((candidate) => {
+    if (tile.id && candidate.id) return candidate.id !== tile.id;
+    return !(candidate.x === tile.x && candidate.y === tile.y && candidate.type === tile.type);
+  });
+};
+
 export const createEventTiles = (boardSize, random = Math.random, excludedPoints = []) => {
   const used = new Set(excludedPoints.map(pointKey));
   const cells = allCells(boardSize);
@@ -81,6 +88,8 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
 
   const team = state.teams.find((item) => item.id === teamId);
   if (!team) return null;
+
+  consumeEventTile(state, tile);
 
   if (tile.type === EVENT_TILE_TYPES.MYSTERY_BOX) {
     const itemMeta = choose(SUPPORT_ITEM_CATALOG, random);

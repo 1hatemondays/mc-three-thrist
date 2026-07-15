@@ -22,6 +22,7 @@ const makeTeam = (teamId, index, teamName) => ({
   endPoint: null,
   walls: [],
   discoveredCells: [{ x: 0, y: 0 }],
+  revealedWalls: [],
   supportItems: [],
   effects: {}
 });
@@ -92,6 +93,7 @@ export const getPlayerState = (teamId) => {
       position: team.position,
       startPoint: team.startPoint,
       discoveredCells: team.discoveredCells,
+      revealedWalls: team.revealedWalls,
       supportItems: team.supportItems
     },
     leaderboard: gameState.teams.map(({ id, name, hp, score }) => ({ id, name, hp, score })),

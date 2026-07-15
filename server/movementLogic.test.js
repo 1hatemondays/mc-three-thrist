@@ -28,6 +28,7 @@ const makeTeam = (id, position = { x: 0, y: 0 }) => ({
   endPoint: { x: 5, y: 5 },
   walls: [],
   discoveredCells: [{ ...position }],
+  revealedWalls: [],
   supportItems: []
 });
 
@@ -69,6 +70,55 @@ test("chooses a movement question without exposing hidden answer or event tiles"
   assert.equal(publicRound.eventTiles, undefined);
 });
 
+test("moves instantly through an already explored square without question or score", () => {
+  const state = makeState();
+  state.teams[0].discoveredCells.push({ x: 1, y: 0 });
+
+  const result = chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+
+  assert.equal(result.ok, true);
+  assert.equal(result.instant, true);
+  assert.equal(result.result.freeMove, true);
+  assert.equal(result.result.usedQuestion, false);
+  assert.equal(result.result.scoreDelta, 0);
+  assert.equal(state.round.pendingAnswers.team1, undefined);
+  assert.deepEqual(state.teams[0].position, { x: 1, y: 0 });
+});
+
+test("moving back to a previously visited square after a normal move is instant and question-free", () => {
+  const state = makeState();
+
+  chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  answerQuestion(state, "team1", { answerIndex: 1 });
+
+  const backtrack = chooseMoveQuestion(state, "team1", { direction: "left" }, questions, () => 0);
+
+  assert.equal(backtrack.ok, true);
+  assert.equal(backtrack.instant, true);
+  assert.equal(backtrack.result.freeMove, true);
+  assert.equal(backtrack.result.usedQuestion, false);
+  assert.equal(backtrack.result.scoreDelta, 0);
+  assert.equal(state.round.pendingAnswers.team1, undefined);
+  assert.deepEqual(state.teams[0].position, { x: 0, y: 0 });
+});
+
+test("reveals a wall immediately and keeps the target square hidden", () => {
+  const state = makeState();
+  state.teams[0].walls = [{ x: 1, y: 0, side: "left" }];
+
+  const result = chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+
+  assert.equal(result.ok, true);
+  assert.equal(result.instant, true);
+  assert.equal(result.result.blocked, true);
+  assert.equal(result.result.usedQuestion, false);
+  assert.equal(result.result.freeMove, true);
+  assert.deepEqual(state.teams[0].position, { x: 0, y: 0 });
+  assert.deepEqual(state.teams[0].discoveredCells, [{ x: 0, y: 0 }]);
+  assert.deepEqual(state.teams[0].revealedWalls, [{ x: 1, y: 0, side: "left" }]);
+  assert.equal(state.round.pendingAnswers.team1.answered, true);
+});
+
 test("correct open moves score 10 and keep the turn alive", () => {
   const state = makeState();
 
@@ -86,7 +136,7 @@ test("correct open moves score 10 and keep the turn alive", () => {
 
 test("event tiles trigger after a successful move without changing the base move score", () => {
   const state = makeState();
-  state.round.eventTiles = [{ type: EVENT_TILE_TYPES.KNOWLEDGE, x: 1, y: 0 }];
+  state.round.eventTiles = [{ id: "knowledge:1:0", type: EVENT_TILE_TYPES.KNOWLEDGE, x: 1, y: 0 }];
 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
   const result = answerQuestion(state, "team1", { answerIndex: 1 });
@@ -95,6 +145,7 @@ test("event tiles trigger after a successful move without changing the base move
   assert.equal(result.result.event.type, EVENT_TILE_TYPES.KNOWLEDGE);
   assert.equal(result.result.scoreDelta, MOVE_SCORE);
   assert.equal(state.teams[0].score, MOVE_SCORE);
+  assert.deepEqual(state.round.eventTiles, []);
 });
 
 test("wrong answers end only that team's turn", () => {
@@ -114,9 +165,9 @@ test("wrong answers end only that team's turn", () => {
 test("hitting an implicit border ends the team's turn", () => {
   const state = makeState();
 
-  chooseMoveQuestion(state, "team1", { direction: "up" }, questions, () => 0);
-  const result = answerQuestion(state, "team1", { answerIndex: 1 });
+  const result = chooseMoveQuestion(state, "team1", { direction: "up" }, questions, () => 0);
 
+  assert.equal(result.instant, true);
   assert.equal(result.result.correct, true);
   assert.equal(result.result.blocked, true);
   assert.equal(result.result.blockedReason, "border");
@@ -129,9 +180,9 @@ test("hitting a maze wall ends the team's turn", () => {
   const state = makeState();
   state.teams[0].walls = [{ x: 1, y: 0, side: "left" }];
 
-  chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
-  const result = answerQuestion(state, "team1", { answerIndex: 1 });
+  const result = chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
 
+  assert.equal(result.instant, true);
   assert.equal(result.result.correct, true);
   assert.equal(result.result.blocked, true);
   assert.equal(result.result.blockedReason, "wall");

@@ -71,6 +71,7 @@ Three independent components communicating over Socket.io (realtime WebSocket):
   endPoint: { x, y },        // this team's own end point (set by the opposing team), hidden from itself
   walls: [ {x, y, side} ],   // 20 INTERIOR walls placed by the opposing team; outer border walls are implicit
   discoveredCells: [ {x,y} ],// cells already visited/known — only this part is sent to the client
+  revealedWalls: [ {x,y,side} ], // walls/borders this team has actually bumped into and discovered
   supportItems: []            // support items won via auction
 }
 
@@ -130,3 +131,23 @@ Three independent components communicating over Socket.io (realtime WebSocket):
 - No long-term user accounts, no email/password login — a simple team code is enough.
 - No need to persist history across multiple sessions — each play session is independent.
 - No need for responsive design beyond common phone screen sizes.
+
+## 9. Current implemented behavior snapshot (updated 2026-07-15)
+
+- **Dynamic teams**: teams are created from player joins, not from a hardcoded team count. The entered **team name** is also the visible display name, and the normalized version is used as the runtime team id / reconnect code.
+- **Reconnect flow**: the player app stores the joined team locally and can reconnect back into the same team after disconnect/reload.
+- **Maze assignment**: completed mazes are assigned **randomly to other teams** with no self-assignment. Players should not be told which opponent received the maze they designed.
+- **Setup input UX**: maze walls are placed by clicking the **shared interior edge** between cells; clicking again toggles the wall off. Outer border walls are implicit and do not count toward the 20-wall limit.
+- **Host setup review**: the host review card should show the maze **submitted by that team**, not the maze assigned to that team.
+- **Movement rule update**:
+  - moving into an **unexplored open cell** still requires answering a question;
+  - moving into an **already explored cell** is a **free move** with **no question and no score gain**;
+  - walking into a **wall or border** is resolved immediately with **no question**, ends the turn, and reveals that wall for that team.
+- **Player fog-of-war truth**: explored cells and discovered walls come from **server state**, not client-side guesswork. A cell only becomes clear when the player has actually been on it; a wall can be revealed independently by colliding with it.
+- **Player movement viewport**:
+  - the movement screen is a zoomed square viewport centered on the player;
+  - the **player stays centered** while the background grid moves;
+  - hidden cells use a **smoke texture fog** (`player/src/assets/smoke-2.png`, currently sourced from the transparent `smoke_2_nobg.png` asset);
+  - fog between adjacent hidden cells should blend by **natural spill/overflow**, not by separate connector overlays.
+- **Known wall persistence**: once a player reveals a wall, it should persist in that player's movement viewport on later turns.
+- **Event tiles are one-time**: when a team lands on an event tile and the event triggers, that tile is **consumed/removed** from `round.eventTiles` so it disappears from host/player state and cannot be triggered again.

@@ -444,12 +444,23 @@ dd {
   background: #d8ccb2;
 }
 
+.movement-world {
+  position: absolute;
+  top: -33.333%;
+  left: -33.333%;
+  width: 166.667%;
+  height: 166.667%;
+  transform: scale(1.22);
+  transform-origin: center;
+  z-index: 1;
+}
+
 .movement-grid {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 1fr);
 }
 
 .movement-grid-cell {
@@ -469,52 +480,47 @@ dd {
 }
 
 .movement-grid-cell.outer {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .movement-cell-fog {
   position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(135deg, rgba(255, 249, 233, 0.18), rgba(16, 23, 19, 0.08)),
-    rgba(255, 249, 233, 0.1);
-  opacity: 0.9;
-}
-
-.movement-fog {
-  position: absolute;
-  inset: 0;
+  inset: -16px;
+  border-radius: 18px;
+  background: transparent;
+  overflow: visible;
   pointer-events: none;
 }
 
-.movement-fog::before {
+.movement-cell-fog::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: rgba(255, 249, 233, 0.04);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  mask-image: radial-gradient(circle at center, transparent 0 28%, #000 44%, #000 100%);
-  -webkit-mask-image: radial-gradient(circle at center, transparent 0 28%, #000 44%, #000 100%);
+  inset: -28%;
+  border-radius: 50%;
+  background: var(--fog-texture) center / 82% 82% no-repeat;
+  filter: blur(4px) brightness(1.45) contrast(0.5);
+  opacity: 0.48;
+  transform-origin: center;
+  animation: fogDriftA 24s linear infinite;
 }
 
-.movement-fog::after {
+.movement-cell-fog::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at center,
-    transparent 0 30%,
-    rgba(255, 249, 233, 0.02) 40%,
-    rgba(16, 23, 19, 0.1) 64%,
-    rgba(8, 20, 14, 0.26) 100%
-  );
+  inset: -22%;
+  border-radius: 50%;
+  background: var(--fog-texture) center / 74% 74% no-repeat;
+  filter: blur(2px) brightness(1.35) contrast(0.58);
+  opacity: 0.34;
+  mix-blend-mode: normal;
+  transform-origin: center;
+  animation: fogDriftB 30s linear infinite;
 }
 
 .movement-player-wrap {
   position: absolute;
-  z-index: 1;
-  inset: 33.333%;
+  z-index: 4;
+  inset: 40%;
   display: grid;
   place-items: center;
   pointer-events: none;
@@ -533,73 +539,77 @@ dd {
 
 .movement-revealed-wall {
   position: absolute;
-  z-index: 1;
+  z-index: 2;
   background: var(--line);
   box-shadow: 0 0 0 3px rgba(240, 185, 75, 0.18);
   animation: revealWall 0.34s ease both;
   pointer-events: none;
 }
 
-.movement-revealed-wall.up,
-.movement-revealed-wall.down {
-  left: 33.333%;
-  width: 33.333%;
+.movement-revealed-wall.top {
+  width: 20%;
   height: 7px;
 }
 
-.movement-revealed-wall.left,
-.movement-revealed-wall.right {
-  top: 33.333%;
-  width: 7px;
-  height: 33.333%;
-}
-
-.movement-revealed-wall.up {
-  top: calc(33.333% - 3.5px);
-}
-
-.movement-revealed-wall.right {
-  left: calc(66.666% - 3.5px);
-}
-
-.movement-revealed-wall.down {
-  top: calc(66.666% - 3.5px);
-}
-
 .movement-revealed-wall.left {
-  left: calc(33.333% - 3.5px);
+  width: 7px;
+  height: 20%;
 }
 
-.movement-player.move-success-up {
-  animation: moveSuccessUp 0.58s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+.movement-world.move-success-up {
+  animation: moveSuccessUp 0.82s cubic-bezier(0.22, 0.8, 0.2, 1) both;
 }
 
-.movement-player.move-success-right {
-  animation: moveSuccessRight 0.58s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+.movement-world.move-success-right {
+  animation: moveSuccessRight 0.82s cubic-bezier(0.22, 0.8, 0.2, 1) both;
 }
 
-.movement-player.move-success-down {
-  animation: moveSuccessDown 0.58s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+.movement-world.move-success-down {
+  animation: moveSuccessDown 0.82s cubic-bezier(0.22, 0.8, 0.2, 1) both;
 }
 
-.movement-player.move-success-left {
-  animation: moveSuccessLeft 0.58s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+.movement-world.move-success-left {
+  animation: moveSuccessLeft 0.82s cubic-bezier(0.22, 0.8, 0.2, 1) both;
 }
 
-.movement-player.move-blocked-up {
-  animation: moveBlockedUp 0.66s cubic-bezier(0.22, 0.82, 0.34, 1) both;
+.movement-world.move-blocked-up {
+  animation: moveBlockedUp 0.78s cubic-bezier(0.22, 0.82, 0.34, 1) both;
 }
 
-.movement-player.move-blocked-right {
-  animation: moveBlockedRight 0.66s cubic-bezier(0.22, 0.82, 0.34, 1) both;
+.movement-world.move-blocked-right {
+  animation: moveBlockedRight 0.78s cubic-bezier(0.22, 0.82, 0.34, 1) both;
 }
 
-.movement-player.move-blocked-down {
-  animation: moveBlockedDown 0.66s cubic-bezier(0.22, 0.82, 0.34, 1) both;
+.movement-world.move-blocked-down {
+  animation: moveBlockedDown 0.78s cubic-bezier(0.22, 0.82, 0.34, 1) both;
 }
 
-.movement-player.move-blocked-left {
-  animation: moveBlockedLeft 0.66s cubic-bezier(0.22, 0.82, 0.34, 1) both;
+.movement-world.move-blocked-left {
+  animation: moveBlockedLeft 0.78s cubic-bezier(0.22, 0.82, 0.34, 1) both;
+}
+
+@keyframes fogDriftA {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.05);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes fogDriftB {
+  0% {
+    transform: rotate(0deg) scale(0.98);
+  }
+  50% {
+    transform: rotate(-180deg) scale(1.03);
+  }
+  100% {
+    transform: rotate(-360deg) scale(0.98);
+  }
 }
 
 @keyframes revealWall {
@@ -614,56 +624,56 @@ dd {
 }
 
 @keyframes moveSuccessUp {
-  from { transform: translateY(108%); }
-  to { transform: translateY(0); }
+  from { transform: scale(1.22) translateY(-20%); }
+  to { transform: scale(1.22) translateY(0); }
 }
 
 @keyframes moveSuccessRight {
-  from { transform: translateX(-108%); }
-  to { transform: translateX(0); }
+  from { transform: scale(1.22) translateX(20%); }
+  to { transform: scale(1.22) translateX(0); }
 }
 
 @keyframes moveSuccessDown {
-  from { transform: translateY(-108%); }
-  to { transform: translateY(0); }
+  from { transform: scale(1.22) translateY(20%); }
+  to { transform: scale(1.22) translateY(0); }
 }
 
 @keyframes moveSuccessLeft {
-  from { transform: translateX(108%); }
-  to { transform: translateX(0); }
+  from { transform: scale(1.22) translateX(-20%); }
+  to { transform: scale(1.22) translateX(0); }
 }
 
 @keyframes moveBlockedUp {
-  0% { transform: translateY(0); }
-  64% { transform: translateY(-58%) scale(0.98); }
-  76% { transform: translateY(-48%) scale(1.02); }
-  100% { transform: translateY(0); }
+  0% { transform: scale(1.22) translateY(0); }
+  64% { transform: scale(1.22) translateY(12%); }
+  76% { transform: scale(1.22) translateY(9%); }
+  100% { transform: scale(1.22) translateY(0); }
 }
 
 @keyframes moveBlockedRight {
-  0% { transform: translateX(0); }
-  64% { transform: translateX(58%) scale(0.98); }
-  76% { transform: translateX(48%) scale(1.02); }
-  100% { transform: translateX(0); }
+  0% { transform: scale(1.22) translateX(0); }
+  64% { transform: scale(1.22) translateX(-12%); }
+  76% { transform: scale(1.22) translateX(-9%); }
+  100% { transform: scale(1.22) translateX(0); }
 }
 
 @keyframes moveBlockedDown {
-  0% { transform: translateY(0); }
-  64% { transform: translateY(58%) scale(0.98); }
-  76% { transform: translateY(48%) scale(1.02); }
-  100% { transform: translateY(0); }
+  0% { transform: scale(1.22) translateY(0); }
+  64% { transform: scale(1.22) translateY(-12%); }
+  76% { transform: scale(1.22) translateY(-9%); }
+  100% { transform: scale(1.22) translateY(0); }
 }
 
 @keyframes moveBlockedLeft {
-  0% { transform: translateX(0); }
-  64% { transform: translateX(-58%) scale(0.98); }
-  76% { transform: translateX(-48%) scale(1.02); }
-  100% { transform: translateX(0); }
+  0% { transform: scale(1.22) translateX(0); }
+  64% { transform: scale(1.22) translateX(12%); }
+  76% { transform: scale(1.22) translateX(9%); }
+  100% { transform: scale(1.22) translateX(0); }
 }
 
 .movement-zone {
   position: absolute;
-  z-index: 2;
+  z-index: 5;
   min-height: 0;
   border: 0;
   padding: 0;

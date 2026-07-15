@@ -26,6 +26,7 @@ const makeTeam = (index) => ({
   endPoint: null,
   walls: [],
   discoveredCells: [{ x: 0, y: 0 }],
+  revealedWalls: [],
   supportItems: [],
   effects: {}
 });
@@ -42,6 +43,7 @@ const assignMazeToTeam = (team, maze) => {
   team.endPoint = cleanPoint(maze.endPoint);
   team.position = cleanPoint(maze.startPoint);
   team.discoveredCells = [cleanPoint(maze.startPoint)];
+  team.revealedWalls = [];
 };
 
 const shuffle = (items, random = Math.random) => {

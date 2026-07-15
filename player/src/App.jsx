@@ -3,6 +3,7 @@ import { io } from "socket.io-client";
 import { DIRECTIONS, EVENTS, ROUND_PHASES } from "../../shared/constants.js";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
+import smokeTexture from "./assets/smoke-2.png";
 
 const SERVER_URL =
   import.meta.env.VITE_SERVER_URL ||
@@ -10,19 +11,14 @@ const SERVER_URL =
 const BOARD_SIZE = 6;
 const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
 const TEAM_SESSION_KEY = "maze-of-knowledge:player-team";
+const MOVEMENT_VIEW_RADIUS = 2;
+const MOVEMENT_VIEW_SIZE = MOVEMENT_VIEW_RADIUS * 2 + 1;
 
 const emptyDraft = () => ({ walls: [], startPoint: null, endPoint: null });
 const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
 const normalizeTeamCode = (value) => value.replace(/\s+/g, "").toLowerCase();
 const boardPointKey = (x, y) => `${x}:${y}`;
-const revealedWallKey = (position, direction) => {
-  if (!position) return "";
-  if (direction === DIRECTIONS.UP) return `${position.x}:${position.y}:top`;
-  if (direction === DIRECTIONS.RIGHT) return `${position.x + 1}:${position.y}:left`;
-  if (direction === DIRECTIONS.DOWN) return `${position.x}:${position.y + 1}:top`;
-  if (direction === DIRECTIONS.LEFT) return `${position.x}:${position.y}:left`;
-  return "";
-};
+const wallFromKey = (wall) => `${wall.x}:${wall.y}:${wall.side}`;
 const loadSavedTeamSession = () => {
   try {
     return JSON.parse(window.localStorage.getItem(TEAM_SESSION_KEY) || "null");
@@ -291,12 +287,11 @@ const SetupBoard = ({ state, onSubmit }) => {
 const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDirection, team }) => {
   const [activeDirection, setActiveDirection] = useState(null);
   const [moveFeedback, setMoveFeedback] = useState(null);
-  const [revealedWalls, setRevealedWalls] = useState(() => new Set());
-  const [extraKnownCells, setExtraKnownCells] = useState(() => new Set());
   const feedbackTimerRef = useRef(null);
   const currentDirection = pendingDirection || activeDirection;
   const directions = Object.values(DIRECTIONS);
   const currentPositionKey = boardPointKey(team.position.x, team.position.y);
+  const fogTextureStyle = useMemo(() => ({ "--fog-texture": `url(${smokeTexture})` }), []);
   const resultKey = lastResult
     ? [
         lastResult.teamId,
@@ -308,23 +303,62 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
         lastResult.scoreDelta
       ].join(":")
     : "";
-  const viewportCells = Array.from({ length: 9 }, (_, index) => {
-    const x = index % 3;
-    const y = Math.floor(index / 3);
-    const dx = x - 1;
-    const dy = y - 1;
+  const viewportCells = Array.from({ length: MOVEMENT_VIEW_SIZE * MOVEMENT_VIEW_SIZE }, (_, index) => {
+    const x = index % MOVEMENT_VIEW_SIZE;
+    const y = Math.floor(index / MOVEMENT_VIEW_SIZE);
+    const dx = x - MOVEMENT_VIEW_RADIUS;
+    const dy = y - MOVEMENT_VIEW_RADIUS;
     return {
       key: `${x}:${y}`,
-      center: x === 1 && y === 1,
+      x,
+      y,
+      center: x === MOVEMENT_VIEW_RADIUS && y === MOVEMENT_VIEW_RADIUS,
       offsetKey: `${dx}:${dy}`
     };
   });
+  const viewportCellStates = viewportCells.map((cell) => {
+    const [dx, dy] = cell.offsetKey.split(":").map(Number);
+    const actualKey = boardPointKey(team.position.x + dx, team.position.y + dy);
+    const discovered = team.discoveredCells?.some((point) => boardPointKey(point.x, point.y) === actualKey);
+    const known =
+      cell.center ||
+      discovered ||
+      moveFeedback?.knownCell === cell.offsetKey;
+    return { ...cell, known };
+  });
+  const visibleRevealedWalls = [
+    ...(team.revealedWalls || []).filter((wall) => {
+      const relX = wall.x - team.position.x + MOVEMENT_VIEW_RADIUS;
+      const relY = wall.y - team.position.y + MOVEMENT_VIEW_RADIUS;
+      return relX >= 0 && relX < MOVEMENT_VIEW_SIZE && relY >= 0 && relY < MOVEMENT_VIEW_SIZE;
+    }),
+    ...(moveFeedback?.wallDirection
+      ? [
+          (() => {
+            const vector = directionVectors[moveFeedback.wallDirection];
+            const side =
+              moveFeedback.wallDirection === DIRECTIONS.UP
+                ? "top"
+                : moveFeedback.wallDirection === DIRECTIONS.RIGHT
+                  ? "left"
+                  : moveFeedback.wallDirection === DIRECTIONS.DOWN
+                    ? "top"
+                    : "left";
+            const wall =
+              moveFeedback.wallDirection === DIRECTIONS.RIGHT
+                ? { x: team.position.x + 1, y: team.position.y, side }
+                : moveFeedback.wallDirection === DIRECTIONS.DOWN
+                  ? { x: team.position.x, y: team.position.y + 1, side }
+                  : { x: team.position.x, y: team.position.y, side };
+            return wall;
+          })()
+        ]
+      : [])
+  ].filter((wall, index, list) => list.findIndex((item) => wallFromKey(item) === wallFromKey(wall)) === index);
 
   useEffect(() => () => clearTimeout(feedbackTimerRef.current), []);
 
   useEffect(() => {
-    setRevealedWalls(new Set());
-    setExtraKnownCells(new Set());
     setMoveFeedback(null);
   }, [team.id]);
 
@@ -335,25 +369,12 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
     if (!vector) return;
 
     const isBlockedWall = lastResult.blocked && ["wall", "border"].includes(lastResult.blockedReason);
-    if (isBlockedWall) {
-      setRevealedWalls((current) => new Set(current).add(revealedWallKey(team.position, lastResult.direction)));
-      const targetX = team.position.x + vector.dx;
-      const targetY = team.position.y + vector.dy;
-      if (targetX >= 0 && targetY >= 0 && targetX < BOARD_SIZE && targetY < BOARD_SIZE) {
-        setExtraKnownCells((current) => new Set(current).add(boardPointKey(targetX, targetY)));
-      }
-    }
 
     const feedback = {
       key: resultKey + ":" + Date.now(),
       direction: lastResult.direction,
       type: lastResult.success ? "success" : isBlockedWall ? "blocked" : "miss",
-      knownCell:
-        lastResult.success
-          ? `${-vector.dx}:${-vector.dy}`
-          : isBlockedWall
-            ? `${vector.dx}:${vector.dy}`
-            : null,
+      knownCell: lastResult.success ? `${-vector.dx}:${-vector.dy}` : null,
       wallDirection: isBlockedWall ? lastResult.direction : null
     };
 
@@ -389,40 +410,49 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
 
   return (
     <div className="movement-viewport" aria-label="Khung điều hướng di chuyển">
-      <div className="movement-scene">
-        <div className="movement-grid" aria-hidden="true">
-          {viewportCells.map((cell) => {
-            const [dx, dy] = cell.offsetKey.split(":").map(Number);
-            const actualKey = boardPointKey(team.position.x + dx, team.position.y + dy);
-            const discovered = team.discoveredCells?.some((point) => boardPointKey(point.x, point.y) === actualKey);
-            const known = cell.center || discovered || extraKnownCells.has(actualKey) || moveFeedback?.knownCell === cell.offsetKey;
+      <div className="movement-scene" style={fogTextureStyle}>
+        <div
+          className={[
+            "movement-world",
+            moveFeedback?.type === "success" ? `move-success-${moveFeedback.direction}` : "",
+            moveFeedback?.type === "blocked" ? `move-blocked-${moveFeedback.direction}` : ""
+          ].filter(Boolean).join(" ")}
+          key={moveFeedback?.key || "still"}
+        >
+          <div className="movement-grid" aria-hidden="true">
+            {viewportCellStates.map((cell) => {
+              return (
+                <div
+                  className={`movement-grid-cell${cell.center ? " center" : " outer"}${cell.known ? " known" : ""}`}
+                  key={cell.key}
+                >
+                  {!cell.known && <div className="movement-cell-fog" />}
+                </div>
+              );
+            })}
+          </div>
+          {visibleRevealedWalls.map((wall) => {
+            const relX = wall.x - team.position.x + MOVEMENT_VIEW_RADIUS;
+            const relY = wall.y - team.position.y + MOVEMENT_VIEW_RADIUS;
             return (
               <div
-                className={`movement-grid-cell${cell.center ? " center" : " outer"}${known ? " known" : ""}`}
-                key={cell.key}
-              >
-                {!known && <div className="movement-cell-fog" />}
-              </div>
+                aria-hidden="true"
+                className={`movement-revealed-wall ${wall.side}`}
+                key={wallFromKey(wall)}
+                style={{
+                  left: wall.side === "left" ? `calc(${relX * 20}% - 3.5px)` : `${relX * 20}%`,
+                  top: wall.side === "top" ? `calc(${relY * 20}% - 3.5px)` : `${relY * 20}%`
+                }}
+              />
             );
           })}
         </div>
-        {directions
-          .filter((direction) => revealedWalls.has(revealedWallKey(team.position, direction)) || moveFeedback?.wallDirection === direction)
-          .map((direction) => (
-            <div className={`movement-revealed-wall ${direction}`} aria-hidden="true" key={direction} />
-          ))}
         <div className="movement-player-wrap">
           <div
-            className={[
-              "movement-player",
-              moveFeedback?.type === "success" ? `move-success-${moveFeedback.direction}` : "",
-              moveFeedback?.type === "blocked" ? `move-blocked-${moveFeedback.direction}` : ""
-            ].filter(Boolean).join(" ")}
-            key={moveFeedback?.key || "still"}
+            className="movement-player"
             aria-label={`Người chơi tại ô ${team.position.x + 1},${team.position.y + 1}`}
           />
         </div>
-        <div className="movement-fog" />
 
         {directions.map((direction) => {
           const selected = currentDirection === direction;
@@ -477,9 +507,13 @@ const ResultCard = ({ result }) => {
   if (!result) return null;
 
   const title = result.success
-    ? "\u0110\u00fang. \u0110\u1ed9i \u0111\u00e3 di chuy\u1ec3n."
+    ? result.freeMove
+      ? "\u0110\u00e3 di chuy\u1ec3n tr\u00ean l\u1ed1i \u0111\u00e3 kh\u00e1m ph\u00e1."
+      : "\u0110\u00fang. \u0110\u1ed9i \u0111\u00e3 di chuy\u1ec3n."
     : result.blocked
-      ? (result.correct ? "\u0110\u00fang" : "Sai") + ", nh\u01b0ng b\u1ecb ch\u1eb7n."
+      ? result.freeMove
+        ? "\u0110\u01b0\u1eddng \u0111i b\u1ecb ch\u1eb7n."
+        : (result.correct ? "\u0110\u00fang" : "Sai") + ", nh\u01b0ng b\u1ecb ch\u1eb7n."
       : "Sai \u0111\u00e1p \u00e1n.";
   const event = result.event;
 
@@ -492,7 +526,7 @@ const ResultCard = ({ result }) => {
       <dl className="result-grid">
         <div>
           <dt>{"\u0110\u00e1p \u00e1n"}</dt>
-          <dd>{result.correct ? "\u0110\u00fang" : "Sai"}</dd>
+          <dd>{result.usedQuestion ? (result.correct ? "\u0110\u00fang" : "Sai") : "Kh\u00f4ng c\u1ea7n"}</dd>
         </div>
         <div>
           <dt>{"\u0110\u01b0\u1eddng \u0111i"}</dt>

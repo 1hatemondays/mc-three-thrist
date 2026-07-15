@@ -61,6 +61,16 @@ test("mystery box grants one free support item", () => {
   assert.equal(state.teams[0].supportItems[0].type, SUPPORT_ITEM_TYPES.DIRECTION_HINT);
 });
 
+test("triggering an event consumes that event tile", () => {
+  const state = makeState();
+  state.round.eventTiles = [{ id: "knowledge:1:0", type: EVENT_TILE_TYPES.KNOWLEDGE, x: 1, y: 0 }];
+
+  const result = applyEventTileEffect(state, "team1", state.round.eventTiles[0]);
+
+  assert.equal(result.type, EVENT_TILE_TYPES.KNOWLEDGE);
+  assert.deepEqual(state.round.eventTiles, []);
+});
+
 test("teleport event moves the team to a random cell and discovers it", () => {
   const state = makeState();
   const result = applyEventTileEffect(

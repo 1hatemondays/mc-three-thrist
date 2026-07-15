@@ -13,6 +13,12 @@ export const registerMovementHandlers = (io, socket) => {
       return;
     }
 
+    if (result.instant) {
+      emitRoundResult(io, result.result);
+      emitAllStates(io);
+      return;
+    }
+
     socket.emit(EVENTS.ROUND_QUESTION, {
       direction: result.direction,
       question: stripQuestionAnswer(result.question)

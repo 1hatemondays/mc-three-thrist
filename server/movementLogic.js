@@ -1,5 +1,5 @@
 import { DIRECTIONS, MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
-import { hasWall } from "../shared/maze.js";
+import { canonicalWall, hasWall, wallKey } from "../shared/maze.js";
 import { applyEventTileEffect, findEventTileAt, getPlayerPendingEvent } from "./eventLogic.js";
 import { maybeFinishMovementRound } from "./roundFlow.js";
 import { applyTrapAtPosition } from "./supportLogic.js";
@@ -81,6 +81,41 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
     return { ok: false, error: "Hãy chọn hướng hợp lệ: lên, phải, xuống hoặc trái." };
   }
 
+  const movement = previewMove(team, state.config.boardSize, direction);
+  const revisitingKnownCell = !movement.blocked && hasDiscoveredCell(team, movement.newPosition);
+
+  if (revisitingKnownCell) {
+    state.round.currentQuestion = null;
+    return {
+      ok: true,
+      instant: true,
+      result: resolveMovement(state, team, teamId, direction, {
+        usedQuestion: false,
+        correct: true,
+        awardScore: false
+      })
+    };
+  }
+
+  if (movement.blocked) {
+    const result = resolveMovement(state, team, teamId, direction, {
+      usedQuestion: false,
+      correct: true,
+      awardScore: false
+    });
+
+    state.round.pendingAnswers[teamId] = {
+      teamId,
+      direction,
+      question: null,
+      answered: true,
+      result
+    };
+    state.round.currentQuestion = null;
+
+    return { ok: true, instant: true, result, roundComplete: maybeFinishMovementRound(state) };
+  }
+
   const question = chooseQuestion(questions, random);
   if (!question) {
     return { ok: false, error: "Ngân hàng câu hỏi đang trống." };
@@ -101,6 +136,16 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
 const addDiscoveredCell = (team, point) => {
   const exists = team.discoveredCells.some((cell) => cell.x === point.x && cell.y === point.y);
   if (!exists) team.discoveredCells.push({ ...point });
+};
+
+const hasDiscoveredCell = (team, point) =>
+  team.discoveredCells.some((cell) => cell.x === point.x && cell.y === point.y);
+
+const addRevealedWall = (team, boardSize, wall) => {
+  const revealed = canonicalWall(wall, boardSize);
+  const key = wallKey(revealed, boardSize);
+  if (team.revealedWalls?.some((item) => wallKey(item, boardSize) === key)) return;
+  team.revealedWalls = [...(team.revealedWalls || []), revealed];
 };
 
 export const previewMove = (team, boardSize, direction) => {
@@ -126,6 +171,54 @@ export const previewMove = (team, boardSize, direction) => {
   return { blocked: false, reason: null, newPosition };
 };
 
+const resolveMovement = (state, team, teamId, direction, { usedQuestion, correct, awardScore }) => {
+  const movement = previewMove(team, state.config.boardSize, direction);
+  const success = Boolean(correct) && !movement.blocked;
+  let scoreDelta = 0;
+  let event = null;
+  let trap = null;
+
+  if (movement.blocked && ["wall", "border"].includes(movement.reason)) {
+    addRevealedWall(team, state.config.boardSize, {
+      x: team.position.x,
+      y: team.position.y,
+      side: DIRECTION_RULES[direction]?.side
+    });
+  }
+
+  if (success) {
+    team.position = movement.newPosition;
+    if (awardScore) {
+      const moveScore = team.effects?.doubleScore ? MOVE_SCORE * 2 : MOVE_SCORE;
+      if (team.effects?.doubleScore) team.effects.doubleScore = false;
+      team.score += moveScore;
+      scoreDelta = moveScore;
+    }
+    addDiscoveredCell(team, movement.newPosition);
+    trap = applyTrapAtPosition(state, teamId);
+    scoreDelta += trap?.scoreDelta || 0;
+
+    const eventTile = findEventTileAt(state.round.eventTiles, team.position);
+    event = applyEventTileEffect(state, teamId, eventTile);
+    scoreDelta += event?.scoreDelta || 0;
+  }
+
+  return {
+    teamId,
+    direction,
+    correct,
+    usedQuestion,
+    freeMove: !usedQuestion,
+    blocked: movement.blocked,
+    blockedReason: movement.reason,
+    success,
+    newPosition: team.position,
+    scoreDelta,
+    event,
+    trap
+  };
+};
+
 const allTeamsDone = (state) =>
   state.teams.every((team) => state.round.pendingAnswers[team.id]?.answered);
 
@@ -146,42 +239,14 @@ export const answerQuestion = (state, teamId, payload) => {
     return { ok: false, error: "Chỉ số đáp án phải là số nguyên." };
   }
 
-  const movement = previewMove(team, state.config.boardSize, pending.direction);
   const correct = answerIndex === pending.question.correctIndex;
-  const success = correct && !movement.blocked;
-  let scoreDelta = 0;
-  let event = null;
-  let trap = null;
-
-  if (success) {
-    team.position = movement.newPosition;
-    const moveScore = team.effects?.doubleScore ? MOVE_SCORE * 2 : MOVE_SCORE;
-    if (team.effects?.doubleScore) team.effects.doubleScore = false;
-    team.score += moveScore;
-    scoreDelta = moveScore;
-    addDiscoveredCell(team, movement.newPosition);
-    trap = applyTrapAtPosition(state, teamId);
-    scoreDelta += trap?.scoreDelta || 0;
-
-    const eventTile = findEventTileAt(state.round.eventTiles, team.position);
-    event = applyEventTileEffect(state, teamId, eventTile);
-    scoreDelta += event?.scoreDelta || 0;
-  }
-
-  const result = {
-    teamId,
-    direction: pending.direction,
+  const result = resolveMovement(state, team, teamId, pending.direction, {
+    usedQuestion: true,
     correct,
-    blocked: movement.blocked,
-    blockedReason: movement.reason,
-    success,
-    newPosition: team.position,
-    scoreDelta,
-    event,
-    trap
-  };
+    awardScore: true
+  });
 
-  const turnEnded = !success;
+  const turnEnded = !result.success;
   let roundComplete = false;
 
   if (turnEnded) {
