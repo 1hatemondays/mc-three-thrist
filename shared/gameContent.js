@@ -66,7 +66,7 @@ export const SUPPORT_ITEM_CATALOG = [
     color: "#f4e06d",
     lucideIcon: "lightbulb",
     minPrice: 10,
-    description: "Lộ một cạnh có tường/không quanh vị trí hiện tại."
+    description: "Gợi ý một hướng mở, ưu tiên dẫn đến ô chưa khám phá."
   },
   {
     type: SUPPORT_ITEM_TYPES.SHIELD,
