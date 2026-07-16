@@ -104,6 +104,7 @@ export const configureTeamCount = (state, payload = {}) => {
   state.teams = Array.from({ length: teamCount }, (_, index) => makeTeam(index));
   state.setup = { submissions: {}, complete: false, started: false };
   state.round = makeRound();
+  state.gameOver = null;
 
   return { ok: true };
 };
@@ -121,6 +122,7 @@ export const startGame = (state) => {
   state.round.auction = state.round.auction || { bids: {}, result: null };
   state.round.traps = state.round.traps || [];
   state.round.messages = state.round.messages || {};
+  state.gameOver = null;
   state.setup.started = true;
   refreshRoundEventTiles(state);
   return { ok: true };

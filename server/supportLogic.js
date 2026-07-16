@@ -1,6 +1,7 @@
 import { DIRECTIONS, ROUND_PHASES } from "../shared/constants.js";
 import { SUPPORT_ITEM_TYPES, getSupportItemMeta } from "../shared/gameContent.js";
 import { hasWall } from "../shared/maze.js";
+import { isGameOver } from "./gameOver.js";
 import { addRoundMessage, ensureRoundCollections, maybeFinishMovementRound } from "./roundFlow.js";
 
 const directionRules = [
@@ -87,6 +88,7 @@ const starMessage = (team) => {
 };
 
 export const useSupportItem = (state, teamId, payload = {}, random = Math.random) => {
+  if (isGameOver(state)) return { ok: false, error: "Trò chơi đã kết thúc." };
   ensureRoundCollections(state);
   const team = findTeam(state, teamId);
   if (!team) return { ok: false, error: "Hãy vào đội trước khi dùng vật phẩm." };

@@ -33,6 +33,7 @@ export const gameState = {
     boardSize: 6
   },
   teams: [],
+  gameOver: null,
   setup: {
     submissions: {},
     complete: false,
@@ -85,6 +86,7 @@ export const getPlayerState = (teamId) => {
   if (!team) return null;
   return {
     config: gameState.config,
+    gameOver: gameState.gameOver,
     team: {
       id: team.id,
       name: team.name,

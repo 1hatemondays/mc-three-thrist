@@ -1,5 +1,6 @@
 import { ROUND_PHASES } from "../shared/constants.js";
 import { AUCTION_ITEM_CATALOG, getSupportItemMeta } from "../shared/gameContent.js";
+import { isGameOver } from "./gameOver.js";
 import { addRoundMessage, makeAuctionState } from "./roundFlow.js";
 import { grantSupportItem } from "./supportLogic.js";
 
@@ -53,6 +54,7 @@ const resolveAuction = (state) => {
 };
 
 export const submitAuctionBid = (state, teamId, payload = {}) => {
+  if (isGameOver(state)) return { ok: false, error: "Trò chơi đã kết thúc." };
   if (state.round.phase !== ROUND_PHASES.AUCTION) return { ok: false, error: "Hiện không phải vòng đấu giá." };
   state.round.auction = state.round.auction || makeAuctionState();
   if (state.round.auction.bids?.[teamId]) return { ok: false, error: "Đội đã gửi giá đấu." };

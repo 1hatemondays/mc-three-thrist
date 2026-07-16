@@ -1,4 +1,5 @@
 import { ROUND_PHASES } from "../shared/constants.js";
+import { isGameOver } from "./gameOver.js";
 import { addRoundMessage } from "./roundFlow.js";
 import { consumeShield } from "./supportLogic.js";
 
@@ -10,6 +11,7 @@ const findTeam = (state, teamId) => state.teams.find((team) => team.id === teamI
 const publicTeam = (team) => team && ({ id: team.id, name: team.name, hp: team.hp, score: team.score });
 
 export const startCombat = (state, attackerId, random = Math.random) => {
+  if (isGameOver(state)) return null;
   const attacker = findTeam(state, attackerId);
   const defender = choose(state.teams.filter((team) => team.id !== attackerId), random);
   if (!attacker || !defender) return null;
@@ -63,6 +65,7 @@ export const getHostCombatState = (state) => {
 };
 
 export const submitCombatBet = (state, teamId, payload = {}) => {
+  if (isGameOver(state)) return { ok: false, error: "Trò chơi đã kết thúc." };
   const combat = state.round.combat;
   if (state.round.phase !== ROUND_PHASES.COMBAT || !combat) return { ok: false, error: "Hiện không có đối kháng." };
   if (![combat.attackerId, combat.defenderId].includes(teamId)) return { ok: false, error: "Đội không tham gia đối kháng này." };

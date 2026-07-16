@@ -19,6 +19,12 @@ const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
 const normalizeTeamCode = (value) => value.replace(/\s+/g, "").toLowerCase();
 const boardPointKey = (x, y) => `${x}:${y}`;
 const wallFromKey = (wall) => `${wall.x}:${wall.y}:${wall.side}`;
+const normalizeViewportWall = (wall) =>
+  wall?.side === "right"
+    ? { x: wall.x + 1, y: wall.y, side: "left" }
+    : wall?.side === "bottom"
+      ? { x: wall.x, y: wall.y + 1, side: "top" }
+      : wall;
 const loadSavedTeamSession = () => {
   try {
     return JSON.parse(window.localStorage.getItem(TEAM_SESSION_KEY) || "null");
@@ -326,34 +332,35 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
       moveFeedback?.knownCell === cell.offsetKey;
     return { ...cell, known };
   });
+  const impactWall = moveFeedback?.wallDirection
+    ? (() => {
+        const side =
+          moveFeedback.wallDirection === DIRECTIONS.UP
+            ? "top"
+            : moveFeedback.wallDirection === DIRECTIONS.RIGHT
+              ? "left"
+              : moveFeedback.wallDirection === DIRECTIONS.DOWN
+                ? "top"
+                : "left";
+        return moveFeedback.wallDirection === DIRECTIONS.RIGHT
+            ? { x: team.position.x + 1, y: team.position.y, side }
+            : moveFeedback.wallDirection === DIRECTIONS.DOWN
+              ? { x: team.position.x, y: team.position.y + 1, side }
+              : { x: team.position.x, y: team.position.y, side };
+      })()
+    : null;
+  const normalizedImpactWall = impactWall ? normalizeViewportWall(impactWall) : null;
+  const impactWallKey = normalizedImpactWall ? wallFromKey(normalizedImpactWall) : null;
   const visibleRevealedWalls = [
-    ...(team.revealedWalls || []).filter((wall) => {
+    ...((team.revealedWalls || []).map(normalizeViewportWall).filter((wall) => {
       const relX = wall.x - team.position.x + MOVEMENT_VIEW_RADIUS;
       const relY = wall.y - team.position.y + MOVEMENT_VIEW_RADIUS;
       return relX >= 0 && relX < MOVEMENT_VIEW_SIZE && relY >= 0 && relY < MOVEMENT_VIEW_SIZE;
-    }),
-    ...(moveFeedback?.wallDirection
-      ? [
-          (() => {
-            const vector = directionVectors[moveFeedback.wallDirection];
-            const side =
-              moveFeedback.wallDirection === DIRECTIONS.UP
-                ? "top"
-                : moveFeedback.wallDirection === DIRECTIONS.RIGHT
-                  ? "left"
-                  : moveFeedback.wallDirection === DIRECTIONS.DOWN
-                    ? "top"
-                    : "left";
-            const wall =
-              moveFeedback.wallDirection === DIRECTIONS.RIGHT
-                ? { x: team.position.x + 1, y: team.position.y, side }
-                : moveFeedback.wallDirection === DIRECTIONS.DOWN
-                  ? { x: team.position.x, y: team.position.y + 1, side }
-                  : { x: team.position.x, y: team.position.y, side };
-            return wall;
-          })()
-        ]
-      : [])
+    })).map((wall) => ({
+      ...wall,
+      impact: wallFromKey(wall) === impactWallKey
+    })),
+    ...(normalizedImpactWall ? [{ ...normalizedImpactWall, impact: true }] : [])
   ].filter((wall, index, list) => list.findIndex((item) => wallFromKey(item) === wallFromKey(wall)) === index);
 
   useEffect(() => () => clearTimeout(feedbackTimerRef.current), []);
@@ -437,7 +444,7 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
             return (
               <div
                 aria-hidden="true"
-                className={`movement-revealed-wall ${wall.side}`}
+                className={`movement-revealed-wall ${wall.side}${wall.impact ? " impact" : ""}`}
                 key={wallFromKey(wall)}
                 style={{
                   left: wall.side === "left" ? `calc(${relX * 20}% - 3.5px)` : `${relX * 20}%`,
@@ -929,7 +936,45 @@ const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
   );
 };
 
+const GameOverPanel = ({ gameOver, teamId }) => {
+  if (!gameOver) return null;
+
+  const myPlacement = gameOver.rankings.find((entry) => entry.teamId === teamId)?.placement;
+
+  return (
+    <section className="game-card game-over-card">
+      <div className="section-head">
+        <p>Kết thúc trò chơi</p>
+        <h2>{gameOver.winnerName} về đích đầu tiên</h2>
+      </div>
+      <p className="game-over-summary">
+        {myPlacement === 1 ? "Đội của bạn giành hạng 1." : "Đội của bạn xếp hạng " + (myPlacement || "—") + "."}
+      </p>
+      {gameOver.rankings.map((entry) => (
+        <div className={"leader-row" + (entry.placement === 1 ? " winner" : "")} key={entry.teamId}>
+          <span>#{entry.placement} · {entry.teamName}</span>
+          <strong>{entry.score} điểm / {entry.hp} máu</strong>
+        </div>
+      ))}
+    </section>
+  );
+};
+
 const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onAnswer, onCombatBet, onResolveEvent }) => {
+  if (state.gameOver) {
+    return (
+      <section className="gameplay two-col">
+        <div className="gameplay-left">
+          <GameOverPanel gameOver={state.gameOver} teamId={state.team.id} />
+        </div>
+        <div className="gameplay-right">
+          <NoticePanel messages={state.round?.messages || []} />
+          <Leaderboard teams={state.leaderboard || []} />
+        </div>
+      </section>
+    );
+  }
+
   const round = state.round;
   const pending = round?.pendingAnswer;
   const question = round?.currentQuestion;

@@ -218,6 +218,11 @@ main {
   text-align: right;
 }
 
+.rank.winner strong,
+.game-over-box strong {
+  color: var(--jade);
+}
+
 
 .admin-controls {
   display: grid;
