@@ -99,3 +99,47 @@ test("meteor shower item starts the shared quiz and is consumed", () => {
   assert.equal(state.round.phase, ROUND_PHASES.METEOR_SHOWER);
   assert.equal(state.teams[0].supportItems.length, 0);
 });
+
+test("direction hint prioritizes an open route to an unexplored cell", () => {
+  const state = makeState();
+  const team = state.teams[0];
+  team.position = { x: 1, y: 1 };
+  team.discoveredCells = [{ x: 1, y: 1 }, { x: 1, y: 0 }];
+  team.walls = [
+    { x: 1, y: 1, side: "left" },
+    { x: 1, y: 1, side: "right" }
+  ];
+  team.supportItems.push(item(SUPPORT_ITEM_TYPES.DIRECTION_HINT));
+
+  const result = useSupportItem(
+    state,
+    "team1",
+    { itemInstanceId: SUPPORT_ITEM_TYPES.DIRECTION_HINT + ":1" },
+    () => 0
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.result.hint.direction, "down");
+  assert.equal(result.result.hint.blocked, false);
+  assert.equal(result.result.hint.unexplored, true);
+  assert.deepEqual(result.result.hint.target, { x: 1, y: 2 });
+});
+
+test("direction hint randomizes between equally useful open routes", () => {
+  const state = makeState();
+  const team = state.teams[0];
+  team.position = { x: 1, y: 1 };
+  team.discoveredCells = [{ x: 1, y: 1 }];
+  team.supportItems.push(item(SUPPORT_ITEM_TYPES.DIRECTION_HINT));
+
+  const result = useSupportItem(
+    state,
+    "team1",
+    { itemInstanceId: SUPPORT_ITEM_TYPES.DIRECTION_HINT + ":1" },
+    () => 0.99
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.result.hint.direction, "left");
+  assert.equal(result.result.hint.unexplored, true);
+});

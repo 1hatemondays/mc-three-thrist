@@ -217,7 +217,6 @@ main {
 .rank strong {
   text-align: right;
 }
-
 .rank.is-active {
   margin-inline: -8px;
   padding-inline: 8px;
@@ -259,6 +258,11 @@ main {
 .turn-order-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.35;
+}
+
+.rank.winner strong,
+.game-over-box strong {
+  color: var(--jade);
 }
 
 

@@ -5,9 +5,10 @@ import {
   SUPPORT_ITEM_CATALOG,
   getEventTileMeta
 } from "../shared/gameContent.js";
+import { finishGameIfNeeded, isGameOver } from "./gameOver.js";
 import { startCombat } from "./combatLogic.js";
 import { hardQuestionBank, questionBank } from "./questionBank.js";
-import { addRoundMessage, finishGameIfNeeded } from "./roundFlow.js";
+import { addRoundMessage } from "./roundFlow.js";
 import { consumeShield, grantSupportItem } from "./supportLogic.js";
 
 const pointKey = ({ x, y }) => x + ":" + y;
@@ -324,6 +325,7 @@ const stripQuestionAnswer = (question) => {
 };
 
 export const resolvePendingEvent = (state, teamId, payload = {}) => {
+  if (isGameOver(state)) return { ok: false, error: "Trò chơi đã kết thúc." };
   const pending = state.round.pendingEvents?.[teamId];
   if (!pending) return { ok: false, error: "Kh\u00f4ng c\u00f3 s\u1ef1 ki\u1ec7n n\u00e0o \u0111ang ch\u1edd." };
 

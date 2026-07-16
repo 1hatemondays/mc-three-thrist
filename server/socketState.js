@@ -31,3 +31,11 @@ export const emitRoundResult = (io, result) => {
     io.to(ROOMS.team(team.id)).emit(EVENTS.ROUND_RESULT, result);
   }
 };
+
+export const emitGameOver = (io, gameOver) => {
+  io.to(ROOMS.HOSTS).emit(EVENTS.GAME_OVER, gameOver);
+
+  for (const team of gameState.teams) {
+    io.to(ROOMS.team(team.id)).emit(EVENTS.GAME_OVER, gameOver);
+  }
+};

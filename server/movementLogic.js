@@ -1,7 +1,8 @@
 import { DIRECTIONS, MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
 import { canonicalWall, hasWall, wallKey } from "../shared/maze.js";
 import { applyEventTileEffect, findEventTileAt, getPlayerPendingEvent } from "./eventLogic.js";
-import { finishGameIfNeeded, maybeFinishMovementRound } from "./roundFlow.js";
+import { finishGameIfNeeded, isGameOver } from "./gameOver.js";
+import { maybeFinishMovementRound } from "./roundFlow.js";
 import { applyTrapAtPosition } from "./supportLogic.js";
 
 const DIRECTION_RULES = {
@@ -56,6 +57,7 @@ const chooseQuestion = (questions, random = Math.random) => {
 export const chooseMoveQuestion = (state, teamId, payload, questions, random) => {
   const team = findTeam(state, teamId);
   if (!team) return { ok: false, error: "Hãy vào đội trước khi chọn hướng đi." };
+  if (isGameOver(state)) return { ok: false, error: "Trò chơi đã kết thúc." };
 
   if (!isSetupReady(state)) {
     return { ok: false, error: "Phần di chuyển bắt đầu sau khi host bấm Bắt đầu." };
@@ -239,6 +241,7 @@ const resolveMovement = (state, team, teamId, direction, { usedQuestion, correct
 export const answerQuestion = (state, teamId, payload) => {
   const team = findTeam(state, teamId);
   if (!team) return { ok: false, error: "Hãy vào đội trước khi trả lời." };
+  if (isGameOver(state)) return { ok: false, error: "Trò chơi đã kết thúc." };
 
   if (state.round.phase !== ROUND_PHASES.MOVEMENT) {
     return { ok: false, error: "Hiện không có câu hỏi di chuyển nào đang mở." };

@@ -1,6 +1,7 @@
 import { DIRECTIONS, ROUND_PHASES } from "../shared/constants.js";
 import { SUPPORT_ITEM_TYPES, getSupportItemMeta } from "../shared/gameContent.js";
 import { hasWall } from "../shared/maze.js";
+import { isGameOver } from "./gameOver.js";
 import { startMeteorShower } from "./meteorLogic.js";
 import { addRoundMessage, ensureRoundCollections, maybeFinishMovementRound } from "./roundFlow.js";
 
@@ -14,6 +15,11 @@ const directionRules = [
 const findTeam = (state, teamId) => state.teams.find((team) => team.id === teamId);
 const pointInside = (point, boardSize) =>
   Number.isInteger(point?.x) && Number.isInteger(point?.y) && point.x >= 0 && point.y >= 0 && point.x < boardSize && point.y < boardSize;
+
+const choose = (items, random = Math.random) => {
+  if (!items.length) return null;
+  return items[Math.min(Math.floor(random() * items.length), items.length - 1)];
+};
 
 export const makeSupportItem = (type, suffix = Date.now()) => {
   const meta = getSupportItemMeta(type);
@@ -47,19 +53,37 @@ export const consumeShield = (team) => {
   return team.supportItems.splice(index, 1)[0];
 };
 
-const edgeHint = (team, boardSize) => {
-  const rule = directionRules[0];
-  const target = { x: team.position.x + rule.dx, y: team.position.y + rule.dy };
-  const blocked = !pointInside(target, boardSize) || hasWall(team.walls || [], boardSize, team.position.x, team.position.y, rule.side);
+const edgeHint = (team, boardSize, random = Math.random) => {
+  const discoveredCells = new Set((team.discoveredCells || []).map((point) => point.x + ":" + point.y));
+  const routes = directionRules.map((rule) => {
+    const target = { x: team.position.x + rule.dx, y: team.position.y + rule.dy };
+    const blocked = !pointInside(target, boardSize) || hasWall(team.walls || [], boardSize, team.position.x, team.position.y, rule.side);
+
+    return {
+      ...rule,
+      target,
+      blocked,
+      unexplored: !blocked && !discoveredCells.has(target.x + ":" + target.y)
+    };
+  });
+  const unexploredOpenRoutes = routes.filter((route) => route.unexplored);
+  const openRoutes = routes.filter((route) => !route.blocked);
+  const route = choose(unexploredOpenRoutes.length ? unexploredOpenRoutes : openRoutes.length ? openRoutes : routes, random);
+
   return {
-    direction: rule.direction,
-    blocked,
-    text: "Cạnh " + rule.label + (blocked ? " có tường hoặc biên." : " không có tường.")
+    direction: route.direction,
+    blocked: route.blocked,
+    target: route.target,
+    unexplored: route.unexplored,
+    text: route.blocked
+      ? "Hướng " + route.label + " bị chặn bởi tường hoặc biên."
+      : "Hướng " + route.label + " đang mở" + (route.unexplored ? " và dẫn tới ô chưa khám phá." : ".")
   };
 };
 
 
-export const useSupportItem = (state, teamId, payload = {}) => {
+export const useSupportItem = (state, teamId, payload = {}, random = Math.random) => {
+  if (isGameOver(state)) return { ok: false, error: "Trò chơi đã kết thúc." };
   ensureRoundCollections(state);
   const team = findTeam(state, teamId);
   if (!team) return { ok: false, error: "Hãy vào đội trước khi dùng vật phẩm." };
@@ -74,7 +98,7 @@ export const useSupportItem = (state, teamId, payload = {}) => {
 
   if (item.type === SUPPORT_ITEM_TYPES.DIRECTION_HINT) {
     takeItem(team, item.instanceId);
-    const hint = edgeHint(team, state.config.boardSize);
+    const hint = edgeHint(team, state.config.boardSize, random);
     addRoundMessage(state, teamId, { title: "Gợi ý hướng", text: hint.text });
     return { ok: true, result: { type: item.type, hint } };
   }

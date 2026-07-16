@@ -3,7 +3,7 @@ import { gameState } from "../gameState.js";
 import { answerQuestion, chooseMoveQuestion, stripQuestionAnswer } from "../movementLogic.js";
 import { scheduleBombTimeout } from "./event.js";
 import { questionBank } from "../questionBank.js";
-import { emitAllStates, emitPlayerError, emitRoundResult } from "../socketState.js";
+import { emitAllStates, emitGameOver, emitPlayerError, emitRoundResult } from "../socketState.js";
 
 export const registerMovementHandlers = (io, socket) => {
   socket.on(EVENTS.MOVE_CHOOSE, (payload = {}) => {
@@ -18,6 +18,7 @@ export const registerMovementHandlers = (io, socket) => {
       emitRoundResult(io, result.result);
       scheduleBombTimeout(io);
       emitAllStates(io);
+      if (result.result.gameOver) emitGameOver(io, result.result.gameOver);
       return;
     }
 
@@ -39,5 +40,6 @@ export const registerMovementHandlers = (io, socket) => {
     emitRoundResult(io, result.result);
     emitAllStates(io);
     scheduleBombTimeout(io);
+    if (result.result.gameOver) emitGameOver(io, result.result.gameOver);
   });
 };

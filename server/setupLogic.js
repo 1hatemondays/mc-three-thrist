@@ -136,6 +136,7 @@ export const startGame = (state) => {
   state.round.bomb = state.round.bomb || null;
   state.round.traps = state.round.traps || [];
   state.round.messages = state.round.messages || {};
+  state.gameOver = null;
   state.setup.started = true;
   refreshRoundEventTiles(state);
   return { ok: true };

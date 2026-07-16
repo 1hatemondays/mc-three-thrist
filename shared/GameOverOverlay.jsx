@@ -42,9 +42,9 @@ export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
           <h3>{"K\u1ebft qu\u1ea3 chung cu\u1ed9c"}</h3>
           <ol>
             {(gameOver.rankings || []).map((team, index) => (
-              <li className={team.id === gameOver.winnerId ? "is-winner" : ""} key={team.id}>
-                <b>{String(index + 1).padStart(2, "0")}</b>
-                <span>{team.name}</span>
+              <li className={team.teamId === gameOver.winnerId ? "is-winner" : ""} key={team.teamId}>
+                <b>{String(team.placement || index + 1).padStart(2, "0")}</b>
+                <span>{team.teamName}</span>
                 <small>{team.score} {"\u0111i\u1ec3m"} / {team.hp} {"m\u00e1u"}</small>
               </li>
             ))}

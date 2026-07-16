@@ -48,6 +48,7 @@ const makeState = () => ({
   config: { boardSize: 6, teamCount: 2 },
   teams: [makeTeam("team1"), makeTeam("team2", { x: 0, y: 1 })],
   setup: { submissions: { team1: {}, team2: {} }, complete: true, started: true },
+  gameOver: null,
   round: {
     roundNumber: 1,
     phase: ROUND_PHASES.MOVEMENT,
@@ -146,19 +147,30 @@ test("correct open moves score 10 and keep the turn alive", () => {
   assert.equal(chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0).ok, true);
 });
 
-
-test("reaching the hidden end point finishes the game", () => {
+test("reaching a team's end point immediately ends the game and ranks that team first", () => {
   const state = makeState();
   state.teams[0].endPoint = { x: 1, y: 0 };
+  state.teams[1].score = 40;
+  state.teams[0].score = 10;
 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
   const result = answerQuestion(state, "team1", { answerIndex: 1 });
 
   assert.equal(state.round.phase, ROUND_PHASES.GAME_OVER);
-  assert.equal(state.gameOver.winnerId, "team1");
-  assert.equal(state.gameOver.rankings[0].id, "team1");
-  assert.equal(result.result.gameOver.winnerName, "team1");
+  assert.equal(result.ok, true);
+  assert.equal(result.result.success, true);
+  assert.equal(state.gameOver?.winnerId, "team1");
+  assert.equal(state.gameOver?.rankings?.[0]?.teamId, "team1");
+  assert.equal(state.gameOver?.rankings?.[0]?.placement, 1);
+  assert.equal(state.gameOver?.rankings?.[1]?.teamId, "team2");
+  assert.equal(state.gameOver?.rankings?.[1]?.placement, 2);
+  assert.equal(result.result.gameOver?.winnerName, "team1");
+  assert.match(
+    chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0).error,
+    /kết thúc/i
+  );
 });
+
 test("event tiles trigger after a successful move without changing the base move score", () => {
   const state = makeState();
   state.round.eventTiles = [{ id: "knowledge:1:0", type: EVENT_TILE_TYPES.KNOWLEDGE, x: 1, y: 0 }];

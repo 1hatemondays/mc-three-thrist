@@ -41,41 +41,6 @@ const consumeSkippedTurns = (state) => {
   }
 };
 
-const reachedEnd = (team) =>
-  team.endPoint && team.position.x === team.endPoint.x && team.position.y === team.endPoint.y;
-
-export const finishGameIfNeeded = (state, preferredWinnerId) => {
-  if (state.gameOver) return state.gameOver;
-
-  const reached = state.teams.filter(reachedEnd);
-  const winner = reached.find((team) => team.id === preferredWinnerId) || reached[0];
-  if (!winner) return null;
-
-  const rankings = [...state.teams]
-    .sort((a, b) =>
-      a.id === winner.id
-        ? -1
-        : b.id === winner.id
-          ? 1
-          : b.score - a.score || b.hp - a.hp || a.name.localeCompare(b.name)
-    )
-    .map(({ id, name, score, hp }) => ({ id, name, score, hp }));
-  state.round.activeTeamId = null;
-
-  state.round.phase = ROUND_PHASES.GAME_OVER;
-  state.round.currentQuestion = null;
-  state.round.pendingAnswers = {};
-  state.round.pendingEvents = {};
-  state.gameOver = {
-    winnerId: winner.id,
-    winnerName: winner.name,
-    reason: "reached-end",
-    rankings
-  };
-
-  return state.gameOver;
-};
-
 export const beginAuction = (state) => {
   ensureRoundCollections(state);
   state.round.phase = ROUND_PHASES.AUCTION;

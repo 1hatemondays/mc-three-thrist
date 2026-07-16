@@ -162,6 +162,8 @@ const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
 const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
   const teams = state?.teams || [];
   const round = state?.round;
+  const gameOver = state?.gameOver || null;
+  const rankingRows = gameOver?.rankings || teams;
   const setupStarted = Boolean(state?.setup?.started);
   const eventTiles = setupStarted ? round?.eventTiles || [] : [];
 
@@ -177,7 +179,9 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
         </div>
         <strong>
           {state
-            ? setupStarted
+            ? gameOver
+              ? "Chung cuộc"
+              : setupStarted
               ? "V\u00f2ng " + (round?.roundNumber || 1)
               : "\u0110ang thi\u1ebft l\u1eadp"
             : "\u0110ang k\u1ebft n\u1ed1i..."}
@@ -242,16 +246,18 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
         </div>
 
         <aside className="guide-panel">
-          <h2>{"V\u1ecb tr\u00ed \u0111\u1ed9i"}</h2>
-          {teams.map((team, index) => (
-            <div className="guide-team" key={team.id}>
+          <h2>{gameOver ? "Xếp hạng chung cuộc" : "Vị trí đội"}</h2>
+          {rankingRows.map((team, index) => (
+            <div className="guide-team" key={team.teamId || team.id}>
               <span className="team-marker round" style={{ "--team-color": teamColor(index) }}>
                 {teamIcon(index)}
               </span>
               <div>
-                <strong>{team.name}</strong>
+                <strong>{gameOver ? "#" + team.placement + " · " + team.teamName : team.name}</strong>
                 <small>
-                  ({(team.position?.x ?? 0) + 1}, {(team.position?.y ?? 0) + 1}) / {team.score} {"\u0111i\u1ec3m"}
+                  {gameOver
+                    ? team.score + " điểm / " + team.hp + " máu"
+                    : "(" + ((team.position?.x ?? 0) + 1) + ", " + ((team.position?.y ?? 0) + 1) + ") / " + team.score + " điểm"}
                 </small>
               </div>
             </div>
@@ -262,16 +268,26 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
   );
 };
 
-const HostRoundBoxes = ({ round }) => {
+const HostRoundBoxes = ({ gameOver, round }) => {
   if (!round) return null;
   const auction = round.auction;
   const combat = round.combat;
 
   return (
     <div className="host-boxes">
+      {gameOver && (
+        <section className="host-box game-over-box">
+          <p>Kết thúc</p>
+          <strong>{gameOver.winnerName} về đích đầu tiên</strong>
+          <small>Bảng xếp hạng cuối cùng đã được chốt.</small>
+        </section>
+      )}
+
       <section className="host-box">
         <p>{"Pha hiện tại"}</p>
-        <strong>{round.phase === "auction" ? "Đấu giá kín" : round.phase === "combat" ? "Đối kháng" : round.phase === "meteorShower" ? "Đấu trí" : round.phase === "bomb" ? "Bom" : "Di chuyển"}</strong>
+        <strong>
+          {gameOver ? "Trò chơi kết thúc" : round.phase === "auction" ? "Đấu giá kín" : round.phase === "combat" ? "Đối kháng" : round.phase === "meteorShower" ? "Đấu trí" : round.phase === "bomb" ? "Bom" : "Di chuyển"}
+        </strong>
         <small>{"Vòng " + (round.roundNumber || 1)}</small>
       </section>
 
@@ -393,6 +409,8 @@ export default function App() {
   const submitted = new Set(Object.keys(state?.setup?.submissions || {}));
   const setupPreviews = state?.setup?.previews || {};
   const setupStarted = Boolean(state?.setup?.started);
+  const gameOver = state?.gameOver || null;
+  const rankingRows = gameOver?.rankings || teams.map((team) => ({ teamId: team.id, teamName: team.name, score: team.score, hp: team.hp }));
   const isSetupReview = !setupStarted;
   const canStartGame = Boolean(state?.setup?.complete && !setupStarted);
   const isGuideScreen = window.location.pathname.replace(/\/+$/, "") === "/guide";
@@ -447,9 +465,11 @@ export default function App() {
           </a>
         </div>
 
-        <span>
+          <span>
           {state
-            ? teams.length + " đội đã vào / " + submitted.size + " đội đã nộp mê cung"
+            ? gameOver
+              ? "Trò chơi đã kết thúc"
+              : teams.length + " đội đã vào / " + submitted.size + " đội đã nộp mê cung"
             : "\u0110ang k\u1ebft n\u1ed1i..."}
         </span>
       </header>
@@ -491,12 +511,12 @@ export default function App() {
         </div>
 
         <aside className="leaderboard">
-          <HostRoundBoxes round={state?.round} />
+          <HostRoundBoxes gameOver={gameOver} round={state?.round} />
 
-          <h2>{"B\u1ea3ng \u0111i\u1ec3m"}</h2>
-          {teams.map((team) => (
-            <div className={"rank" + (state?.round?.activeTeamId === team.id ? " is-active" : "")} key={team.id}>
-              <span>{team.name}</span>
+          <h2>{gameOver ? "Xếp hạng chung cuộc" : "Bảng điểm"}</h2>
+          {rankingRows.map((team, index) => (
+            <div className={"rank" + (gameOver && index === 0 ? " winner" : state?.round?.activeTeamId === (team.teamId || team.id) ? " is-active" : "")} key={team.teamId || team.id}>
+              <span>{gameOver ? "#" + (team.placement || index + 1) + " · " + team.teamName : team.name}</span>
               <strong>{team.score} {"\u0111i\u1ec3m"} / {team.hp} {"m\u00e1u"}</strong>
             </div>
           ))}
@@ -506,7 +526,9 @@ export default function App() {
             <span>{"Tr\u1ea1ng th\u00e1i"}</span>
             <strong>
               {setupStarted
-                ? "\u0110ang ch\u01a1i"
+                ? gameOver
+                  ? "Đã kết thúc"
+                  : "\u0110ang ch\u01a1i"
                 : state?.setup?.complete
                   ? "Ch\u1edd b\u1eaft \u0111\u1ea7u"
                   : "\u0110ang n\u1ed9p m\u00ea cung"}

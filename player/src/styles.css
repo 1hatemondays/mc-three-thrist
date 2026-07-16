@@ -546,6 +546,12 @@ dd {
   pointer-events: none;
 }
 
+.movement-revealed-wall.impact {
+  animation:
+    revealWall 0.34s ease both,
+    wallImpactFlash 0.54s ease-out;
+}
+
 .movement-revealed-wall.top {
   width: 20%;
   height: 7px;
@@ -623,6 +629,21 @@ dd {
   }
 }
 
+@keyframes wallImpactFlash {
+  0% {
+    background: #ff7866;
+    box-shadow: 0 0 0 4px rgba(232, 74, 58, 0.28);
+  }
+  55% {
+    background: #ff7866;
+    box-shadow: 0 0 0 5px rgba(232, 74, 58, 0.2);
+  }
+  100% {
+    background: var(--line);
+    box-shadow: 0 0 0 3px rgba(240, 185, 75, 0.18);
+  }
+}
+
 @keyframes moveSuccessUp {
   from { transform: scale(1.22) translateY(-20%); }
   to { transform: scale(1.22) translateY(0); }
@@ -645,29 +666,29 @@ dd {
 
 @keyframes moveBlockedUp {
   0% { transform: scale(1.22) translateY(0); }
-  64% { transform: scale(1.22) translateY(12%); }
-  76% { transform: scale(1.22) translateY(9%); }
+  62% { transform: scale(1.22) translateY(7%); }
+  76% { transform: scale(1.22) translateY(5%); }
   100% { transform: scale(1.22) translateY(0); }
 }
 
 @keyframes moveBlockedRight {
   0% { transform: scale(1.22) translateX(0); }
-  64% { transform: scale(1.22) translateX(-12%); }
-  76% { transform: scale(1.22) translateX(-9%); }
+  62% { transform: scale(1.22) translateX(-7%); }
+  76% { transform: scale(1.22) translateX(-5%); }
   100% { transform: scale(1.22) translateX(0); }
 }
 
 @keyframes moveBlockedDown {
   0% { transform: scale(1.22) translateY(0); }
-  64% { transform: scale(1.22) translateY(-12%); }
-  76% { transform: scale(1.22) translateY(-9%); }
+  62% { transform: scale(1.22) translateY(-7%); }
+  76% { transform: scale(1.22) translateY(-5%); }
   100% { transform: scale(1.22) translateY(0); }
 }
 
 @keyframes moveBlockedLeft {
   0% { transform: scale(1.22) translateX(0); }
-  64% { transform: scale(1.22) translateX(12%); }
-  76% { transform: scale(1.22) translateX(9%); }
+  62% { transform: scale(1.22) translateX(7%); }
+  76% { transform: scale(1.22) translateX(5%); }
   100% { transform: scale(1.22) translateX(0); }
 }
 
@@ -892,6 +913,22 @@ dd {
 
 .leader-row strong {
   text-align: right;
+}
+
+.leader-row.winner {
+  color: var(--jade);
+}
+
+.game-over-card {
+  background: linear-gradient(180deg, #fff5d9 0%, #fff9e9 100%);
+  border-color: rgba(240, 185, 75, 0.52);
+}
+
+.game-over-summary {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 800;
 }
 
 @media (max-width: 560px) {
