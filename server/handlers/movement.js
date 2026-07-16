@@ -1,6 +1,7 @@
 import { EVENTS } from "../../shared/constants.js";
 import { gameState } from "../gameState.js";
 import { answerQuestion, chooseMoveQuestion, stripQuestionAnswer } from "../movementLogic.js";
+import { scheduleBombTimeout } from "./event.js";
 import { questionBank } from "../questionBank.js";
 import { emitAllStates, emitPlayerError, emitRoundResult } from "../socketState.js";
 
@@ -15,6 +16,7 @@ export const registerMovementHandlers = (io, socket) => {
 
     if (result.instant) {
       emitRoundResult(io, result.result);
+      scheduleBombTimeout(io);
       emitAllStates(io);
       return;
     }
@@ -36,5 +38,6 @@ export const registerMovementHandlers = (io, socket) => {
 
     emitRoundResult(io, result.result);
     emitAllStates(io);
+    scheduleBombTimeout(io);
   });
 };

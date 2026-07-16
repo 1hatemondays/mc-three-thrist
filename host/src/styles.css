@@ -218,6 +218,49 @@ main {
   text-align: right;
 }
 
+.rank.is-active {
+  margin-inline: -8px;
+  padding-inline: 8px;
+  border-left: 4px solid var(--gold);
+  background: rgba(240, 185, 75, 0.18);
+}
+
+.turn-order-row span {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.turn-order-row span b {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  color: var(--paper);
+  background: var(--line);
+}
+
+.turn-order-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.turn-order-actions button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--gold);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.turn-order-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
 
 .admin-controls {
   display: grid;

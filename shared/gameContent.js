@@ -3,7 +3,12 @@ export const EVENT_TILE_TYPES = {
   POSITION_SWAP: "position_swap",
   MYSTERY_BOX: "mystery_box",
   TELEPORT: "teleport",
-  KNOWLEDGE: "knowledge"
+  KNOWLEDGE: "knowledge",
+  MONSTER_ATTACK: "monster_attack",
+  METEOR_STRIKE: "meteor_strike",
+  PRISON: "prison",
+  BOMB: "bomb",
+  BLESSING: "blessing"
 };
 
 export const SUPPORT_ITEM_TYPES = {
@@ -12,7 +17,7 @@ export const SUPPORT_ITEM_TYPES = {
   DOUBLE_SCORE: "double_score",
   FREEZE_OPPONENT: "freeze_opponent",
   TRAP: "trap",
-  GUIDING_STAR: "guiding_star"
+  METEOR_SHOWER: "meteor_shower"
 };
 
 export const EVENT_TILE_CATALOG = [
@@ -55,6 +60,46 @@ export const EVENT_TILE_CATALOG = [
     color: "#f0b94b",
     lucideIcon: "brain",
     description: "Trả lời câu hỏi khó; đúng thì nhận thêm 10 điểm."
+  },
+  {
+    type: EVENT_TILE_TYPES.MONSTER_ATTACK,
+    name: "Qu\u00e1i v\u1eadt t\u1ea5n c\u00f4ng",
+    symbol: "MV",
+    color: "#bd473f",
+    lucideIcon: "skull",
+    description: "M\u1ed7i \u0111\u1ed9i tr\u1eeb 10 \u0111i\u1ec3m; kh\u00f4ng \u0111\u1ee7 \u0111i\u1ec3m th\u00ec m\u1ea5t 10 HP. L\u00e1 ch\u1eafn s\u1ebd b\u1ea3o v\u1ec7."
+  },
+  {
+    type: EVENT_TILE_TYPES.METEOR_STRIKE,
+    name: "M\u01b0a sao b\u0103ng",
+    symbol: "☄",
+    color: "#ff784f",
+    lucideIcon: "sparkles",
+    description: "T\u1ea5t c\u1ea3 \u0111\u1ed9i m\u1ea5t 10 HP; L\u00e1 ch\u1eafn s\u1ebd b\u1ea3o v\u1ec7."
+  },
+  {
+    type: EVENT_TILE_TYPES.PRISON,
+    name: "Nh\u1ed1t t\u00f9",
+    symbol: "TU",
+    color: "#777066",
+    lucideIcon: "lock-keyhole",
+    description: "\u0110\u1ed9i b\u01b0\u1edbc v\u00e0o b\u1ecb m\u1ea5t l\u01b0\u1ee3t hi\u1ec7n t\u1ea1i."
+  },
+  {
+    type: EVENT_TILE_TYPES.BOMB,
+    name: "Bom",
+    symbol: "BO",
+    color: "#1d3329",
+    lucideIcon: "bomb",
+    description: "Tr\u1ea3 l\u1eddi trong 10 gi\u00e2y \u0111\u1ec3 chuy\u1ec3n bom; sai ho\u1eb7c h\u1ebft gi\u1edd m\u1ea5t 30 HP."
+  },
+  {
+    type: EVENT_TILE_TYPES.BLESSING,
+    name: "Ban ph\u01b0\u1edbc",
+    symbol: "+",
+    color: "#65c8a2",
+    lucideIcon: "heart-handshake",
+    description: "T\u1ea5t c\u1ea3 \u0111\u1ed9i h\u1ed3i 10 HP, c\u00f3 th\u1ec3 v\u01b0\u1ee3t 100 HP."
   }
 ];
 
@@ -75,7 +120,7 @@ export const SUPPORT_ITEM_CATALOG = [
     color: "#8bd6e8",
     lucideIcon: "shield-check",
     minPrice: 20,
-    description: "Tự động miễn một lần thua đối kháng hoặc dính cạm bẫy."
+    description: "Tự động miễn một lần chịu sát thương từ đối kháng, cạm bẫy hoặc sự kiện toàn bản đồ."
   },
   {
     type: SUPPORT_ITEM_TYPES.DOUBLE_SCORE,
@@ -105,13 +150,13 @@ export const SUPPORT_ITEM_CATALOG = [
     description: "Đặt cạm bẫy ở một ô; đội bước vào bị trừ 1 điểm."
   },
   {
-    type: SUPPORT_ITEM_TYPES.GUIDING_STAR,
-    name: "Sao dẫn đường",
-    symbol: "ST",
-    color: "#fff0bd",
-    lucideIcon: "goal",
-    minPrice: 15,
-    description: "Cho biết đội đang xa hay gần đích."
+    type: SUPPORT_ITEM_TYPES.METEOR_SHOWER,
+    name: "\u0110\u1ea5u tr\u00ed",
+    symbol: "DT",
+    color: "#ff784f",
+    lucideIcon: "sparkles",
+    minPrice: 30,
+    description: "10 c\u00e2u h\u1ecfi tranh quy\u1ec1n b\u1eb1ng ph\u00edm Space; th\u1eafng +50 \u0111i\u1ec3m."
   }
 ];
 

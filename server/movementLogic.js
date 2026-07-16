@@ -1,7 +1,7 @@
 import { DIRECTIONS, MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
 import { canonicalWall, hasWall, wallKey } from "../shared/maze.js";
 import { applyEventTileEffect, findEventTileAt, getPlayerPendingEvent } from "./eventLogic.js";
-import { maybeFinishMovementRound } from "./roundFlow.js";
+import { finishGameIfNeeded, maybeFinishMovementRound } from "./roundFlow.js";
 import { applyTrapAtPosition } from "./supportLogic.js";
 
 const DIRECTION_RULES = {
@@ -24,6 +24,8 @@ export const getPlayerRoundState = (round, teamId) => {
   return {
     roundNumber: round.roundNumber,
     phase: round.phase,
+    turnOrder: round.turnOrder || [],
+    activeTeamId: round.activeTeamId || null,
     pendingEvent: getPlayerPendingEvent(round, teamId),
     currentQuestion: pending && !pending.answered ? stripQuestionAnswer(pending.question) : null,
     pendingAnswer: pending
@@ -58,6 +60,11 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
   if (!isSetupReady(state)) {
     return { ok: false, error: "Phần di chuyển bắt đầu sau khi host bấm Bắt đầu." };
   }
+  const turnOrder = state.round.turnOrder?.length
+    ? state.round.turnOrder
+    : state.teams.map((item) => item.id);
+  state.round.turnOrder = turnOrder;
+  state.round.activeTeamId = state.round.activeTeamId || turnOrder[0] || null;
 
   if (state.round.phase !== ROUND_PHASES.MOVEMENT) {
     return { ok: false, error: "Hiện chưa mở phần di chuyển." };
@@ -79,6 +86,9 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
   const direction = normalizeDirection(payload?.direction);
   if (!DIRECTION_RULES[direction]) {
     return { ok: false, error: "Hãy chọn hướng hợp lệ: lên, phải, xuống hoặc trái." };
+  }
+  if (state.round.activeTeamId !== teamId) {
+    return { ok: false, error: "Ch\u01b0a \u0111\u1ebfn l\u01b0\u1ee3t c\u1ee7a \u0111\u1ed9i n\u00e0y." };
   }
 
   const movement = previewMove(team, state.config.boardSize, direction);
@@ -177,6 +187,7 @@ const resolveMovement = (state, team, teamId, direction, { usedQuestion, correct
   let scoreDelta = 0;
   let event = null;
   let trap = null;
+  let gameOver = null;
 
   if (movement.blocked && ["wall", "border"].includes(movement.reason)) {
     addRevealedWall(team, state.config.boardSize, {
@@ -195,12 +206,17 @@ const resolveMovement = (state, team, teamId, direction, { usedQuestion, correct
       scoreDelta = moveScore;
     }
     addDiscoveredCell(team, movement.newPosition);
-    trap = applyTrapAtPosition(state, teamId);
-    scoreDelta += trap?.scoreDelta || 0;
+    gameOver = finishGameIfNeeded(state, teamId);
 
-    const eventTile = findEventTileAt(state.round.eventTiles, team.position);
-    event = applyEventTileEffect(state, teamId, eventTile);
-    scoreDelta += event?.scoreDelta || 0;
+    if (!gameOver) {
+      trap = applyTrapAtPosition(state, teamId);
+      scoreDelta += trap?.scoreDelta || 0;
+
+      const eventTile = findEventTileAt(state.round.eventTiles, team.position);
+      event = applyEventTileEffect(state, teamId, eventTile);
+      scoreDelta += event?.scoreDelta || 0;
+      gameOver = state.gameOver || null;
+    }
   }
 
   return {
@@ -215,12 +231,10 @@ const resolveMovement = (state, team, teamId, direction, { usedQuestion, correct
     newPosition: team.position,
     scoreDelta,
     event,
-    trap
+    trap,
+    gameOver
   };
 };
-
-const allTeamsDone = (state) =>
-  state.teams.every((team) => state.round.pendingAnswers[team.id]?.answered);
 
 export const answerQuestion = (state, teamId, payload) => {
   const team = findTeam(state, teamId);
@@ -233,6 +247,9 @@ export const answerQuestion = (state, teamId, payload) => {
   const pending = state.round.pendingAnswers[teamId];
   if (!pending) return { ok: false, error: "Hãy chọn hướng trước khi trả lời." };
   if (pending.answered) return { ok: false, error: "Câu hỏi này đã được trả lời." };
+  if (state.round.activeTeamId && state.round.activeTeamId !== teamId) {
+    return { ok: false, error: "Ch\u01b0a \u0111\u1ebfn l\u01b0\u1ee3t c\u1ee7a \u0111\u1ed9i n\u00e0y." };
+  }
 
   const answerIndex = Number(payload?.answerIndex);
   if (!Number.isInteger(answerIndex)) {
@@ -246,7 +263,7 @@ export const answerQuestion = (state, teamId, payload) => {
     awardScore: true
   });
 
-  const turnEnded = !result.success;
+  const turnEnded = !result.success || Boolean(result.event?.endsTurn);
   let roundComplete = false;
 
   if (turnEnded) {

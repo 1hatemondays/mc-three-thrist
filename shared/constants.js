@@ -3,12 +3,15 @@ export const EVENTS = {
   SETUP_SUBMIT_MAZE: "setup:submitMaze",
   SETUP_SET_TEAM_COUNT: "setup:setTeamCount",
   SETUP_START_GAME: "setup:startGame",
+  SETUP_SET_TURN_ORDER: "setup:setTurnOrder",
   MOVE_CHOOSE: "move:choose",
   QUESTION_ANSWER: "question:answer",
   AUCTION_BID: "auction:bid",
   COMBAT_BET: "combat:bet",
   EVENT_RESOLVE: "event:resolve",
   SUPPORT_USE: "support:use",
+  METEOR_BUZZ: "meteor:buzz",
+  METEOR_ANSWER: "meteor:answer",
   GAME_STATE: "game:state",
   ROUND_QUESTION: "round:question",
   ROUND_RESULT: "round:result",
@@ -25,7 +28,10 @@ export const ROOMS = {
 export const ROUND_PHASES = {
   MOVEMENT: "movement",
   AUCTION: "auction",
-  COMBAT: "combat"
+  COMBAT: "combat",
+  GAME_OVER: "gameOver",
+  METEOR_SHOWER: "meteorShower",
+  BOMB: "bomb"
 };
 
 export const DIRECTIONS = {

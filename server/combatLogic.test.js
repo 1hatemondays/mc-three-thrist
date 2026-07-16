@@ -48,13 +48,13 @@ test("duel event opens real sealed combat and resolves HP loss", () => {
   assert.equal("bets" in playerCombat, false);
   assert.equal("bets" in hostCombat, false);
 
-  assert.equal(submitCombatBet(state, "team1", { amount: 10 }).resolved, false);
+  assert.equal(submitCombatBet(state, "team1", { amount: 5 }).resolved, false);
   const result = submitCombatBet(state, "team2", { amount: 20 });
 
   assert.equal(result.resolved, true);
   assert.equal(state.round.phase, ROUND_PHASES.MOVEMENT);
   assert.equal(state.round.combat.result.winnerId, "team2");
-  assert.equal(state.teams[0].hp, 90);
+  assert.equal(state.teams[0].hp, 85);
   assert.equal(state.round.combat.bets, undefined);
 });
 

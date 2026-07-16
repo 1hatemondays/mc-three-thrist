@@ -9,6 +9,7 @@ import { registerAuctionHandlers } from "./handlers/auction.js";
 import { registerCombatHandlers } from "./handlers/combat.js";
 import { registerEventHandlers } from "./handlers/event.js";
 import { registerMovementHandlers } from "./handlers/movement.js";
+import { registerMeteorHandlers } from "./handlers/meteor.js";
 import { registerSetupHandlers } from "./handlers/setup.js";
 import { registerSupportHandlers } from "./handlers/support.js";
 
@@ -90,6 +91,7 @@ io.on("connection", (socket) => {
   registerCombatHandlers(io, socket);
   registerEventHandlers(io, socket);
   registerSupportHandlers(io, socket);
+  registerMeteorHandlers(io, socket);
 });
 
 server.listen(config.port, config.host, () => {

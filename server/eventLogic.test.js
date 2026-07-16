@@ -1,8 +1,66 @@
+
+test("global hazard events respect shields, points, health and blessing overflow", () => {
+  const monster = makeState();
+  monster.teams[0].supportItems.push({ type: SUPPORT_ITEM_TYPES.SHIELD, instanceId: "shield:1" });
+  monster.teams[1].score = 10;
+
+  applyEventTileEffect(monster, "team1", { type: EVENT_TILE_TYPES.MONSTER_ATTACK, x: 1, y: 0 });
+
+  assert.equal(monster.teams[0].supportItems.length, 0);
+  assert.equal(monster.teams[0].hp, 100);
+  assert.equal(monster.teams[1].score, 0);
+  assert.equal(monster.teams[1].hp, 100);
+  assert.equal(monster.teams[2].hp, 90);
+
+  const meteor = makeState();
+  meteor.teams[0].supportItems.push({ type: SUPPORT_ITEM_TYPES.SHIELD, instanceId: "shield:2" });
+  applyEventTileEffect(meteor, "team1", { type: EVENT_TILE_TYPES.METEOR_STRIKE, x: 1, y: 0 });
+  assert.equal(meteor.teams[0].hp, 100);
+  assert.equal(meteor.teams[1].hp, 90);
+  assert.equal(meteor.teams[2].hp, 90);
+
+  applyEventTileEffect(meteor, "team1", { type: EVENT_TILE_TYPES.BLESSING, x: 2, y: 0 });
+  assert.equal(meteor.teams[0].hp, 110);
+  assert.equal(meteor.teams[1].hp, 100);
+});
+
+test("prison marks the triggering event as turn-ending", () => {
+  const state = makeState();
+  const event = applyEventTileEffect(state, "team1", { type: EVENT_TILE_TYPES.PRISON, x: 1, y: 0 });
+  assert.equal(event.endsTurn, true);
+});
+
+test("bomb passes on a correct answer and explodes on wrong answer or timeout", () => {
+  const state = makeState();
+  applyEventTileEffect(state, "team1", { type: EVENT_TILE_TYPES.BOMB, x: 1, y: 0 }, () => 0);
+
+  const firstDeadline = state.round.bomb.deadline;
+  assert.equal(state.round.phase, "bomb");
+  assert.equal(getBombState(state, "team1", firstDeadline - 1).question.correctIndex, undefined);
+
+  const passed = resolveBombAnswer(state, "team1", { answerIndex: 1 }, () => 0, firstDeadline - 1);
+  assert.equal(passed.nextTeamId, "team2");
+  assert.equal(state.round.bomb.holderTeamId, "team2");
+
+  const secondDeadline = state.round.bomb.deadline;
+  const exploded = resolveBombAnswer(state, "team2", { answerIndex: 0 }, () => 0, secondDeadline - 1);
+  assert.equal(exploded.exploded, true);
+  assert.equal(state.teams[1].hp, 70);
+  assert.equal(state.round.phase, "movement");
+
+  const timeoutState = makeState();
+  applyEventTileEffect(timeoutState, "team1", { type: EVENT_TILE_TYPES.BOMB, x: 1, y: 0 }, () => 0);
+  assert.equal(resolveBombTimeout(timeoutState, timeoutState.round.bomb.deadline).hpLoss, 30);
+  assert.equal(timeoutState.teams[0].hp, 70);
+});
 import assert from "node:assert/strict";
 import test from "node:test";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES } from "../shared/gameContent.js";
 import {
   applyEventTileEffect,
+  getBombState,
+  resolveBombAnswer,
+  resolveBombTimeout,
   createEventTiles,
   resolvePendingEvent
 } from "./eventLogic.js";
@@ -22,7 +80,8 @@ const makeTeam = (id, position) => ({
   endPoint: { x: 5, y: 5 },
   walls: [],
   discoveredCells: [{ ...position }],
-  supportItems: []
+  supportItems: [],
+  effects: {}
 });
 
 const makeState = () => ({
@@ -34,6 +93,7 @@ const makeState = () => ({
     pendingAnswers: {},
     currentQuestion: null,
     eventTiles: [],
+    turnOrder: ["team1", "team2", "team3"],
     pendingEvents: {}
   }
 });
@@ -85,6 +145,20 @@ test("teleport event moves the team to a random cell and discovers it", () => {
   assert.deepEqual(state.teams[0].discoveredCells.at(-1), { x: 5, y: 5 });
 });
 
+
+test("teleporting onto the end point finishes the game", () => {
+  const state = makeState();
+
+  const result = applyEventTileEffect(
+    state,
+    "team1",
+    { type: EVENT_TILE_TYPES.TELEPORT, x: 1, y: 0 },
+    sequenceRandom([0.99])
+  );
+
+  assert.equal(result.gameOver.winnerId, "team1");
+  assert.equal(state.round.phase, "gameOver");
+});
 test("position swap event waits for the team to choose or skip", () => {
   const state = makeState();
   const eventResult = applyEventTileEffect(state, "team1", { type: EVENT_TILE_TYPES.POSITION_SWAP, x: 1, y: 0 });

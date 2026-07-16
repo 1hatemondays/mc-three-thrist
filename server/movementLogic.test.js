@@ -1,3 +1,15 @@
+
+test("prison event ends the triggering team's turn", () => {
+  const state = makeState();
+  state.round.eventTiles = [{ type: EVENT_TILE_TYPES.PRISON, x: 1, y: 0 }];
+
+  chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  const result = answerQuestion(state, "team1", { answerIndex: 1 });
+
+  assert.equal(result.result.event.endsTurn, true);
+  assert.equal(state.round.pendingAnswers.team1.answered, true);
+  assert.equal(state.round.activeTeamId, "team2");
+});
 import assert from "node:assert/strict";
 import test from "node:test";
 import { MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
@@ -134,6 +146,19 @@ test("correct open moves score 10 and keep the turn alive", () => {
   assert.equal(chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0).ok, true);
 });
 
+
+test("reaching the hidden end point finishes the game", () => {
+  const state = makeState();
+  state.teams[0].endPoint = { x: 1, y: 0 };
+
+  chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  const result = answerQuestion(state, "team1", { answerIndex: 1 });
+
+  assert.equal(state.round.phase, ROUND_PHASES.GAME_OVER);
+  assert.equal(state.gameOver.winnerId, "team1");
+  assert.equal(state.gameOver.rankings[0].id, "team1");
+  assert.equal(result.result.gameOver.winnerName, "team1");
+});
 test("event tiles trigger after a successful move without changing the base move score", () => {
   const state = makeState();
   state.round.eventTiles = [{ id: "knowledge:1:0", type: EVENT_TILE_TYPES.KNOWLEDGE, x: 1, y: 0 }];
@@ -191,7 +216,7 @@ test("hitting a maze wall ends the team's turn", () => {
   assert.equal(state.round.pendingAnswers.team1.answered, true);
 });
 
-test("starts sealed auction from round 2 after every team ends its turn", () => {
+test("starts a sealed auction after every two completed movement rounds", () => {
   const state = makeState();
   const eventTiles = [{ type: EVENT_TILE_TYPES.DUEL, x: 3, y: 3 }];
   state.round.eventTiles = eventTiles;
@@ -204,6 +229,17 @@ test("starts sealed auction from round 2 after every team ends its turn", () => 
   const result = answerQuestion(state, "team2", { answerIndex: 0 });
 
   assert.equal(result.roundComplete, true);
+  assert.equal(state.round.roundNumber, 2);
+  assert.equal(state.round.phase, ROUND_PHASES.MOVEMENT);
+
+  chooseMoveQuestion(state, "team1", { direction: "down" }, questions, () => 0);
+  answerQuestion(state, "team1", { answerIndex: 0 });
+  assert.equal(state.round.roundNumber, 2);
+
+  chooseMoveQuestion(state, "team2", { direction: "down" }, questions, () => 0);
+  const secondResult = answerQuestion(state, "team2", { answerIndex: 0 });
+
+  assert.equal(secondResult.roundComplete, true);
   assert.equal(state.round.roundNumber, 2);
   assert.equal(state.round.phase, ROUND_PHASES.AUCTION);
   assert.deepEqual(state.round.pendingAnswers, {});
@@ -225,4 +261,19 @@ test("prevents a team from choosing while answering or after its turn ended", ()
     chooseMoveQuestion(state, "team1", { direction: "down" }, questions, () => 0).error,
     /hoàn thành lượt/i
   );
+});
+
+test("only the active team can move and a failed turn advances to the next team", () => {
+  const state = makeState();
+
+  assert.match(
+    chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0).error,
+    /Ch\u01b0a \u0111\u1ebfn l\u01b0\u1ee3t/i
+  );
+
+  chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  answerQuestion(state, "team1", { answerIndex: 0 });
+
+  assert.equal(state.round.activeTeamId, "team2");
+  assert.equal(chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0).ok, true);
 });

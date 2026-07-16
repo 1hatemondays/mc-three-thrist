@@ -56,6 +56,8 @@ test("trap subtracts one point unless a shield absorbs it", () => {
   state.teams[1].supportItems.push(item(SUPPORT_ITEM_TYPES.SHIELD));
 
   assert.equal(useSupportItem(state, "team1", { itemInstanceId: SUPPORT_ITEM_TYPES.TRAP + ":1", x: 1, y: 0 }).ok, true);
+  state.round.turnOrder = ["team2", "team1"];
+  state.round.activeTeamId = "team2";
   chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0);
   const result = answerQuestion(state, "team2", { answerIndex: 0 });
 
@@ -79,14 +81,21 @@ test("freeze item immediately ends the target team's current movement turn", () 
   assert.equal(chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0).ok, false);
 });
 
-test("direction hint and guiding star create private notices", () => {
+test("direction hint creates a private notice", () => {
   const state = makeState();
-  state.teams[0].supportItems.push(item(SUPPORT_ITEM_TYPES.DIRECTION_HINT), item(SUPPORT_ITEM_TYPES.GUIDING_STAR));
+  state.teams[0].supportItems.push(item(SUPPORT_ITEM_TYPES.DIRECTION_HINT));
 
   assert.equal(useSupportItem(state, "team1", { itemInstanceId: SUPPORT_ITEM_TYPES.DIRECTION_HINT + ":1" }).ok, true);
-  assert.equal(useSupportItem(state, "team1", { itemInstanceId: SUPPORT_ITEM_TYPES.GUIDING_STAR + ":1" }).ok, true);
 
-  assert.equal(state.round.messages.team1.length, 2);
+  assert.equal(state.round.messages.team1.length, 1);
   assert.equal(typeof state.round.messages.team1[0].text, "string");
-  assert.equal(typeof state.round.messages.team1[1].text, "string");
+});
+
+test("meteor shower item starts the shared quiz and is consumed", () => {
+  const state = makeState();
+  state.teams[0].supportItems.push(item(SUPPORT_ITEM_TYPES.METEOR_SHOWER));
+
+  assert.equal(useSupportItem(state, "team1", { itemInstanceId: SUPPORT_ITEM_TYPES.METEOR_SHOWER + ":1" }).ok, true);
+  assert.equal(state.round.phase, ROUND_PHASES.METEOR_SHOWER);
+  assert.equal(state.teams[0].supportItems.length, 0);
 });

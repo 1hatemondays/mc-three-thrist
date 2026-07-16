@@ -1617,7 +1617,15 @@ dd {
 }
 
 .trap-row {
-  grid-template-columns: 76px 76px auto;
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) auto;
+}
+
+.coordinate-field {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
 }
 
 @media (max-width: 560px) {

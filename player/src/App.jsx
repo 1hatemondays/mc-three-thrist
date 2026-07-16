@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { DIRECTIONS, EVENTS, ROUND_PHASES } from "../../shared/constants.js";
+import { GameOverOverlay } from "../../shared/GameOverOverlay.jsx";
+import { BombOverlay } from "../../shared/BombOverlay.jsx";
+import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
 import smokeTexture from "./assets/smoke-2.png";
@@ -54,7 +57,9 @@ const directionVectors = {
 const phaseLabels = {
   [ROUND_PHASES.MOVEMENT]: "Di chuyển",
   [ROUND_PHASES.AUCTION]: "Đấu giá",
-  [ROUND_PHASES.COMBAT]: "Chiến đấu"
+  [ROUND_PHASES.COMBAT]: "Chiến đấu",
+  [ROUND_PHASES.METEOR_SHOWER]: "Đấu trí",
+  [ROUND_PHASES.BOMB]: "Bom"
 };
 const INTERIOR_EDGES = [
   ...Array.from({ length: BOARD_SIZE }, (_, y) =>
@@ -506,7 +511,9 @@ const QuestionCard = ({ question, answered, onAnswer }) => {
 const ResultCard = ({ result }) => {
   if (!result) return null;
 
-  const title = result.success
+  const title = result.skipped
+    ? "\u0110\u1ed9i b\u1ecb m\u1ea5t l\u01b0\u1ee3t do \u0110\u1ea5u tr\u00ed."
+    : result.success
     ? result.freeMove
       ? "\u0110\u00e3 di chuy\u1ec3n tr\u00ean l\u1ed1i \u0111\u00e3 kh\u00e1m ph\u00e1."
       : "\u0110\u00fang. \u0110\u1ed9i \u0111\u00e3 di chuy\u1ec3n."
@@ -821,7 +828,7 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
           <button className="combat-submit" disabled={!canSubmit} type="submit">
             Khóa điểm cược
           </button>
-          <p className="combat-rule">Điểm cược được giữ kín. Cược cao hơn thắng; hòa thì đội thách đấu thắng.</p>
+          <p className="combat-rule">Điểm cược được giữ kín. Đội thua mất HP bằng chênh lệch cược; hòa thì đội thách đấu thắng và không gây sát thương.</p>
         </form>
       )}
 
@@ -912,8 +919,14 @@ const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
                 </div>
               ) : item.type === SUPPORT_ITEM_TYPES.TRAP ? (
                 <div className="item-use-row trap-row">
-                  <input min="1" max="6" type="number" value={trapDraft(item).x} onChange={(event) => setTraps({ ...traps, [item.instanceId]: { ...trapDraft(item), x: event.target.value } })} />
-                  <input min="1" max="6" type="number" value={trapDraft(item).y} onChange={(event) => setTraps({ ...traps, [item.instanceId]: { ...trapDraft(item), y: event.target.value } })} />
+                  <label className="coordinate-field">
+                    <span>{"X \u00b7 Ngang (c\u1ed9t)"}</span>
+                    <input aria-label={"T\u1ecda \u0111\u1ed9 ngang, c\u1ed9t X"} min="1" max="6" type="number" value={trapDraft(item).x} onChange={(event) => setTraps({ ...traps, [item.instanceId]: { ...trapDraft(item), x: event.target.value } })} />
+                  </label>
+                  <label className="coordinate-field">
+                    <span>{"Y \u00b7 D\u1ecdc (h\u00e0ng)"}</span>
+                    <input aria-label={"T\u1ecda \u0111\u1ed9 d\u1ecdc, h\u00e0ng Y"} min="1" max="6" type="number" value={trapDraft(item).y} onChange={(event) => setTraps({ ...traps, [item.instanceId]: { ...trapDraft(item), y: event.target.value } })} />
+                  </label>
                   <button onClick={() => onUse({ itemInstanceId: item.instanceId, x: Number(trapDraft(item).x) - 1, y: Number(trapDraft(item).y) - 1 })} type="button">{"Đặt"}</button>
                 </div>
               ) : (
@@ -936,8 +949,11 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
   const result = pending?.result || lastResult;
   const movementOpen = round?.phase === ROUND_PHASES.MOVEMENT;
   const waitingForAnswer = Boolean(question && pending && !pending.answered);
-  const waitingForOthers = movementOpen && pending?.answered;
-  const canChooseDirection = movementOpen && !pending;
+  const isMyTurn = round?.activeTeamId === state.team.id;
+  const finishedTurn = movementOpen && pending?.answered;
+  const waitingForTurn = movementOpen && !isMyTurn && !finishedTurn;
+  const activeTeam = state.leaderboard?.find((team) => team.id === round?.activeTeamId);
+  const canChooseDirection = movementOpen && isMyTurn && !pending;
 
   return (
     <section className="gameplay two-col">
@@ -957,7 +973,8 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
           <div className="turn-note">
             {canChooseDirection && "Rê chuột vào cạnh để hiện hướng, hoặc chạm cạnh hai lần trên điện thoại để di chuyển."}
             {waitingForAnswer && "\u0110\u00e3 khóa hướng: " + directionLabels[pending.direction] + ". Trả lời câu hỏi để thử di chuyển."}
-            {waitingForOthers && "\u0110\u00e3 xong l\u01b0\u1ee3t. \u0110ang ch\u1edd c\u00e1c \u0111\u1ed9i c\u00f2n l\u1ea1i."}
+            {finishedTurn && "\u0110\u00e3 xong l\u01b0\u1ee3t. \u0110ang ch\u1edd \u0111\u1ed9i ti\u1ebfp theo."}
+            {waitingForTurn && "\u0110ang ch\u1edd l\u01b0\u1ee3t. Hi\u1ec7n l\u00e0 l\u01b0\u1ee3t c\u1ee7a " + (activeTeam?.name || "\u0111\u1ed9i kh\u00e1c") + "."}
             {round?.phase === ROUND_PHASES.AUCTION && "Đang mở vòng đấu giá kín."}
             {round?.phase === ROUND_PHASES.COMBAT && "Đang mở đối kháng kín."}
           </div>
@@ -1185,11 +1202,31 @@ export default function App() {
     socket.emit(EVENTS.SUPPORT_USE, payload);
   };
 
+  const buzzMeteor = () => {
+    socket.emit(EVENTS.METEOR_BUZZ);
+  };
+
+  const answerMeteor = (answerIndex) => {
+    socket.emit(EVENTS.METEOR_ANSWER, { answerIndex });
+  };
+
   const visibleError = localError || state?.error;
 
   return (
     <main>
+      <GameOverOverlay gameOver={state?.gameOver} currentTeamId={state?.team?.id} />
       <EventReveal reveal={reveal} onClose={() => setReveal(null)} />
+      <BombOverlay
+        bomb={state?.round?.bomb}
+        currentTeamId={state?.team?.id}
+        onAnswer={(answerIndex) => resolveEvent({ answerIndex })}
+      />
+      <MeteorShowerOverlay
+        currentTeamId={state?.team?.id}
+        meteor={state?.round?.meteorShower}
+        onAnswer={answerMeteor}
+        onBuzz={buzzMeteor}
+      />
       <section className={state?.setup?.started ? "panel playing" : "panel"}>
         <p>Màn hình đội chơi</p>
         <h1>{APP_TITLE}</h1>

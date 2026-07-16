@@ -42,7 +42,7 @@ test("auction exposes starting prices but never exposes sealed bids", () => {
   assert.equal(playerAuction.items.find((item) => item.type === SUPPORT_ITEM_TYPES.DOUBLE_SCORE).minPrice, 20);
   assert.equal(playerAuction.items.find((item) => item.type === SUPPORT_ITEM_TYPES.FREEZE_OPPONENT).minPrice, 25);
   assert.equal(playerAuction.items.find((item) => item.type === SUPPORT_ITEM_TYPES.TRAP).minPrice, 25);
-  assert.equal(playerAuction.items.find((item) => item.type === SUPPORT_ITEM_TYPES.GUIDING_STAR).minPrice, 15);
+  assert.equal(playerAuction.items.find((item) => item.type === SUPPORT_ITEM_TYPES.METEOR_SHOWER).minPrice, 30);
 
   assert.equal(submitAuctionBid(state, "team1", { itemId: SUPPORT_ITEM_TYPES.DIRECTION_HINT, amount: 9 }).ok, false);
   assert.equal(submitAuctionBid(state, "team1", { itemId: SUPPORT_ITEM_TYPES.DIRECTION_HINT, amount: 10 }).ok, true);
@@ -66,6 +66,7 @@ test("auction resolves after every team bids and awards highest sealed bids", ()
   assert.equal(result.ok, true);
   assert.equal(result.resolved, true);
   assert.equal(state.round.phase, ROUND_PHASES.MOVEMENT);
+  assert.equal(state.round.roundNumber, 3);
   assert.equal(state.teams[1].score, 25);
   assert.equal(state.teams[1].supportItems[0].type, SUPPORT_ITEM_TYPES.SHIELD);
   assert.equal(state.teams[0].supportItems.length, 0);

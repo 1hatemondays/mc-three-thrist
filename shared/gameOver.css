@@ -1,0 +1,198 @@
+@keyframes gameOverEnter {
+  from { opacity: 0; transform: translateY(28px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes gameOverParticle {
+  0% { opacity: 0; transform: translateY(-12vh) rotate(var(--go-spin)); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(112vh) rotate(calc(var(--go-spin) + 620deg)); }
+}
+
+.game-over-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: clamp(16px, 4vw, 48px);
+  overflow: hidden;
+  color: #fff9e9;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(47, 138, 104, 0.36), transparent 34%),
+    radial-gradient(circle at 82% 85%, rgba(240, 185, 75, 0.2), transparent 30%),
+    rgba(8, 20, 14, 0.97);
+}
+
+.game-over-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background:
+    linear-gradient(90deg, rgba(255, 249, 233, 0.14) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(rgba(255, 249, 233, 0.12) 1px, transparent 1px) 0 0 / 48px 48px;
+}
+
+.game-over-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.game-over-particles i {
+  position: absolute;
+  top: -20px;
+  left: var(--go-left);
+  width: 8px;
+  height: 18px;
+  background: var(--gold, #f0b94b);
+  animation: gameOverParticle 4.8s linear var(--go-delay) infinite;
+}
+
+.game-over-particles i:nth-child(3n) { background: var(--jade, #2f8a68); }
+.game-over-particles i:nth-child(3n + 1) { width: 14px; height: 7px; background: var(--coral, #ef8f6b); }
+
+.game-over-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.88fr);
+  width: min(100%, 900px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  border: 2px solid var(--gold, #f0b94b);
+  background: #101713;
+  box-shadow: 12px 12px 0 rgba(240, 185, 75, 0.26);
+  animation: gameOverEnter 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.game-over-heading {
+  grid-column: 1 / -1;
+  padding: clamp(22px, 5vw, 46px);
+  border-bottom: 1px solid rgba(240, 185, 75, 0.34);
+}
+
+.game-over-heading p {
+  margin: 0 0 8px;
+  color: var(--gold, #f0b94b);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.game-over-heading h2 {
+  margin: 0;
+  color: #fff9e9;
+  font-family: Cambria, "Times New Roman", serif;
+  font-size: clamp(62px, 12vw, 126px);
+  font-weight: 900;
+  line-height: 0.78;
+  letter-spacing: -0.06em;
+}
+
+.game-over-heading h2 strong {
+  color: var(--gold, #f0b94b);
+  font-weight: inherit;
+}
+
+.game-over-champion {
+  display: flex;
+  min-height: 250px;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: clamp(24px, 5vw, 46px);
+  color: #101713;
+  background: var(--gold, #f0b94b);
+}
+
+.game-over-champion > span {
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: 0.12em;
+}
+
+.game-over-champion > strong {
+  margin: 8px 0 12px;
+  overflow-wrap: anywhere;
+  font-size: clamp(34px, 6vw, 62px);
+  font-weight: 1000;
+  line-height: 0.92;
+}
+
+.game-over-champion p {
+  margin: 0;
+  color: rgba(16, 23, 19, 0.72);
+  font-weight: 900;
+}
+
+.game-over-standings {
+  padding: 28px;
+  background: #17241d;
+}
+
+.game-over-standings h3 {
+  margin: 0 0 18px;
+  color: #fff9e9;
+  font-size: 18px;
+}
+
+.game-over-standings ol {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.game-over-standings li {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 2px 10px;
+  align-items: center;
+  padding: 11px 12px;
+  border-left: 3px solid rgba(255, 249, 233, 0.18);
+  background: rgba(255, 249, 233, 0.06);
+}
+
+.game-over-standings li.is-winner {
+  border-left-color: var(--gold, #f0b94b);
+  background: rgba(240, 185, 75, 0.12);
+}
+
+.game-over-standings li b {
+  grid-row: 1 / 3;
+  color: var(--gold, #f0b94b);
+  font-size: 18px;
+}
+
+.game-over-standings li span {
+  overflow: hidden;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-over-standings li small {
+  color: rgba(255, 249, 233, 0.62);
+  font-weight: 800;
+}
+
+@media (max-width: 700px) {
+  .game-over-overlay { padding: 14px; }
+  .game-over-card { grid-template-columns: 1fr; }
+  .game-over-heading { grid-column: auto; }
+  .game-over-heading h2 span,
+  .game-over-heading h2 strong { display: block; }
+  .game-over-heading h2 { line-height: 0.82; }
+  .game-over-champion { min-height: 180px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-over-card { animation: none; }
+  .game-over-particles { display: none; }
+}

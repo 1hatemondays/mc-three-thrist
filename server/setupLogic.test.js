@@ -5,6 +5,7 @@ import {
   getHostSetupPreviewMap,
   getSetupSummary,
   startGame,
+  setTurnOrder,
   validateMazeSubmission
 } from "./setupLogic.js";
 
@@ -279,4 +280,22 @@ test("builds host setup previews keyed by the submitting team", () => {
   assert.deepEqual(previews.team1.walls, walls);
   assert.equal(state.teams[1].startPoint, null);
   assert.equal(previews.team2, undefined);
+
+});
+test("host can set the turn order before the game starts", () => {
+  const state = makeState();
+  const teamIds = ["team3", "team1", "team2"];
+
+  assert.equal(setTurnOrder(state, { teamIds }).ok, true);
+  assert.deepEqual(state.round.turnOrder, teamIds);
+  assert.equal(state.round.activeTeamId, null);
+
+  state.setup.complete = true;
+  state.teams.forEach((team) => {
+    team.startPoint = { x: 0, y: 0 };
+  });
+  assert.equal(startGame(state).ok, true);
+  assert.equal(state.round.activeTeamId, "team3");
+  assert.equal(setTurnOrder(state, { teamIds: [...teamIds].reverse() }).ok, false);
+  assert.deepEqual(state.round.turnOrder, teamIds);
 });

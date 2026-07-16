@@ -85,20 +85,21 @@ export const submitCombatBet = (state, teamId, payload = {}) => {
 
   const winner = defenderBet > attackerBet ? defender : attacker;
   const loser = winner.id === attacker.id ? defender : attacker;
-  const shield = consumeShield(loser);
-  if (!shield) loser.hp = Math.max(0, loser.hp - 10);
+  const damage = Math.abs(attackerBet - defenderBet);
+  const shield = damage > 0 ? consumeShield(loser) : null;
+  if (!shield) loser.hp = Math.max(0, loser.hp - damage);
 
   combat.result = {
     winnerId: winner.id,
     winnerName: winner.name,
     loserId: loser.id,
     loserName: loser.name,
-    hpLoss: shield ? 0 : 10,
+    hpLoss: shield ? 0 : damage,
     shielded: Boolean(shield)
   };
   delete combat.bets;
   state.round.phase = ROUND_PHASES.MOVEMENT;
   addRoundMessage(state, winner.id, { title: "Thắng đối kháng", text: "Đội thắng đối kháng." });
-  addRoundMessage(state, loser.id, { title: "Thua đối kháng", text: shield ? "Lá chắn đã chặn sát thương." : "Mất 10 máu." });
+  addRoundMessage(state, loser.id, { title: "Thua đối kháng", text: shield ? "Lá chắn đã chặn sát thương." : "Mất " + damage + " máu." });
   return { ok: true, resolved: true, result: combat.result };
 };

@@ -1,6 +1,8 @@
 import { getPlayerRoundState } from "./movementLogic.js";
 import { getHostAuctionState, getPlayerAuctionState } from "./auctionLogic.js";
 import { getHostCombatState, getPlayerCombatState } from "./combatLogic.js";
+import { getBombState } from "./eventLogic.js";
+import { getMeteorShowerState } from "./meteorLogic.js";
 import { getHostSetupPreviewMap, getSetupSummary } from "./setupLogic.js";
 
 const cleanTeamName = (teamName) => String(teamName || "").trim().replace(/\s+/g, " ").slice(0, 40);
@@ -38,13 +40,18 @@ export const gameState = {
     complete: false,
     started: false
   },
+  gameOver: null,
   round: {
     roundNumber: 1,
     phase: "movement",
     pendingAnswers: {},
     currentQuestion: null,
     eventTiles: [],
-    pendingEvents: {}
+    turnOrder: [],
+    activeTeamId: null,
+    pendingEvents: {},
+    meteorShower: null,
+    bomb: null
   }
 };
 
@@ -63,6 +70,7 @@ export const ensureTeam = (state, teamId, teamName) => {
 
   const team = makeTeam(teamId, state.teams.length, teamName);
   state.teams.push(team);
+  state.round.turnOrder = [...(state.round.turnOrder || []), team.id];
   state.config.teamCount = state.teams.length;
   return team;
 };
@@ -72,7 +80,9 @@ export const getHostState = () => ({
   round: {
     ...gameState.round,
     auction: getHostAuctionState(gameState),
-    combat: getHostCombatState(gameState)
+    combat: getHostCombatState(gameState),
+    meteorShower: getMeteorShowerState(gameState),
+    bomb: getBombState(gameState)
   },
   setup: {
     ...gameState.setup,
@@ -85,6 +95,7 @@ export const getPlayerState = (teamId) => {
   if (!team) return null;
   return {
     config: gameState.config,
+    gameOver: gameState.gameOver,
     team: {
       id: team.id,
       name: team.name,
@@ -101,6 +112,8 @@ export const getPlayerState = (teamId) => {
       ...getPlayerRoundState(gameState.round, teamId),
       auction: getPlayerAuctionState(gameState, teamId),
       combat: getPlayerCombatState(gameState, teamId),
+      meteorShower: getMeteorShowerState(gameState, teamId),
+      bomb: getBombState(gameState, teamId),
       messages: gameState.round.messages?.[teamId] || []
     },
     setup: getSetupSummary(gameState, teamId)

@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { EVENTS } from "../../shared/constants.js";
+import { GameOverOverlay } from "../../shared/GameOverOverlay.jsx";
+import { BombOverlay } from "../../shared/BombOverlay.jsx";
+import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
 import { getEventTileMeta } from "../../shared/gameContent.js";
 import { hasWall } from "../../shared/maze.js";
 
@@ -164,6 +167,9 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
 
   return (
     <main className="guide-screen">
+      <GameOverOverlay gameOver={state?.gameOver} />
+      <BombOverlay bomb={state?.round?.bomb} />
+      <MeteorShowerOverlay meteor={state?.round?.meteorShower} />
       <header className="guide-top">
         <div>
           <p>{"M\u00e0n d\u1eabn tr\u00f2 ch\u01a1i"}</p>
@@ -265,7 +271,7 @@ const HostRoundBoxes = ({ round }) => {
     <div className="host-boxes">
       <section className="host-box">
         <p>{"Pha hiện tại"}</p>
-        <strong>{round.phase === "auction" ? "Đấu giá kín" : round.phase === "combat" ? "Đối kháng" : "Di chuyển"}</strong>
+        <strong>{round.phase === "auction" ? "Đấu giá kín" : round.phase === "combat" ? "Đối kháng" : round.phase === "meteorShower" ? "Đấu trí" : round.phase === "bomb" ? "Bom" : "Di chuyển"}</strong>
         <small>{"Vòng " + (round.roundNumber || 1)}</small>
       </section>
 
@@ -390,6 +396,19 @@ export default function App() {
   const isSetupReview = !setupStarted;
   const canStartGame = Boolean(state?.setup?.complete && !setupStarted);
   const isGuideScreen = window.location.pathname.replace(/\/+$/, "") === "/guide";
+  const turnOrder = state?.round?.turnOrder?.length
+    ? state.round.turnOrder
+    : teams.map((team) => team.id);
+  const orderedTeams = turnOrder
+    .map((teamId) => teams.find((team) => team.id === teamId))
+    .filter(Boolean);
+
+  const moveTeam = (index, offset) => {
+    const nextOrder = [...turnOrder];
+    [nextOrder[index], nextOrder[index + offset]] = [nextOrder[index + offset], nextOrder[index]];
+    socketRef.current?.emit(EVENTS.SETUP_SET_TURN_ORDER, { teamIds: nextOrder });
+  };
+
 
   const startGame = () => {
     socketRef.current?.emit(EVENTS.SETUP_START_GAME);
@@ -409,6 +428,9 @@ export default function App() {
 
   return (
     <main>
+      <GameOverOverlay gameOver={state?.gameOver} />
+      <BombOverlay bomb={state?.round?.bomb} />
+      <MeteorShowerOverlay meteor={state?.round?.meteorShower} />
       <header className="topbar">
         <div>
           <p>{"M\u00e0n h\u00ecnh host"}</p>
@@ -473,7 +495,7 @@ export default function App() {
 
           <h2>{"B\u1ea3ng \u0111i\u1ec3m"}</h2>
           {teams.map((team) => (
-            <div className="rank" key={team.id}>
+            <div className={"rank" + (state?.round?.activeTeamId === team.id ? " is-active" : "")} key={team.id}>
               <span>{team.name}</span>
               <strong>{team.score} {"\u0111i\u1ec3m"} / {team.hp} {"m\u00e1u"}</strong>
             </div>
@@ -489,6 +511,36 @@ export default function App() {
                   ? "Ch\u1edd b\u1eaft \u0111\u1ea7u"
                   : "\u0110ang n\u1ed9p m\u00ea cung"}
             </strong>
+          </div>
+
+          <h2 className="setup-title">{"Th\u1ee9 t\u1ef1 l\u01b0\u1ee3t ch\u01a1i"}</h2>
+          <div className="turn-order">
+            {orderedTeams.map((team, index) => (
+              <div
+                className={"rank turn-order-row" + (state?.round?.activeTeamId === team.id ? " is-active" : "")}
+                key={team.id + "-turn"}
+              >
+                <span><b>{index + 1}</b>{team.name}</span>
+                {setupStarted ? (
+                  <strong>{state?.round?.activeTeamId === team.id ? "\u0110ang l\u01b0\u1ee3t" : "Ch\u1edd"}</strong>
+                ) : (
+                  <div className="turn-order-actions">
+                    <button
+                      aria-label={"\u0110\u01b0a " + team.name + " l\u00ean"}
+                      disabled={index === 0}
+                      onClick={() => moveTeam(index, -1)}
+                      type="button"
+                    >{"\u2191"}</button>
+                    <button
+                      aria-label={"\u0110\u01b0a " + team.name + " xu\u1ed1ng"}
+                      disabled={index === orderedTeams.length - 1}
+                      onClick={() => moveTeam(index, 1)}
+                      type="button"
+                    >{"\u2193"}</button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
           {teams.map((team) => (
             <div className="rank" key={team.id + "-setup"}>

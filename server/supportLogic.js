@@ -1,6 +1,7 @@
 import { DIRECTIONS, ROUND_PHASES } from "../shared/constants.js";
 import { SUPPORT_ITEM_TYPES, getSupportItemMeta } from "../shared/gameContent.js";
 import { hasWall } from "../shared/maze.js";
+import { startMeteorShower } from "./meteorLogic.js";
 import { addRoundMessage, ensureRoundCollections, maybeFinishMovementRound } from "./roundFlow.js";
 
 const directionRules = [
@@ -57,12 +58,6 @@ const edgeHint = (team, boardSize) => {
   };
 };
 
-const starMessage = (team) => {
-  const distance = Math.abs((team.endPoint?.x ?? team.position.x) - team.position.x) + Math.abs((team.endPoint?.y ?? team.position.y) - team.position.y);
-  if (distance <= 3) return "Sao dẫn đường: đội đang gần đích.";
-  if (distance <= 6) return "Sao dẫn đường: đội đang ở khoảng giữa.";
-  return "Sao dẫn đường: đội còn xa đích.";
-};
 
 export const useSupportItem = (state, teamId, payload = {}) => {
   ensureRoundCollections(state);
@@ -84,11 +79,11 @@ export const useSupportItem = (state, teamId, payload = {}) => {
     return { ok: true, result: { type: item.type, hint } };
   }
 
-  if (item.type === SUPPORT_ITEM_TYPES.GUIDING_STAR) {
+  if (item.type === SUPPORT_ITEM_TYPES.METEOR_SHOWER) {
+    const started = startMeteorShower(state, teamId);
+    if (!started.ok) return started;
     takeItem(team, item.instanceId);
-    const text = starMessage(team);
-    addRoundMessage(state, teamId, { title: "Sao dẫn đường", text });
-    return { ok: true, result: { type: item.type, text } };
+    return { ok: true, result: { type: item.type } };
   }
 
   if (item.type === SUPPORT_ITEM_TYPES.DOUBLE_SCORE) {

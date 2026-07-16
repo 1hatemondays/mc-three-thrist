@@ -76,15 +76,19 @@ export const finalizeMazeAssignments = (state, random = Math.random) => {
   return { ok: true };
 };
 
-const makeRound = () => ({
+const makeRound = (turnOrder = []) => ({
   roundNumber: 1,
   phase: "movement",
+  turnOrder: [...turnOrder],
+  activeTeamId: null,
   pendingAnswers: {},
   currentQuestion: null,
   eventTiles: [],
   pendingEvents: {},
   auction: { bids: {}, result: null },
   combat: null,
+  meteorShower: null,
+  bomb: null,
   traps: [],
   messages: {}
 });
@@ -103,7 +107,8 @@ export const configureTeamCount = (state, payload = {}) => {
   state.config.teamCount = teamCount;
   state.teams = Array.from({ length: teamCount }, (_, index) => makeTeam(index));
   state.setup = { submissions: {}, complete: false, started: false };
-  state.round = makeRound();
+  state.gameOver = null;
+  state.round = makeRound(state.teams.map((team) => team.id));
 
   return { ok: true };
 };
@@ -115,14 +120,45 @@ export const startGame = (state) => {
     return { ok: false, error: "Chưa đủ mê cung để bắt đầu." };
   }
 
-  state.round = state.round || makeRound();
+  const teamIds = state.teams.map((team) => team.id);
+  state.round = state.round || makeRound(teamIds);
+  const savedOrder = state.round.turnOrder || [];
+  state.round.turnOrder =
+    savedOrder.length === teamIds.length &&
+    savedOrder.every((teamId) => teamIds.includes(teamId))
+      ? savedOrder
+      : teamIds;
+  state.round.activeTeamId = state.round.turnOrder[0] || null;
   state.round.pendingEvents = state.round.pendingEvents || {};
   state.round.eventTiles = state.round.eventTiles || [];
   state.round.auction = state.round.auction || { bids: {}, result: null };
+  state.round.meteorShower = state.round.meteorShower || null;
+  state.round.bomb = state.round.bomb || null;
   state.round.traps = state.round.traps || [];
   state.round.messages = state.round.messages || {};
   state.setup.started = true;
   refreshRoundEventTiles(state);
+  return { ok: true };
+};
+
+export const setTurnOrder = (state, payload = {}) => {
+  if (state.setup?.started) {
+    return { ok: false, error: "Ch\u1ec9 \u0111\u01b0\u1ee3c \u0111\u1ed5i th\u1ee9 t\u1ef1 tr\u01b0\u1edbc khi tr\u00f2 ch\u01a1i b\u1eaft \u0111\u1ea7u." };
+  }
+
+  const teamIds = payload.teamIds;
+  const knownIds = state.teams.map((team) => team.id);
+  if (
+    !Array.isArray(teamIds) ||
+    teamIds.length !== knownIds.length ||
+    new Set(teamIds).size !== knownIds.length ||
+    !teamIds.every((teamId) => knownIds.includes(teamId))
+  ) {
+    return { ok: false, error: "Th\u1ee9 t\u1ef1 ch\u01a1i kh\u00f4ng h\u1ee3p l\u1ec7." };
+  }
+
+  state.round = state.round || makeRound();
+  state.round.turnOrder = [...teamIds];
   return { ok: true };
 };
 

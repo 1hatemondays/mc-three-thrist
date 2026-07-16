@@ -1,4 +1,4 @@
-import { MOVE_SCORE } from "../shared/constants.js";
+import { MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
 import {
   EVENT_TILE_CATALOG,
   EVENT_TILE_TYPES,
@@ -6,11 +6,14 @@ import {
   getEventTileMeta
 } from "../shared/gameContent.js";
 import { startCombat } from "./combatLogic.js";
-import { hardQuestionBank } from "./questionBank.js";
-import { addRoundMessage } from "./roundFlow.js";
-import { grantSupportItem } from "./supportLogic.js";
+import { hardQuestionBank, questionBank } from "./questionBank.js";
+import { addRoundMessage, finishGameIfNeeded } from "./roundFlow.js";
+import { consumeShield, grantSupportItem } from "./supportLogic.js";
 
 const pointKey = ({ x, y }) => x + ":" + y;
+const BOMB_TIME_MS = 10000;
+const BOMB_DAMAGE = 30;
+
 
 const allCells = (boardSize) =>
   Array.from({ length: boardSize * boardSize }, (_, index) => ({
@@ -83,6 +86,21 @@ const makeEventResult = (tile, extra = {}) => {
   };
 };
 
+const applyShieldedGlobalEffect = (state, title, applyEffect) =>
+  state.teams.map((team) => {
+    const shield = consumeShield(team);
+    const outcome = shield
+      ? { teamId: team.id, shielded: true }
+      : { teamId: team.id, shielded: false, ...applyEffect(team) };
+
+    addRoundMessage(state, team.id, {
+      title,
+      text: shield ? "L\u00e1 ch\u1eafn \u0111\u00e3 b\u1ea3o v\u1ec7 \u0111\u1ed9i." : outcome.message
+    });
+    delete outcome.message;
+    return outcome;
+  });
+
 export const applyEventTileEffect = (state, teamId, tile, random = Math.random) => {
   if (!tile) return null;
 
@@ -105,9 +123,11 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
     const point = choose(allCells(state.config.boardSize), random);
     team.position = point;
     discover(team, point);
+    const gameOver = finishGameIfNeeded(state, teamId);
 
     return makeEventResult(tile, {
       newPosition: point,
+      gameOver,
       message: "D\u1ecbch chuy\u1ec3n \u0111\u1ebfn (" + (point.x + 1) + ", " + (point.y + 1) + ")"
     });
   }
@@ -142,6 +162,52 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
     });
   }
 
+  if (tile.type === EVENT_TILE_TYPES.MONSTER_ATTACK) {
+    const outcomes = applyShieldedGlobalEffect(state, "Qu\u00e1i v\u1eadt t\u1ea5n c\u00f4ng", (target) => {
+      if (target.score >= 10) {
+        target.score -= 10;
+        return { scoreLoss: 10, hpLoss: 0, message: "M\u1ea5t 10 \u0111i\u1ec3m." };
+      }
+      target.hp = Math.max(0, target.hp - 10);
+      return { scoreLoss: 0, hpLoss: 10, message: "Kh\u00f4ng \u0111\u1ee7 \u0111i\u1ec3m, m\u1ea5t 10 HP." };
+    });
+    return makeEventResult(tile, { outcomes, message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i ph\u1ea3i n\u1ed9p 10 \u0111i\u1ec3m ho\u1eb7c m\u1ea5t 10 HP" });
+  }
+
+  if (tile.type === EVENT_TILE_TYPES.METEOR_STRIKE) {
+    const outcomes = applyShieldedGlobalEffect(state, "M\u01b0a sao b\u0103ng", (target) => {
+      target.hp = Math.max(0, target.hp - 10);
+      return { hpLoss: 10, message: "M\u1ea5t 10 HP." };
+    });
+    return makeEventResult(tile, { outcomes, message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i m\u1ea5t 10 HP" });
+  }
+
+  if (tile.type === EVENT_TILE_TYPES.BLESSING) {
+    for (const target of state.teams) {
+      target.hp += 10;
+      addRoundMessage(state, target.id, { title: "Ban ph\u01b0\u1edbc", text: "H\u1ed3i 10 HP." });
+    }
+    return makeEventResult(tile, { message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i h\u1ed3i 10 HP" });
+  }
+
+  if (tile.type === EVENT_TILE_TYPES.PRISON) {
+    addRoundMessage(state, teamId, { title: "Nh\u1ed1t t\u00f9", text: "\u0110\u1ed9i b\u1ecb m\u1ea5t l\u01b0\u1ee3t hi\u1ec7n t\u1ea1i." });
+    return makeEventResult(tile, { endsTurn: true, message: "\u0110\u1ed9i b\u1ecb m\u1ea5t l\u01b0\u1ee3t" });
+  }
+
+  if (tile.type === EVENT_TILE_TYPES.BOMB) {
+    state.round.phase = ROUND_PHASES.BOMB;
+    state.round.bomb = {
+      holderTeamId: teamId,
+      question: choose(questionBank, random),
+      deadline: Date.now() + BOMB_TIME_MS,
+      passCount: 0,
+      lastPass: null,
+      result: null
+    };
+    return makeEventResult(tile, { message: "Bom \u0111\u00e3 b\u1eaft \u0111\u1ea7u trong tay " + team.name });
+  }
+
   if (tile.type === EVENT_TILE_TYPES.DUEL) {
     const combat = startCombat(state, teamId, random);
     return makeEventResult(tile, {
@@ -152,6 +218,92 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
   }
 
   return makeEventResult(tile);
+};
+
+
+const nextBombHolder = (state, teamId) => {
+  const order = state.round.turnOrder?.length
+    ? state.round.turnOrder
+    : state.teams.map((team) => team.id);
+  const index = order.indexOf(teamId);
+  return order[(index + 1) % order.length];
+};
+
+const explodeBomb = (state, teamId, reason) => {
+  const bomb = state.round.bomb;
+  const team = state.teams.find((item) => item.id === teamId);
+  if (!bomb || !team) return null;
+
+  team.hp = Math.max(0, team.hp - BOMB_DAMAGE);
+  bomb.question = null;
+  bomb.deadline = 0;
+  bomb.result = {
+    loserTeamId: team.id,
+    loserTeamName: team.name,
+    hpLoss: BOMB_DAMAGE,
+    reason,
+    explodedAt: Date.now()
+  };
+  state.round.phase = ROUND_PHASES.MOVEMENT;
+  addRoundMessage(state, team.id, {
+    title: "Bom ph\u00e1t n\u1ed5",
+    text: "M\u1ea5t 30 HP v\u00ec " + (reason === "timeout" ? "h\u1ebft th\u1eddi gian." : "tr\u1ea3 l\u1eddi sai.")
+  });
+  return bomb.result;
+};
+
+export const getBombState = (state, teamId = null, now = Date.now()) => {
+  const bomb = state.round.bomb;
+  if (!bomb) return null;
+  const holder = state.teams.find((team) => team.id === bomb.holderTeamId);
+  const active = state.round.phase === ROUND_PHASES.BOMB;
+  return {
+    active,
+    holderTeamId: bomb.holderTeamId,
+    holderTeamName: holder?.name || null,
+    question: active && bomb.question ? stripQuestionAnswer(bomb.question) : null,
+    countdownMs: active ? Math.max(0, bomb.deadline - now) : 0,
+    passCount: bomb.passCount,
+    lastPass: bomb.lastPass,
+    canAnswer: Boolean(active && teamId === bomb.holderTeamId),
+    result: bomb.result
+  };
+};
+
+export const resolveBombTimeout = (state, now = Date.now()) => {
+  const bomb = state.round.bomb;
+  if (state.round.phase !== ROUND_PHASES.BOMB || !bomb || now < bomb.deadline) return null;
+  return explodeBomb(state, bomb.holderTeamId, "timeout");
+};
+
+export const resolveBombAnswer = (state, teamId, payload = {}, random = Math.random, now = Date.now()) => {
+  const bomb = state.round.bomb;
+  if (state.round.phase !== ROUND_PHASES.BOMB || !bomb) {
+    return { ok: false, error: "Hi\u1ec7n kh\u00f4ng c\u00f3 Bom." };
+  }
+  if (teamId !== bomb.holderTeamId) {
+    return { ok: false, error: "Bom kh\u00f4ng \u1edf trong tay \u0111\u1ed9i n\u00e0y." };
+  }
+  if (now >= bomb.deadline) {
+    return { ok: true, exploded: true, result: explodeBomb(state, teamId, "timeout") };
+  }
+
+  const answerIndex = Number(payload.answerIndex);
+  if (!Number.isInteger(answerIndex) || answerIndex < 0 || answerIndex >= bomb.question.choices.length) {
+    return { ok: false, error: "\u0110\u00e1p \u00e1n kh\u00f4ng h\u1ee3p l\u1ec7." };
+  }
+  if (answerIndex !== bomb.question.correctIndex) {
+    return { ok: true, exploded: true, result: explodeBomb(state, teamId, "wrong") };
+  }
+
+  const nextTeamId = nextBombHolder(state, teamId);
+  const nextTeam = state.teams.find((team) => team.id === nextTeamId);
+  bomb.holderTeamId = nextTeamId;
+  bomb.question = choose(questionBank, random);
+  bomb.deadline = now + BOMB_TIME_MS;
+  bomb.passCount += 1;
+  bomb.lastPass = { fromTeamId: teamId, toTeamId: nextTeamId, toTeamName: nextTeam?.name || nextTeamId };
+  return { ok: true, exploded: false, nextTeamId };
 };
 
 export const getPlayerPendingEvent = (round, teamId) => {
@@ -213,6 +365,7 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
   target.position = original;
   discover(team, team.position);
   discover(target, target.position);
+  const gameOver = finishGameIfNeeded(state, teamId);
   delete state.round.pendingEvents[teamId];
 
   return {
@@ -221,6 +374,7 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
       type: pending.type,
       targetTeamId: target.id,
       targetName: target.name,
+      gameOver,
       message: "\u0110\u00e3 trao \u0111\u1ed5i v\u1ecb tr\u00ed v\u1edbi " + target.name
     }
   };

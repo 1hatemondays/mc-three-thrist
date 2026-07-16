@@ -48,7 +48,9 @@ const resolveAuction = (state) => {
   }
 
   state.round.auction = { result: { winners } };
+  state.round.roundNumber += 1;
   state.round.phase = ROUND_PHASES.MOVEMENT;
+  state.round.activeTeamId = state.round.turnOrder?.[0] || state.teams[0]?.id || null;
   return state.round.auction.result;
 };
 
