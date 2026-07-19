@@ -188,7 +188,7 @@ const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
   );
 };
 
-const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
+const GuideScreen = ({ state, activeTeam, banner, confettiSeed, flashSeed, onOpenQuestion, onRevealQuestion, onShowLeaderboard }) => {
   const teams = state?.teams || [];
   const round = state?.round;
   const gameOver = state?.gameOver || null;
@@ -300,6 +300,14 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
         </div>
 
         <aside className="guide-panel">
+          <HostRoundBoxes
+            activeTeam={activeTeam}
+            gameOver={gameOver}
+            onOpenQuestion={onOpenQuestion}
+            onRevealQuestion={onRevealQuestion}
+            onShowLeaderboard={onShowLeaderboard}
+            round={round}
+          />
           <h2>{gameOver ? "Xếp hạng chung cuộc" : "Vị trí đội"}</h2>
           {rankingRows.map((team, index) => (
             <div className="guide-team" key={team.teamId || team.id}>
@@ -470,15 +478,48 @@ export default function App() {
     };
 
     const onRoundResult = (result) => {
-      if (!result?.event) return;
-      const team = teamsRef.current.find((item) => item.id === result.teamId);
-      const event = result.event;
-      showBanner({
-        title: (team?.name || "Một đội") + " kích hoạt " + event.name + "!",
-        text: event.message || event.name,
-        color: event.color,
-        symbol: event.symbol
-      });
+      const team = teamsRef.current.find((item) => item.id === result?.teamId);
+      const teamName = team?.name || "Một đội";
+
+      if (result?.event) {
+        const event = result.event;
+        showBanner({
+          title: teamName + " kích hoạt " + event.name + "!",
+          text: event.message || event.name,
+          color: event.color,
+          symbol: event.symbol
+        });
+        return;
+      }
+
+      if (result?.blockedReason === "wall" || result?.blockedReason === "border") {
+        showBanner({
+          title: teamName + " chạm tường!",
+          text: "Lượt này bị chặn lại.",
+          color: "#bd473f",
+          symbol: "TƯỜNG"
+        });
+        return;
+      }
+
+      if (result?.success) {
+        showBanner({
+          title: teamName + " di chuyển tiếp!",
+          text: "Đã mở thêm đường đi.",
+          color: "#65c8a2",
+          symbol: "ĐI"
+        });
+        return;
+      }
+
+      if (result) {
+        showBanner({
+          title: teamName + " không được di chuyển!",
+          text: "Cần chờ lượt kế tiếp.",
+          color: "#f0b94b",
+          symbol: "DỪNG"
+        });
+      }
     };
 
     const onCombatResult = (combat) => {
@@ -615,9 +656,13 @@ export default function App() {
   if (isGuideScreen) {
     return (
       <GuideScreen
+        activeTeam={teams.find((team) => team.id === state?.round?.activeTeamId)}
         banner={tvBanner}
         confettiSeed={confettiSeed}
         flashSeed={flashSeed}
+        onOpenQuestion={openQuestion}
+        onRevealQuestion={revealQuestion}
+        onShowLeaderboard={showFinalLeaderboard}
         state={state}
       />
     );
@@ -701,15 +746,6 @@ export default function App() {
         </div>
 
         <aside className="leaderboard">
-          <HostRoundBoxes
-            activeTeam={teams.find((team) => team.id === state?.round?.activeTeamId)}
-            gameOver={gameOver}
-            onOpenQuestion={openQuestion}
-            onRevealQuestion={revealQuestion}
-            onShowLeaderboard={showFinalLeaderboard}
-            round={state?.round}
-          />
-
           <h2>{gameOver ? "Xếp hạng chung cuộc" : "Trạng thái đội"}</h2>
           {rankingRows.map((team, index) => (
             <div className={"rank" + (gameOver && index === 0 ? " winner" : state?.round?.activeTeamId === (team.teamId || team.id) ? " is-active" : "")} key={team.teamId || team.id}>

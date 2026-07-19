@@ -210,7 +210,7 @@ const SetupBoard = ({ state, onSubmit }) => {
           <p>Thiết lập mê cung</p>
           <h2>Tạo bàn chơi cho đội kế tiếp</h2>
         </div>
-        <strong>{draft.walls.length}/{WALL_COUNT} walls</strong>
+        <strong>{draft.walls.length}/{WALL_COUNT} tường</strong>
       </div>
 
       <div className="toolbar" aria-label="Setup tools">
@@ -542,15 +542,7 @@ const ResultCard = ({ result }) => {
       </div>
       <dl className="result-grid">
         <div>
-          <dt>{"\u0110\u00e1p \u00e1n"}</dt>
-          <dd>{result.usedQuestion ? (result.correct ? "\u0110\u00fang" : "Sai") : "Kh\u00f4ng c\u1ea7n"}</dd>
-        </div>
-        <div>
-          <dt>{"\u0110\u01b0\u1eddng \u0111i"}</dt>
-          <dd>{result.blocked ? formatBlockedReason(result.blockedReason) : "Th\u00f4ng"}</dd>
-        </div>
-        <div>
-          <dt>{"\u0110i\u1ec3m"}</dt>
+          <dt>{"\u0110i\u1ec3m c\u1ed9ng"}</dt>
           <dd>+{result.scoreDelta}</dd>
         </div>
       </dl>
@@ -633,17 +625,32 @@ const PendingEventCard = ({ event, onResolve }) => {
 };
 
 const NoticePanel = ({ messages = [] }) => {
-  if (!messages.length) return null;
+  const latest = messages[0] || null;
+  const latestKey = latest ? latest.id || latest.title + latest.text : "";
+  const [visibleKey, setVisibleKey] = useState("");
+  const [dismissedKey, setDismissedKey] = useState("");
+
+  useEffect(() => {
+    if (!latestKey || latestKey === dismissedKey) return undefined;
+
+    setVisibleKey(latestKey);
+    const timer = setTimeout(() => {
+      setVisibleKey("");
+      setDismissedKey(latestKey);
+    }, 3200);
+
+    return () => clearTimeout(timer);
+  }, [latestKey, dismissedKey]);
+
+  if (!latest || visibleKey !== latestKey) return null;
 
   return (
-    <section className="notice-stack" aria-label="Thông báo">
-      {messages.map((message) => (
-        <article className="notice-box" key={message.id || message.title + message.text}>
-          <strong>{message.title}</strong>
-          <span>{message.text}</span>
-        </article>
-      ))}
-    </section>
+    <div className="notice-popup" aria-live="polite" role="status">
+      <article className="notice-box">
+        <strong>{latest.title}</strong>
+        <span>{latest.text}</span>
+      </article>
+    </div>
   );
 };
 
@@ -1171,9 +1178,6 @@ export default function App() {
         saveTeamSession({ teamId: nextState.team.id, teamName: nextState.team.name });
         setTeamName(nextState.team.name);
       }
-      if (nextState?.team && nextState.round?.pendingAnswer?.result) {
-        setLastResult(nextState.round.pendingAnswer.result);
-      }
     };
     const onRoundResult = (result) => {
       if (result?.teamId === teamIdRef.current) {
@@ -1299,30 +1303,31 @@ export default function App() {
         onBuzz={buzzMeteor}
       />
       <section className={state?.setup?.started ? "panel playing" : "panel"}>
-        <p>Màn hình đội chơi</p>
         <h1>{APP_TITLE}</h1>
-        <div className={socketStatus === "đã kết nối" ? "connection online" : "connection"}>
-          Máy chủ: {socketStatus}
-          {socketStatus !== "đã kết nối" && (
+        {socketStatus !== "đã kết nối" && (
+          <div className="connection">
+            Máy chủ: {socketStatus}
             <button className="reconnect-button" onClick={reconnect} type="button">
               Kết nối lại
             </button>
-          )}
-        </div>
-
-        <form onSubmit={joinTeam}>
-          <label htmlFor="teamName">Tên đội</label>
-          <div className="join-row">
-            <input
-              id="teamName"
-              maxLength="40"
-              placeholder="Ví dụ: Chim Cánh Cụt"
-              value={teamName}
-              onChange={(event) => setTeamName(event.target.value)}
-            />
-            <button type="submit">Vào đội</button>
           </div>
-        </form>
+        )}
+
+        {!state?.team && (
+          <form onSubmit={joinTeam}>
+            <label htmlFor="teamName">Tên đội</label>
+            <div className="join-row">
+              <input
+                id="teamName"
+                maxLength="40"
+                placeholder="Ví dụ: Chim Cánh Cụt"
+                value={teamName}
+                onChange={(event) => setTeamName(event.target.value)}
+              />
+              <button type="submit">Vào đội</button>
+            </div>
+          </form>
+        )}
 
         {visibleError && <div className="error">{visibleError}</div>}
 
@@ -1338,10 +1343,6 @@ export default function App() {
                 <div>
                   <dt>Máu</dt>
                   <dd>{state.team.hp}</dd>
-                </div>
-                <div>
-                  <dt>Vị trí</dt>
-                  <dd>{state.team.position.x}, {state.team.position.y}</dd>
                 </div>
               </dl>
               <SupportInventory
