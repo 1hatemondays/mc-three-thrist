@@ -146,6 +146,8 @@ test("teleport event waits for a valid destination or lets the team stay", () =>
   assert.equal(moved.ok, true);
   assert.deepEqual(state.teams[0].position, { x: 4, y: 3 });
   assert.deepEqual(state.teams[0].discoveredCells.at(-1), { x: 4, y: 3 });
+  assert.equal(state.round.messages.team1[0].title, "Dịch chuyển");
+  assert.match(state.round.messages.team1[0].text, /\(5, 4\)/);
 
   const stayState = makeState();
   applyEventTileEffect(stayState, "team1", { type: EVENT_TILE_TYPES.TELEPORT, x: 1, y: 0 });
@@ -175,6 +177,9 @@ test("position swap event waits for the team to choose or skip", () => {
   assert.deepEqual(state.teams[0].position, { x: 2, y: 0 });
   assert.deepEqual(state.teams[1].position, { x: 0, y: 0 });
   assert.equal(state.round.pendingEvents.team1, undefined);
+  assert.equal(state.round.messages.team1[0].title, "Đổi vị trí");
+  assert.equal(state.round.messages.team2[0].title, "Bị đổi vị trí");
+  assert.match(state.round.messages.team2[0].text, /team1/i);
 });
 
 test("knowledge event does not change the base move score", () => {

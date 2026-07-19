@@ -67,7 +67,8 @@ const MonsterEffect = ({ effect }) => (
     <div className="live-claw-flash" aria-hidden="true" />
     <div className="live-claws" aria-hidden="true"><i /><i /><i /></div>
     {effect.currentTeamShielded ? <ShieldImpact /> : (
-      <div className="live-effect-banner danger">
+      <div className="live-monster-card">
+        <small>ĐÒN TẤN CÔNG TOÀN BẢN ĐỒ</small>
         <strong>QUÁI VẬT TẤN CÔNG</strong>
         <span>{effect.message || "Mỗi đội nộp 10 điểm hoặc mất 10 máu"}</span>
       </div>

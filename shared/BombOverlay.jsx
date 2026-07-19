@@ -39,7 +39,7 @@ export const BombOverlay = ({ bomb, currentTeamId, onAnswer }) => {
   const canAnswer = Boolean(bomb.canAnswer && onAnswer && remainingMs > 0);
 
   return (
-    <div aria-labelledby="bombTitle" aria-modal="true" className={"bomb-overlay" + (result ? " exploded" : "")} role="dialog">
+    <div aria-labelledby="bombTitle" aria-modal="true" className={"bomb-overlay" + (result ? " exploded" : "") + (canAnswer ? " can-answer" : "")} role="dialog">
       <section className="bomb-card">
         <header className="bomb-heading">
           <div>
@@ -71,7 +71,7 @@ export const BombOverlay = ({ bomb, currentTeamId, onAnswer }) => {
               <small>{"BOM \u0110ANG TRONG TAY"}</small>
               <strong>{bomb.holderTeamName}</strong>
               {bomb.canAnswer
-                ? <p>{"Ch\u1ecdn \u0111\u00e1p \u00e1n tr\u01b0\u1edbc khi bom n\u1ed5."}</p>
+                ? <p>{"Bom \u0111ang \u1edf trong tay \u0111\u1ed9i b\u1ea1n. Ch\u1ecdn \u0111\u00e1p \u00e1n tr\u01b0\u1edbc khi bom n\u1ed5."}</p>
                 : <p>{"Ch\u1edd \u0111\u1ed9i c\u1ea7m bom tr\u1ea3 l\u1eddi."}</p>}
             </div>
 

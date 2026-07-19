@@ -10,7 +10,7 @@ import { AnimatedScore } from "../../shared/AnimatedScore.jsx";
 import { AuctionRevealOverlay } from "../../shared/AuctionRevealOverlay.jsx";
 import { shouldRevealAuctionResult } from "../../shared/auctionReveal.js";
 import { EventEffectOverlay } from "../../shared/EventEffectOverlay.jsx";
-import { normalizeCombatEffect, normalizeRoundEffect, normalizeSupportEffect } from "../../shared/eventEffects.js";
+import { getActivePlayerAlert, normalizeCombatEffect, normalizeRoundEffect, normalizeSupportEffect } from "../../shared/eventEffects.js";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, hasWall, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
 import { getOpponentTeams } from "../../shared/teamTargets.js";
@@ -793,6 +793,21 @@ const NoticePanel = ({ messages = [] }) => {
   );
 };
 
+const ActivePlayerAlert = ({ alert }) => {
+  if (!alert) return null;
+
+  return (
+    <section className={`active-player-alert is-${alert.kind}`} aria-live="polite" role="status">
+      <GameIcon color={alert.color} label={alert.title} symbol={alert.symbol} type={alert.type} />
+      <div>
+        <small>Trạng thái hiện tại</small>
+        <strong>{alert.title}</strong>
+        <p>{alert.message}</p>
+      </div>
+    </section>
+  );
+};
+
 const AuctionPanel = ({ auction, active, onBid }) => {
   const items = auction?.items || [];
   const [itemId, setItemId] = useState(items[0]?.type || "");
@@ -1456,6 +1471,7 @@ export default function App() {
   };
 
   const visibleError = localError || state?.error;
+  const activePlayerAlert = getActivePlayerAlert(state);
 
   const leaveFinalScreen = () => {
     try {
@@ -1542,6 +1558,7 @@ export default function App() {
                   <dd>{state.team.hp}</dd>
                 </div>
               </dl>
+              <ActivePlayerAlert alert={activePlayerAlert} />
               <SupportInventory
                 currentTeamId={state.team.id}
                 items={state.team.supportItems || []}

@@ -483,36 +483,38 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
       )}
 
       {questionControl && !gameOver && (
-        <section className={`host-box host-question-box${questionControl.answerOpen ? " is-open" : ""}${questionControl.reveal ? " is-revealed" : ""}`}>
-          <p>{"Câu hỏi người dẫn"}</p>
-          <strong>{questionControl.question?.text}</strong>
-          <ol>
-            {(questionControl.question?.choices || []).map((choice, index) => (
-              <li
-                className={
-                  questionControl.reveal && index === questionControl.question.correctIndex
-                    ? "correct"
-                    : questionControl.reveal && index === questionControl.answerIndex
-                      ? "wrong-submitted"
-                      : questionControl.reveal
-                        ? "dimmed"
-                        : ""
-                }
-                key={choice}
-              >
-                {String.fromCharCode(65 + index)}. {choice}
-                {questionControl.reveal && index === questionControl.question.correctIndex && <b>ĐÁP ÁN ĐÚNG</b>}
-              </li>
-            ))}
-          </ol>
-          {!questionControl.answerOpen && !questionControl.answered && (
-            <button className="host-box-action" onClick={onOpenQuestion} type="button">Mở trả lời</button>
-          )}
-          {questionControl.answered && !questionControl.reveal && (
-            <button className="host-box-action" onClick={onRevealQuestion} type="button">Hiện đáp án</button>
-          )}
-          {questionControl.reveal && <small>{"Đáp án đúng: " + correctChoice}</small>}
-        </section>
+        <div className="guide-question-layer">
+          <section className={`host-box host-question-box${questionControl.answerOpen ? " is-open" : ""}${questionControl.reveal ? " is-revealed" : ""}`}>
+            <p>{"Câu hỏi người dẫn"}</p>
+            <strong>{questionControl.question?.text}</strong>
+            <ol>
+              {(questionControl.question?.choices || []).map((choice, index) => (
+                <li
+                  className={
+                    questionControl.reveal && index === questionControl.question.correctIndex
+                      ? "correct"
+                      : questionControl.reveal && index === questionControl.answerIndex
+                        ? "wrong-submitted"
+                        : questionControl.reveal
+                          ? "dimmed"
+                          : ""
+                  }
+                  key={choice}
+                >
+                  {String.fromCharCode(65 + index)}. {choice}
+                  {questionControl.reveal && index === questionControl.question.correctIndex && <b>ĐÁP ÁN ĐÚNG</b>}
+                </li>
+              ))}
+            </ol>
+            {!questionControl.answerOpen && !questionControl.answered && (
+              <button className="host-box-action" onClick={onOpenQuestion} type="button">Mở trả lời</button>
+            )}
+            {questionControl.answered && !questionControl.reveal && (
+              <button className="host-box-action" onClick={onRevealQuestion} type="button">Hiện đáp án</button>
+            )}
+            {questionControl.reveal && <small>{"Đáp án đúng: " + correctChoice}</small>}
+          </section>
+        </div>
       )}
 
       {auction && round.phase === "auction" && (

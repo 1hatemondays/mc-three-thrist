@@ -111,7 +111,10 @@ export const getPlayerState = (teamId) => {
       startPoint: team.startPoint,
       discoveredCells: team.discoveredCells,
       revealedWalls: team.revealedWalls,
-      supportItems: team.supportItems
+      supportItems: team.supportItems,
+      statusEffects: {
+        skipTurns: Math.max(0, Number(team.effects?.skipTurns) || 0)
+      }
     },
     teams: gameState.teams.map(({ id, name }) => ({ id, name })),
     round: {

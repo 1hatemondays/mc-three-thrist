@@ -1,7 +1,53 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES } from "./gameContent.js";
-import { normalizeCombatEffect, normalizeRoundEffect, normalizeSupportEffect } from "./eventEffects.js";
+import * as eventEffects from "./eventEffects.js";
+
+const { normalizeCombatEffect, normalizeRoundEffect, normalizeSupportEffect } = eventEffects;
+
+test("builds a persistent frozen alert until the skipped turn clears", () => {
+  assert.equal(typeof eventEffects.getActivePlayerAlert, "function");
+  const alert = eventEffects.getActivePlayerAlert({
+    team: { statusEffects: { skipTurns: 0 } },
+    round: { pendingAnswer: { result: { frozen: true } }, pendingEvent: null }
+  });
+
+  assert.equal(alert.kind, "freeze");
+  assert.equal(alert.title, "Bạn đang bị đóng băng");
+  assert.match(alert.message, /mất một lượt/i);
+});
+
+test("builds an active event alert while an event needs player action", () => {
+  const alert = eventEffects.getActivePlayerAlert({
+    team: { statusEffects: { skipTurns: 0 } },
+    round: {
+      pendingAnswer: null,
+      pendingEvent: {
+        type: EVENT_TILE_TYPES.TELEPORT,
+        name: "Dịch chuyển",
+        description: "Chọn vị trí mới hoặc ở lại."
+      }
+    }
+  });
+
+  assert.equal(alert.kind, EVENT_TILE_TYPES.TELEPORT);
+  assert.equal(alert.title, "Bạn đang gặp: Dịch chuyển");
+  assert.equal(alert.message, "Chọn vị trí mới hoặc ở lại.");
+});
+
+test("keeps a lost-turn alert visible before and during the skipped turn", () => {
+  const queued = eventEffects.getActivePlayerAlert({
+    team: { statusEffects: { skipTurns: 1 } },
+    round: { pendingAnswer: null, pendingEvent: null }
+  });
+  const consumed = eventEffects.getActivePlayerAlert({
+    team: { statusEffects: { skipTurns: 0 } },
+    round: { pendingAnswer: { result: { skipped: true } }, pendingEvent: null }
+  });
+
+  assert.equal(queued.kind, "skip-turn");
+  assert.equal(consumed.kind, "skip-turn");
+});
 
 test("normalizes global meteor and monster effects with shield outcomes", () => {
   const meteor = normalizeRoundEffect({

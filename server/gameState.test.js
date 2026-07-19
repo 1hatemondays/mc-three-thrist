@@ -86,6 +86,7 @@ test("player state hides other teams live scores and HP", () => {
   ensureTeam(gameState, "team2", "Beta");
   gameState.teams[0].score = 40;
   gameState.teams[0].hp = 80;
+  gameState.teams[0].effects = { skipTurns: 2, privateTrapData: "hidden" };
   gameState.teams[1].score = 90;
   gameState.teams[1].hp = 50;
   gameState.gameOver = null;
@@ -110,6 +111,8 @@ test("player state hides other teams live scores and HP", () => {
   assert.equal(playerState.leaderboard, undefined);
   assert.equal(playerState.team.score, 40);
   assert.equal(playerState.team.hp, 80);
+  assert.deepEqual(playerState.team.statusEffects, { skipTurns: 2 });
+  assert.equal(playerState.team.effects, undefined);
 });
 
 test("player state exposes the final ranking when the game is over", () => {

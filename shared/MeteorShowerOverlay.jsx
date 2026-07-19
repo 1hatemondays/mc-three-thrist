@@ -97,6 +97,10 @@ export const MeteorShowerOverlay = ({ meteor, currentTeamId, onAnswer, onBuzz })
             </div>
 
             <div className="meteor-action">
+              <p className="meteor-rules">
+                <strong>Luật tranh quyền</strong>
+                <span>Chờ đếm ngược 3 giây, sau đó bấm PHÍM CÁCH để giành quyền trả lời.</span>
+              </p>
               {remainingMs > 0 ? (
                 <div className="meteor-countdown" aria-live="assertive">
                   <small>{"CHU\u1ea8N B\u1eca"}</small>

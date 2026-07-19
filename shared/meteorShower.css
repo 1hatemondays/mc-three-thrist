@@ -149,10 +149,35 @@
 .meteor-action {
   display: grid;
   place-items: center;
+  gap: 14px;
   min-height: 152px;
   margin: 0 clamp(20px, 4vw, 38px);
   border: 1px solid rgba(255, 247, 223, 0.18);
   background: rgba(255, 247, 223, 0.035);
+}
+
+.meteor-rules {
+  display: grid;
+  gap: 3px;
+  width: min(92%, 640px);
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-left: 4px solid #f0b94b;
+  color: #fff7df;
+  background: rgba(240, 185, 75, 0.09);
+  text-align: left;
+}
+
+.meteor-rules strong {
+  color: #f0b94b;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.meteor-rules span {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.35;
 }
 
 .meteor-countdown,

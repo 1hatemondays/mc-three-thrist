@@ -58,3 +58,40 @@ export const normalizeCombatEffect = (result, currentTeamId = null) => {
     role: protectedTeam ? "protected" : currentTeamId === result.winnerId ? "winner" : currentTeamId === result.loserId ? "loser" : "viewer"
   };
 };
+
+export const getActivePlayerAlert = (state) => {
+  const turnResult = state?.round?.pendingAnswer?.result;
+  if (turnResult?.frozen) {
+    return {
+      kind: "freeze",
+      type: SUPPORT_ITEM_TYPES.FREEZE_OPPONENT,
+      symbol: "ĐÓNG",
+      color: "#7bb7ff",
+      title: "Bạn đang bị đóng băng",
+      message: "Bạn bị mất một lượt. Thông báo này sẽ giữ nguyên cho đến khi đội được đi tiếp."
+    };
+  }
+
+  if (turnResult?.skipped || Number(state?.team?.statusEffects?.skipTurns) > 0) {
+    return {
+      kind: "skip-turn",
+      type: EVENT_TILE_TYPES.PRISON,
+      symbol: "DỪNG",
+      color: "#ef8f6b",
+      title: "Bạn đang bị mất lượt",
+      message: "Hình phạt mất lượt đang có hiệu lực và sẽ tự biến mất khi đội được đi tiếp."
+    };
+  }
+
+  const pendingEvent = state?.round?.pendingEvent;
+  if (!pendingEvent) return null;
+
+  return {
+    kind: pendingEvent.type,
+    type: pendingEvent.type,
+    symbol: pendingEvent.symbol,
+    color: pendingEvent.color,
+    title: `Bạn đang gặp: ${pendingEvent.name}`,
+    message: pendingEvent.description || "Hãy xử lý sự kiện này trước khi tiếp tục di chuyển."
+  };
+};
