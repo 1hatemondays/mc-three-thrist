@@ -41,7 +41,7 @@ export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
       <section className="game-over-card">
         <header className="game-over-heading">
           <p>{label}</p>
-          <h2 id="gameOverTitle"><span>GAME</span> <strong>OVER</strong></h2>
+          <h2 id="gameOverTitle"><span>KẾT</span> <strong>THÚC</strong></h2>
         </header>
 
         <div className="game-over-champion">

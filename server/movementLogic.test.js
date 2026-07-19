@@ -338,7 +338,7 @@ test("host must open a movement question before the active team can answer", () 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
 
   assert.equal(getPlayerRoundState(state.round, "team1").currentQuestion, null);
-  assert.match(answerQuestion(state, "team1", { answerIndex: 1 }).error, /host/i);
+  assert.match(answerQuestion(state, "team1", { answerIndex: 1 }).error, /Người dẫn/i);
   assert.equal(openQuestionForAnswer(state, "team1").ok, true);
   assert.equal(getPlayerRoundState(state.round, "team1").currentQuestion.id, "q1");
   assert.equal(answerQuestion(state, "team1", { answerIndex: 1 }).ok, true);

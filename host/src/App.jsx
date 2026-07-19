@@ -139,7 +139,7 @@ const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
         <span className={submitted ? "status ready" : "status"}>{submitted ? "Đã nộp" : "Đang chờ"}</span>
       </header>
 
-      <div className="board" aria-label={`${cardLabel} maze`}>
+      <div className="board" aria-label={`${cardLabel} mê cung`}>
         {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
           const x = index % BOARD_SIZE;
           const y = Math.floor(index / BOARD_SIZE);
@@ -342,7 +342,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
           </small>
           {gameOver.stage !== "leaderboard" && (
             <button className="host-box-action" onClick={onShowLeaderboard} type="button">
-              Hiện leaderboard cuối
+              Hiện bảng xếp hạng cuối
             </button>
           )}
         </section>
@@ -358,8 +358,8 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
 
       {!gameOver && (
         <section className="host-box active-spotlight">
-          <p>{"Spotlight lượt"}</p>
-          <strong>{activeTeam?.name || "Chưa có đội active"}</strong>
+          <p>{"Đội đang lượt"}</p>
+          <strong>{activeTeam?.name || "Chưa có đội đang lượt"}</strong>
           <small>
             {round.turnEnergy
               ? "Năng lượng " + round.turnEnergy.remaining + "/" + round.turnEnergy.max
@@ -370,7 +370,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
 
       {questionControl && !gameOver && (
         <section className="host-box host-question-box">
-          <p>{"Câu hỏi host dẫn"}</p>
+          <p>{"Câu hỏi người dẫn"}</p>
           <strong>{questionControl.question?.text}</strong>
           <ol>
             {(questionControl.question?.choices || []).map((choice, index) => (
@@ -383,7 +383,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
             <button className="host-box-action" onClick={onOpenQuestion} type="button">Mở trả lời</button>
           )}
           {questionControl.answered && !questionControl.reveal && (
-            <button className="host-box-action" onClick={onRevealQuestion} type="button">Reveal đáp án</button>
+            <button className="host-box-action" onClick={onRevealQuestion} type="button">Hiện đáp án</button>
           )}
           {questionControl.reveal && <small>{"Đáp án đúng: " + correctChoice}</small>}
         </section>
@@ -411,7 +411,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
           </div>
           <div className="combat-matchup">
             <strong>{combat.attacker?.name || "Đội thách đấu"}</strong>
-            <b>VS</b>
+            <b>ĐẤU</b>
             <strong>{combat.defender?.name || "Đội phòng thủ"}</strong>
           </div>
           {!combat.result && (
@@ -490,7 +490,7 @@ export default function App() {
             ? (combat.loserName || "Đối thủ") + " được lá chắn bảo vệ."
             : "Hai đội đã phân thắng bại.",
           color: "#ef8f6b",
-          symbol: "VS"
+          symbol: "ĐẤU"
         },
         true
       );
@@ -504,7 +504,7 @@ export default function App() {
       setHostAccessKey("");
       setHostAuthError(
         error.message === "host_access_not_configured"
-          ? "M\u00e1y ch\u1ee7 ch\u01b0a c\u1ea5u h\u00ecnh m\u00e3 truy c\u1eadp Host."
+          ? "M\u00e1y ch\u1ee7 ch\u01b0a c\u1ea5u h\u00ecnh m\u00e3 truy c\u1eadp ng\u01b0\u1eddi d\u1eabn."
           : "M\u00e3 truy c\u1eadp kh\u00f4ng \u0111\u00fang."
       );
     };
@@ -592,7 +592,7 @@ export default function App() {
         <form className="host-auth-panel" onSubmit={unlockHost}>
           <p>{"M\u00e0n h\u00ecnh qu\u1ea3n tr\u1ecb"}</p>
           <h1>{APP_TITLE}</h1>
-          <label htmlFor="host-access-key">{"M\u00e3 truy c\u1eadp Host"}</label>
+          <label htmlFor="host-access-key">{"M\u00e3 truy c\u1eadp ng\u01b0\u1eddi d\u1eabn"}</label>
           <input
             autoComplete="current-password"
             autoFocus
@@ -630,7 +630,7 @@ export default function App() {
       <MeteorShowerOverlay meteor={state?.round?.meteorShower} />
       <header className="topbar">
         <div>
-          <p>{"M\u00e0n h\u00ecnh host"}</p>
+          <p>{"M\u00e0n h\u00ecnh ng\u01b0\u1eddi d\u1eabn"}</p>
           <h1>{APP_TITLE}</h1>
         </div>
 
@@ -643,7 +643,7 @@ export default function App() {
             {"M\u00e0n d\u1eabn"}
           </a>
           <button className="lock-host-button" onClick={lockHost} type="button">
-            {"Kh\u00f3a Host"}
+            {"Kh\u00f3a ng\u01b0\u1eddi d\u1eabn"}
           </button>
         </div>
 
@@ -718,7 +718,7 @@ export default function App() {
                 {gameOver
                   ? team.score + " \u0111i\u1ec3m / " + team.hp + " m\u00e1u"
                   : state?.round?.activeTeamId === (team.teamId || team.id)
-                    ? "\u0110ang spotlight"
+                    ? "\u0110ang l\u00ean s\u00f3ng"
                     : "Chờ lượt"}
               </strong>
             </div>
