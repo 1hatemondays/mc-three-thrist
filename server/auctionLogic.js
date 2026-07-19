@@ -28,26 +28,50 @@ export const getHostAuctionState = (state) => ({
 
 const resolveAuction = (state) => {
   const winners = [];
+  const outcomes = [];
+  const bids = state.round.auction.bids;
 
   for (const item of auctionItems()) {
-    let best = null;
-    for (const [teamId, bid] of Object.entries(state.round.auction.bids)) {
-      if (bid.skipped || bid.itemId !== item.type) continue;
-      const teamIndex = state.teams.findIndex((team) => team.id === teamId);
-      if (!best || bid.amount > best.amount || (bid.amount === best.amount && teamIndex < best.teamIndex)) {
-        best = { teamId, amount: bid.amount, teamIndex };
-      }
-    }
-    if (!best) continue;
+    const publicBids = Object.entries(bids)
+      .filter(([, bid]) => !bid.skipped && bid.itemId === item.type)
+      .map(([teamId, bid]) => {
+        const teamIndex = state.teams.findIndex((team) => team.id === teamId);
+        const team = state.teams[teamIndex];
+        return { teamId, teamName: team?.name || teamId, amount: bid.amount, teamIndex };
+      })
+      .sort((a, b) => b.amount - a.amount || a.teamIndex - b.teamIndex);
 
-    const team = findTeam(state, best.teamId);
-    if (!team || team.score < best.amount) continue;
-    team.score -= best.amount;
-    grantSupportItem(team, item.type);
-    winners.push({ teamId: team.id, teamName: team.name, itemId: item.type, itemName: item.name, amount: best.amount });
+    const best = publicBids[0] || null;
+    const team = best ? findTeam(state, best.teamId) : null;
+    let winner = null;
+
+    if (best && team && team.score >= best.amount) {
+      team.score -= best.amount;
+      grantSupportItem(team, item.type);
+      winner = { teamId: team.id, teamName: team.name, itemId: item.type, itemName: item.name, amount: best.amount };
+      winners.push(winner);
+    }
+
+    outcomes.push({
+      itemId: item.type,
+      itemName: item.name,
+      symbol: item.symbol,
+      color: item.color,
+      minPrice: item.minPrice,
+      bids: publicBids.map(({ teamIndex, ...bid }) => ({ ...bid, won: winner?.teamId === bid.teamId })),
+      winner
+    });
   }
 
-  state.round.auction = { result: { winners } };
+  const teamResults = state.teams.map((team) => {
+    const items = winners
+      .filter((winner) => winner.teamId === team.id)
+      .map(({ itemId, itemName, amount }) => ({ itemId, itemName, amount }));
+    const status = items.length ? "won" : bids[team.id]?.skipped ? "skipped" : "no_win";
+    return { teamId: team.id, teamName: team.name, status, items };
+  });
+
+  state.round.auction = { result: { winners, outcomes, teamResults } };
   state.round.roundNumber += 1;
   state.round.phase = ROUND_PHASES.MOVEMENT;
   state.round.activeTeamId = state.round.turnOrder?.[0] || state.teams[0]?.id || null;
