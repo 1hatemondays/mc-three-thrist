@@ -24,7 +24,7 @@ export const EVENT_TILE_CATALOG = [
   {
     type: EVENT_TILE_TYPES.DUEL,
     name: "Ô đối kháng",
-    symbol: "ĐẤU",
+    symbol: "V/S",
     color: "#ef8f6b",
     lucideIcon: "swords",
     description: "Kích hoạt đối kháng với một đội khác."
@@ -152,7 +152,7 @@ export const SUPPORT_ITEM_CATALOG = [
   {
     type: SUPPORT_ITEM_TYPES.METEOR_SHOWER,
     name: "\u0110\u1ea5u tr\u00ed",
-    symbol: "ĐẤU",
+    symbol: "V/S",
     color: "#ff784f",
     lucideIcon: "sparkles",
     minPrice: 30,

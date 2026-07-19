@@ -1,0 +1,21 @@
+.game-icon {
+  display: inline-grid;
+  place-items: center;
+  color: #15281f;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.game-icon.is-image img {
+  display: block;
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%);
+}
+
+.game-icon.is-text {
+  font-family: "Aptos", "Segoe UI", sans-serif;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}

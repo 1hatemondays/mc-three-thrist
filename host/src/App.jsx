@@ -4,7 +4,7 @@ import { EVENTS } from "../../shared/constants.js";
 import { GameOverOverlay } from "../../shared/GameOverOverlay.jsx";
 import { BombOverlay } from "../../shared/BombOverlay.jsx";
 import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
-import { FinalKahootLeaderboard, FinalStatsCard } from "../../shared/FinalStats.jsx";
+import { FinalStatsScreen } from "../../shared/FinalStats.jsx";
 import { EVENT_TILE_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { hasWall } from "../../shared/maze.js";
 
@@ -225,6 +225,14 @@ const GuideScreen = ({ state, activeTeam, banner, confettiSeed, flashSeed, onOpe
   const setupStarted = Boolean(state?.setup?.started);
   const eventTiles = setupStarted ? round?.eventTiles || [] : [];
 
+  if (gameOver) {
+    return (
+      <FinalStatsScreen gameOver={gameOver} mode="host" onShowLeaderboard={onShowLeaderboard}>
+        <p className="final-screen-label">Màn dẫn trò chơi</p>
+      </FinalStatsScreen>
+    );
+  }
+
   return (
     <main className="guide-screen">
       <GameOverOverlay gameOver={state?.gameOver} />
@@ -415,7 +423,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
         </section>
       )}
 
-      {auction && (round.phase === "auction" || auction.result) && (
+      {auction && round.phase === "auction" && (
         <section className="host-box auction-box">
           <p>{"Đấu giá"}</p>
           <strong>{auction.submittedCount + "/" + auction.totalTeams + " đội đã gửi"}</strong>
@@ -458,6 +466,12 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
     </div>
   );
 };
+
+const HostEndGameScreen = ({ gameOver, onShowLeaderboard }) => (
+  <FinalStatsScreen gameOver={gameOver} mode="host" onShowLeaderboard={onShowLeaderboard}>
+    <p className="final-screen-label">Màn hình người dẫn</p>
+  </FinalStatsScreen>
+);
 
 export default function App() {
   const [state, setState] = useState(null);
@@ -540,6 +554,21 @@ export default function App() {
       }
     };
 
+    const onAuctionResult = (result) => {
+      const winners = result?.winners || [];
+      showBanner(
+        {
+          title: "Kết quả đấu giá",
+          text: winners.length
+            ? winners.map((winner) => winner.teamName + " thắng " + winner.itemName).join(" · ")
+            : "Không có đội nào thắng vật phẩm.",
+          color: "#f0b94b",
+          symbol: "ĐẤU GIÁ"
+        },
+        Boolean(winners.length)
+      );
+    };
+
     const onCombatResult = (combat) => {
       if (!combat) return;
       showBanner(
@@ -580,6 +609,7 @@ export default function App() {
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
     socket.on(EVENTS.GAME_RESTART, onGameRestart);
+    socket.on(EVENTS.AUCTION_RESULT, onAuctionResult);
     socket.on(EVENTS.COMBAT_RESULT, onCombatResult);
     socket.on("connect_error", onConnectError);
 
@@ -588,6 +618,7 @@ export default function App() {
       socket.off(EVENTS.GAME_STATE, onState);
       socket.off(EVENTS.ROUND_RESULT, onRoundResult);
       socket.off(EVENTS.GAME_RESTART, onGameRestart);
+      socket.off(EVENTS.AUCTION_RESULT, onAuctionResult);
       socket.off(EVENTS.COMBAT_RESULT, onCombatResult);
       socket.off("connect_error", onConnectError);
       socketRef.current = null;
@@ -704,6 +735,10 @@ export default function App() {
     );
   }
 
+  if (gameOver) {
+    return <HostEndGameScreen gameOver={gameOver} onShowLeaderboard={showFinalLeaderboard} />;
+  }
+
   return (
     <main>
       <GameOverOverlay gameOver={state?.gameOver} />
@@ -746,45 +781,37 @@ export default function App() {
       {state?.error && <div className="host-error">{state.error}</div>}
 
       <section className="layout">
-        <div className={gameOver ? "maps final-host-stage" : "maps"}>
-          {gameOver?.stage === "leaderboard" ? (
-            <FinalKahootLeaderboard rankings={gameOver.rankings || []} />
-          ) : gameOver ? (
-            (gameOver.summaries || []).map((summary) => (
-              <FinalStatsCard key={summary.teamId} summary={summary} titlePrefix="Tổng kết" />
-            ))
-          ) : (
-            teams.map((team) => {
-              if (!isSetupReview) {
-                return (
-                  <Board
-                    cardLabel={team.name}
-                    key={team.id}
-                    metaLabel={team.startPoint ? "\u0110\u00e3 s\u1eb5n s\u00e0ng" : "\u0110ang ch\u1edd m\u00ea cung"}
-                    eventTiles={state?.round?.eventTiles || []}
-                    submitted={submitted.has(team.id)}
-                    team={team}
-                  />
-                );
-              }
-
-              const preview = setupPreviews[team.id];
-
+        <div className="maps">
+          {teams.map((team) => {
+            if (!isSetupReview) {
               return (
                 <Board
                   cardLabel={team.name}
                   key={team.id}
-                  metaLabel={
-                    preview
-                      ? "\u0110\u00e3 n\u1ed9p - chia ng\u1eabu nhi\u00ean khi \u0111\u1ee7 \u0111\u1ed9i"
-                      : "\u0110ang ch\u1edd n\u1ed9p"
-                  }
+                  metaLabel={team.startPoint ? "\u0110\u00e3 s\u1eb5n s\u00e0ng" : "\u0110ang ch\u1edd m\u00ea cung"}
+                  eventTiles={state?.round?.eventTiles || []}
                   submitted={submitted.has(team.id)}
-                  team={preview || { ...team, walls: [], startPoint: null, endPoint: null }}
+                  team={team}
                 />
               );
-            })
-          )}
+            }
+
+            const preview = setupPreviews[team.id];
+
+            return (
+              <Board
+                cardLabel={team.name}
+                key={team.id}
+                metaLabel={
+                  preview
+                    ? "\u0110\u00e3 n\u1ed9p - chia ng\u1eabu nhi\u00ean khi \u0111\u1ee7 \u0111\u1ed9i"
+                    : "\u0110ang ch\u1edd n\u1ed9p"
+                }
+                submitted={submitted.has(team.id)}
+                team={preview || { ...team, walls: [], startPoint: null, endPoint: null }}
+              />
+            );
+          })}
         </div>
 
         <aside className="leaderboard">

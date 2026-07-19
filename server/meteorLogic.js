@@ -1,5 +1,5 @@
 import { ROUND_PHASES } from "../shared/constants.js";
-import { questionBank } from "./questionBank.js";
+import { drawQuestions, questionBank } from "./questionBank.js";
 import { addRoundMessage, maybeFinishMovementRound } from "./roundFlow.js";
 
 const QUESTION_COUNT = 10;
@@ -18,15 +18,6 @@ const recordAnswer = (team, correct) => {
   team.answerStats = team.answerStats || { correct: 0, wrong: 0 };
   if (correct) team.answerStats.correct += 1;
   else team.answerStats.wrong += 1;
-};
-
-const pickQuestions = (questions, random) => {
-  const pool = [...questions];
-  for (let index = 0; index < QUESTION_COUNT; index += 1) {
-    const swapIndex = index + Math.floor(random() * (pool.length - index));
-    [pool[index], pool[swapIndex]] = [pool[swapIndex], pool[index]];
-  }
-  return pool.slice(0, QUESTION_COUNT);
 };
 
 export const startMeteorShower = (
@@ -49,7 +40,7 @@ export const startMeteorShower = (
   state.round.phase = ROUND_PHASES.METEOR_SHOWER;
   state.round.meteorShower = {
     activatorId,
-    questions: pickQuestions(questions, random),
+    questions: drawQuestions(state, "normal", questions, QUESTION_COUNT, random),
     questionIndex: 0,
     totalQuestions: QUESTION_COUNT,
     countdownEndsAt: now + COUNTDOWN_MS,

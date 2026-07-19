@@ -1,7 +1,7 @@
 import { ROUND_PHASES } from "../shared/constants.js";
 import { AUCTION_ITEM_CATALOG, getSupportItemMeta } from "../shared/gameContent.js";
 import { isGameOver } from "./gameOver.js";
-import { addRoundMessage, makeAuctionState } from "./roundFlow.js";
+import { makeAuctionState } from "./roundFlow.js";
 import { grantSupportItem } from "./supportLogic.js";
 
 const findTeam = (state, teamId) => state.teams.find((team) => team.id === teamId);
@@ -43,9 +43,8 @@ const resolveAuction = (state) => {
     const team = findTeam(state, best.teamId);
     if (!team || team.score < best.amount) continue;
     team.score -= best.amount;
-    const supportItem = grantSupportItem(team, item.type);
+    grantSupportItem(team, item.type);
     winners.push({ teamId: team.id, teamName: team.name, itemId: item.type, itemName: item.name, amount: best.amount });
-    addRoundMessage(state, team.id, { title: "Thắng đấu giá", text: "Nhận " + supportItem.name + " với giá " + best.amount + " điểm." });
   }
 
   state.round.auction = { result: { winners } };
