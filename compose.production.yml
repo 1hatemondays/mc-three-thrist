@@ -1,0 +1,21 @@
+services:
+  maze-of-knowledge:
+    container_name: maze-of-knowledge
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8080
+      TEAM_COUNT: 4
+    ports:
+      - "7020:8080"
+    networks:
+      - default
+      - proxy
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
+    name: mascoteach-network

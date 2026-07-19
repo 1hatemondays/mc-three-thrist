@@ -9,7 +9,10 @@ import { hasWall } from "../../shared/maze.js";
 
 const SERVER_URL =
   import.meta.env.VITE_SERVER_URL ||
-  `${window.location.protocol}//${window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname}:3000`;
+  (import.meta.env.DEV
+    ? `${window.location.protocol}//${window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname}:3000`
+    : window.location.origin);
+const GUIDE_URL = `${import.meta.env.BASE_URL}guide`;
 const BOARD_SIZE = 6;
 const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
 
@@ -413,7 +416,7 @@ export default function App() {
   const rankingRows = gameOver?.rankings || teams.map((team) => ({ teamId: team.id, teamName: team.name, score: team.score, hp: team.hp }));
   const isSetupReview = !setupStarted;
   const canStartGame = Boolean(state?.setup?.complete && !setupStarted);
-  const isGuideScreen = window.location.pathname.replace(/\/+$/, "") === "/guide";
+  const isGuideScreen = window.location.pathname.replace(/\/+$/, "").endsWith("/guide");
   const turnOrder = state?.round?.turnOrder?.length
     ? state.round.turnOrder
     : teams.map((team) => team.id);
@@ -460,7 +463,7 @@ export default function App() {
           <button disabled={!canStartGame} onClick={startGame} type="button">
             {"B\u1eaft \u0111\u1ea7u"}
           </button>
-          <a className="guide-link" href="/guide" rel="noreferrer" target="_blank">
+          <a className="guide-link" href={GUIDE_URL} rel="noreferrer" target="_blank">
             {"M\u00e0n d\u1eabn"}
           </a>
         </div>

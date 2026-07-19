@@ -1,0 +1,16 @@
+.git
+.gitignore
+.vercel
+node_modules
+**/node_modules
+**/dist
+build-check
+.playwright-mcp
+.serena
+docs
+Particle Textures
+TODO.md
+player-gameplay-screenshot.png
+*.log
+.env
+.env.*

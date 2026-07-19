@@ -10,7 +10,9 @@ import smokeTexture from "./assets/smoke-2.png";
 
 const SERVER_URL =
   import.meta.env.VITE_SERVER_URL ||
-  `${window.location.protocol}//${window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname}:3000`;
+  (import.meta.env.DEV
+    ? `${window.location.protocol}//${window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname}:3000`
+    : window.location.origin);
 const BOARD_SIZE = 6;
 const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
 const TEAM_SESSION_KEY = "maze-of-knowledge:player-team";
