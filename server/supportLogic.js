@@ -3,7 +3,7 @@ import { SUPPORT_ITEM_TYPES, getSupportItemMeta } from "../shared/gameContent.js
 import { hasWall } from "../shared/maze.js";
 import { isGameOver } from "./gameOver.js";
 import { startMeteorShower } from "./meteorLogic.js";
-import { addRoundMessage, ensureRoundCollections, maybeFinishMovementRound } from "./roundFlow.js";
+import { addRoundMessage, ensureRoundCollections, finishTeamTurn, maybeFinishMovementRound, spendTurnEnergy } from "./roundFlow.js";
 
 const directionRules = [
   { direction: DIRECTIONS.UP, label: "trên", dx: 0, dy: -1, side: "top" },
@@ -96,40 +96,65 @@ export const useSupportItem = (state, teamId, payload = {}, random = Math.random
     return { ok: true, result: { type: item.type } };
   }
 
+  if (state.round.phase !== ROUND_PHASES.MOVEMENT || state.round.activeTeamId !== teamId) {
+    return { ok: false, error: "Chỉ được dùng vật phẩm chủ động trong lượt của đội." };
+  }
+  if (state.round.turnEnergy?.teamId === teamId && state.round.turnEnergy.remaining < 1) {
+    return { ok: false, error: "Đội đã hết năng lượng cho lượt này." };
+  }
+
+  const spendItemEnergy = () => spendTurnEnergy(state, teamId);
+  const finishIfEnergyEmpty = (spent, result = null) =>
+    spent.energy.remaining <= 0 ? finishTeamTurn(state, teamId, result) : false;
+
   if (item.type === SUPPORT_ITEM_TYPES.DIRECTION_HINT) {
+    const spent = spendItemEnergy();
+    if (!spent.ok) return spent;
     takeItem(team, item.instanceId);
     const hint = edgeHint(team, state.config.boardSize, random);
     addRoundMessage(state, teamId, { title: "Gợi ý hướng", text: hint.text });
-    return { ok: true, result: { type: item.type, hint } };
+    const result = { type: item.type, hint };
+    return { ok: true, result, roundComplete: finishIfEnergyEmpty(spent, { teamId, success: false, itemUsed: item.type, scoreDelta: 0 }) };
   }
 
   if (item.type === SUPPORT_ITEM_TYPES.METEOR_SHOWER) {
     const started = startMeteorShower(state, teamId);
     if (!started.ok) return started;
+    const spent = spendItemEnergy();
+    if (!spent.ok) return spent;
     takeItem(team, item.instanceId);
-    return { ok: true, result: { type: item.type } };
+    const result = { type: item.type };
+    return { ok: true, result, roundComplete: finishIfEnergyEmpty(spent, { teamId, success: false, itemUsed: item.type, scoreDelta: 0 }) };
   }
 
   if (item.type === SUPPORT_ITEM_TYPES.DOUBLE_SCORE) {
+    const spent = spendItemEnergy();
+    if (!spent.ok) return spent;
     takeItem(team, item.instanceId);
     team.effects = { ...(team.effects || {}), doubleScore: true };
     addRoundMessage(state, teamId, { title: "Nhân đôi điểm", text: "Lần di chuyển đúng kế tiếp sẽ được +20 điểm." });
-    return { ok: true, result: { type: item.type } };
+    const result = { type: item.type };
+    return { ok: true, result, roundComplete: finishIfEnergyEmpty(spent, { teamId, success: false, itemUsed: item.type, scoreDelta: 0 }) };
   }
 
   if (item.type === SUPPORT_ITEM_TYPES.TRAP) {
     const point = { x: Number(payload.x), y: Number(payload.y) };
     if (!pointInside(point, state.config.boardSize)) return { ok: false, error: "Vị trí cạm bẫy không hợp lệ." };
+    const spent = spendItemEnergy();
+    if (!spent.ok) return spent;
     takeItem(team, item.instanceId);
     state.round.traps.push({ x: point.x, y: point.y, ownerTeamId: teamId });
     addRoundMessage(state, teamId, { title: "Cạm bẫy", text: "Đã đặt cạm bẫy tại (" + (point.x + 1) + ", " + (point.y + 1) + ")." });
-    return { ok: true, result: { type: item.type, point } };
+    const result = { type: item.type, point };
+    return { ok: true, result, roundComplete: finishIfEnergyEmpty(spent, { teamId, success: false, itemUsed: item.type, scoreDelta: 0 }) };
   }
 
   if (item.type === SUPPORT_ITEM_TYPES.FREEZE_OPPONENT) {
     if (state.round.phase !== ROUND_PHASES.MOVEMENT) return { ok: false, error: "Chỉ được đóng băng trong pha di chuyển." };
     const target = findTeam(state, payload.targetTeamId);
     if (!target || target.id === teamId) return { ok: false, error: "Hãy chọn đối thủ hợp lệ." };
+    const spent = spendItemEnergy();
+    if (!spent.ok) return spent;
     takeItem(team, item.instanceId);
     state.round.pendingAnswers[target.id] = {
       teamId: target.id,
@@ -139,8 +164,9 @@ export const useSupportItem = (state, teamId, payload = {}, random = Math.random
       result: { teamId: target.id, success: false, frozen: true, newPosition: target.position, scoreDelta: 0 }
     };
     addRoundMessage(state, target.id, { title: "Bị đóng băng", text: "Đội bị mất lượt hiện tại." });
-    const roundComplete = maybeFinishMovementRound(state);
-    return { ok: true, result: { type: item.type, targetTeamId: target.id }, roundComplete };
+    maybeFinishMovementRound(state);
+    const result = { type: item.type, targetTeamId: target.id };
+    return { ok: true, result, roundComplete: finishIfEnergyEmpty(spent, { teamId, success: false, itemUsed: item.type, scoreDelta: 0 }) };
   }
 
   return { ok: false, error: "Vật phẩm chưa hỗ trợ." };

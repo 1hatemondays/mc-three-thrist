@@ -216,11 +216,17 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
   }
 
   if (tile.type === EVENT_TILE_TYPES.DUEL) {
-    const combat = startCombat(state, teamId, random);
+    const options = state.teams
+      .filter((item) => item.id !== teamId)
+      .map(({ id, name }) => ({ id, name }));
+    state.round.pendingEvents = state.round.pendingEvents || {};
+    state.round.pendingEvents[teamId] = {
+      type: EVENT_TILE_TYPES.DUEL,
+      options
+    };
     return makeEventResult(tile, {
-      opponentId: combat?.opponentId || null,
-      opponentName: combat?.opponentName || null,
-      message: combat ? "Đối kháng với " + combat.opponentName : "Không có đối thủ"
+      options,
+      message: "Chọn một đội để đối kháng."
     });
   }
 
@@ -354,6 +360,23 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
       text: correct ? "Trả lời đúng câu hỏi khó, nhận thêm 10 điểm." : "Trả lời sai câu hỏi khó."
     });
     return { ok: true, result: { type: pending.type, correct, scoreDelta } };
+  }
+
+  if (pending.type === EVENT_TILE_TYPES.DUEL) {
+    const target = state.teams.find((item) => item.id === payload.targetTeamId && item.id !== teamId);
+    if (!target) return { ok: false, error: "Hãy chọn đội đối kháng hợp lệ." };
+    const combat = startCombat(state, teamId, target.id);
+    if (!combat) return { ok: false, error: "Không thể bắt đầu đối kháng." };
+    delete state.round.pendingEvents[teamId];
+    return {
+      ok: true,
+      result: {
+        type: pending.type,
+        targetTeamId: target.id,
+        targetName: target.name,
+        message: "Đã chọn đối kháng với " + target.name
+      }
+    };
   }
 
   if (pending.type !== EVENT_TILE_TYPES.POSITION_SWAP) {

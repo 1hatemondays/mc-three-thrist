@@ -5,7 +5,9 @@ export const EVENTS = {
   SETUP_START_GAME: "setup:startGame",
   SETUP_SET_TURN_ORDER: "setup:setTurnOrder",
   MOVE_CHOOSE: "move:choose",
+  QUESTION_OPEN: "question:open",
   QUESTION_ANSWER: "question:answer",
+  QUESTION_REVEAL: "question:reveal",
   AUCTION_BID: "auction:bid",
   COMBAT_BET: "combat:bet",
   EVENT_RESOLVE: "event:resolve",
@@ -43,3 +45,4 @@ export const DIRECTIONS = {
 };
 
 export const MOVE_SCORE = 10;
+export const TURN_ENERGY_MAX = 3;

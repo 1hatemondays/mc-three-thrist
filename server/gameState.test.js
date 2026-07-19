@@ -60,6 +60,40 @@ test("player state includes auction data when movement round advances to auction
   assert.ok(playerState.round.auction.items.length > 0);
 });
 
+test("player state hides other teams live scores and HP", () => {
+  gameState.config = { boardSize: 6, teamCount: 2 };
+  gameState.teams = [];
+  gameState.setup = { submissions: {}, complete: true, started: true };
+  ensureTeam(gameState, "team1", "Alpha");
+  ensureTeam(gameState, "team2", "Beta");
+  gameState.teams[0].score = 40;
+  gameState.teams[0].hp = 80;
+  gameState.teams[1].score = 90;
+  gameState.teams[1].hp = 50;
+  gameState.gameOver = null;
+  gameState.round = {
+    roundNumber: 1,
+    phase: ROUND_PHASES.MOVEMENT,
+    pendingAnswers: {},
+    currentQuestion: null,
+    pendingEvents: {},
+    auction: { bids: {}, result: null },
+    combat: null,
+    traps: [],
+    messages: {}
+  };
+
+  const playerState = getPlayerState("team1");
+
+  assert.deepEqual(playerState.teams, [
+    { id: "team1", name: "Alpha" },
+    { id: "team2", name: "Beta" }
+  ]);
+  assert.equal(playerState.leaderboard, undefined);
+  assert.equal(playerState.team.score, 40);
+  assert.equal(playerState.team.hp, 80);
+});
+
 test("player state exposes the final ranking when the game is over", () => {
   gameState.config = { boardSize: 6, teamCount: 2 };
   gameState.teams = [];

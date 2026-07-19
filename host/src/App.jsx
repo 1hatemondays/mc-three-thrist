@@ -224,11 +224,17 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
               const x = index % BOARD_SIZE;
               const y = Math.floor(index / BOARD_SIZE);
               const cellTeams = teams.filter((team) => team.position?.x === x && team.position?.y === y);
+              const visibleTeams = cellTeams.slice(0, 4);
+              const extraTeamCount = Math.max(0, cellTeams.length - visibleTeams.length);
               const eventTile = eventTiles.find((tile) => tile.x === x && tile.y === y);
               const bobDelay = ((index % 7) * 0.25).toFixed(2) + "s";
 
               return (
-                <div className="guide-cell" key={x + ":" + y}>
+                <div
+                  className={"guide-cell" + (cellTeams.length > 1 ? " has-stack" : "")}
+                  key={x + ":" + y}
+                  style={{ gridColumn: x * 2 + 2, gridRow: y * 2 + 2 }}
+                >
                   <span className="guide-coord">{x + 1}.{y + 1}</span>
                   {eventTile && !cellTeams.length && (
                     <span className="guide-event-marker" style={{ animationDelay: bobDelay }} title="Ô sự kiện bí ẩn">
@@ -239,11 +245,11 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
                     </span>
                   )}
                   <div className="guide-markers">
-                    {cellTeams.map((team) => {
+                    {visibleTeams.map((team) => {
                       const realIndex = teams.findIndex((item) => item.id === team.id);
                       return (
                         <span
-                          className="team-marker round bob"
+                          className={"team-marker round" + (cellTeams.length === 1 ? " bob" : " mini")}
                           key={team.id}
                           style={{ "--team-color": teamColor(realIndex), animationDelay: bobDelay }}
                           title={team.name}
@@ -252,10 +258,29 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
                         </span>
                       );
                     })}
+                    {extraTeamCount > 0 && <span className="team-marker-overflow">+{extraTeamCount}</span>}
                   </div>
                 </div>
               );
             })}
+
+            {BORDER_SEGMENTS.map((edge) => (
+              <div
+                aria-hidden="true"
+                className={`guide-edge border ${edge.orientation}`}
+                key={`guide-border-${edge.side}-${edge.x}-${edge.y}`}
+                style={edgeGridPosition(edge)}
+              />
+            ))}
+
+            {INTERIOR_EDGES.map((edge) => (
+              <div
+                aria-hidden="true"
+                className={`guide-edge ${edge.orientation}`}
+                key={`guide-edge-${edge.side}-${edge.x}-${edge.y}`}
+                style={edgeGridPosition(edge)}
+              />
+            ))}
           </div>
 
           <Confetti seed={confettiSeed} />
@@ -286,7 +311,7 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
                 <small>
                   {gameOver
                     ? team.score + " điểm / " + team.hp + " máu"
-                    : "(" + ((team.position?.x ?? 0) + 1) + ", " + ((team.position?.y ?? 0) + 1) + ") / " + team.score + " điểm"}
+                    : "(" + ((team.position?.x ?? 0) + 1) + ", " + ((team.position?.y ?? 0) + 1) + ")"}
                 </small>
               </div>
             </div>
@@ -297,10 +322,12 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
   );
 };
 
-const HostRoundBoxes = ({ gameOver, onShowLeaderboard, round }) => {
+const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion, onShowLeaderboard, round }) => {
   if (!round) return null;
   const auction = round.auction;
   const combat = round.combat;
+  const questionControl = round.questionControl;
+  const correctChoice = questionControl?.question?.choices?.[questionControl.question.correctIndex];
 
   return (
     <div className="host-boxes">
@@ -328,6 +355,39 @@ const HostRoundBoxes = ({ gameOver, onShowLeaderboard, round }) => {
         </strong>
         <small>{"Vòng " + (round.roundNumber || 1)}</small>
       </section>
+
+      {!gameOver && (
+        <section className="host-box active-spotlight">
+          <p>{"Spotlight lượt"}</p>
+          <strong>{activeTeam?.name || "Chưa có đội active"}</strong>
+          <small>
+            {round.turnEnergy
+              ? "Năng lượng " + round.turnEnergy.remaining + "/" + round.turnEnergy.max
+              : "Chờ lượt mới"}
+          </small>
+        </section>
+      )}
+
+      {questionControl && !gameOver && (
+        <section className="host-box host-question-box">
+          <p>{"Câu hỏi host dẫn"}</p>
+          <strong>{questionControl.question?.text}</strong>
+          <ol>
+            {(questionControl.question?.choices || []).map((choice, index) => (
+              <li className={questionControl.reveal && index === questionControl.question.correctIndex ? "correct" : ""} key={choice}>
+                {String.fromCharCode(65 + index)}. {choice}
+              </li>
+            ))}
+          </ol>
+          {!questionControl.answerOpen && !questionControl.answered && (
+            <button className="host-box-action" onClick={onOpenQuestion} type="button">Mở trả lời</button>
+          )}
+          {questionControl.answered && !questionControl.reveal && (
+            <button className="host-box-action" onClick={onRevealQuestion} type="button">Reveal đáp án</button>
+          )}
+          {questionControl.reveal && <small>{"Đáp án đúng: " + correctChoice}</small>}
+        </section>
+      )}
 
       {auction && (round.phase === "auction" || auction.result) && (
         <section className="host-box auction-box">
@@ -364,7 +424,7 @@ const HostRoundBoxes = ({ gameOver, onShowLeaderboard, round }) => {
             {combat.result
               ? combat.result.shielded
                 ? combat.result.winnerName + " thắng · lá chắn đã chặn sát thương"
-                : combat.result.winnerName + " thắng · " + combat.result.loserName + " mất " + combat.result.hpLoss + " HP"
+                : combat.result.winnerName + " thắng đối kháng"
               : "Điểm cược đang được niêm phong."}
           </small>
         </section>
@@ -428,7 +488,7 @@ export default function App() {
           title: (combat.winnerName || "Một đội") + " thắng đối kháng!",
           text: combat.shielded
             ? (combat.loserName || "Đối thủ") + " được lá chắn bảo vệ."
-            : (combat.loserName || "Đối thủ") + " mất " + (combat.hpLoss ?? 0) + " máu.",
+            : "Hai đội đã phân thắng bại.",
           color: "#ef8f6b",
           symbol: "VS"
         },
@@ -516,6 +576,14 @@ export default function App() {
 
   const showFinalLeaderboard = () => {
     socketRef.current?.emit(EVENTS.GAME_OVER_SHOW_LEADERBOARD);
+  };
+
+  const openQuestion = () => {
+    socketRef.current?.emit(EVENTS.QUESTION_OPEN);
+  };
+
+  const revealQuestion = () => {
+    socketRef.current?.emit(EVENTS.QUESTION_REVEAL);
   };
 
   if (!hostAccessKey) {
@@ -633,13 +701,26 @@ export default function App() {
         </div>
 
         <aside className="leaderboard">
-          <HostRoundBoxes gameOver={gameOver} onShowLeaderboard={showFinalLeaderboard} round={state?.round} />
+          <HostRoundBoxes
+            activeTeam={teams.find((team) => team.id === state?.round?.activeTeamId)}
+            gameOver={gameOver}
+            onOpenQuestion={openQuestion}
+            onRevealQuestion={revealQuestion}
+            onShowLeaderboard={showFinalLeaderboard}
+            round={state?.round}
+          />
 
-          <h2>{gameOver ? "Xếp hạng chung cuộc" : "Bảng điểm"}</h2>
+          <h2>{gameOver ? "Xếp hạng chung cuộc" : "Trạng thái đội"}</h2>
           {rankingRows.map((team, index) => (
             <div className={"rank" + (gameOver && index === 0 ? " winner" : state?.round?.activeTeamId === (team.teamId || team.id) ? " is-active" : "")} key={team.teamId || team.id}>
               <span>{gameOver ? "#" + (team.placement || index + 1) + " · " + team.teamName : team.name}</span>
-              <strong>{team.score} {"\u0111i\u1ec3m"} / {team.hp} {"m\u00e1u"}</strong>
+              <strong>
+                {gameOver
+                  ? team.score + " \u0111i\u1ec3m / " + team.hp + " m\u00e1u"
+                  : state?.round?.activeTeamId === (team.teamId || team.id)
+                    ? "\u0110ang spotlight"
+                    : "Chờ lượt"}
+              </strong>
             </div>
           ))}
 

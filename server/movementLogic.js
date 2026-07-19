@@ -2,7 +2,7 @@ import { DIRECTIONS, MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
 import { canonicalWall, hasWall, wallKey } from "../shared/maze.js";
 import { applyEventTileEffect, findEventTileAt, getPlayerPendingEvent } from "./eventLogic.js";
 import { finishGameIfNeeded, isGameOver } from "./gameOver.js";
-import { maybeFinishMovementRound } from "./roundFlow.js";
+import { ensureTurnEnergy, finishTeamTurn, maybeFinishMovementRound, spendTurnEnergy } from "./roundFlow.js";
 import { applyTrapAtPosition } from "./supportLogic.js";
 
 const DIRECTION_RULES = {
@@ -21,18 +21,33 @@ export const stripQuestionAnswer = (question) => {
 
 export const getPlayerRoundState = (round, teamId) => {
   const pending = round.pendingAnswers?.[teamId] || null;
+  const questionControl = round.questionControl?.teamId === teamId ? round.questionControl : null;
 
   return {
     roundNumber: round.roundNumber,
     phase: round.phase,
     turnOrder: round.turnOrder || [],
     activeTeamId: round.activeTeamId || null,
+    turnEnergy: round.turnEnergy?.teamId === teamId ? round.turnEnergy : null,
+    questionControl: questionControl
+      ? {
+          answerOpen: Boolean(questionControl.answerOpen),
+          answered: Boolean(questionControl.answered),
+          reveal: Boolean(questionControl.reveal),
+          correct: questionControl.reveal ? questionControl.correct : null,
+          correctIndex: questionControl.reveal ? questionControl.question?.correctIndex : null
+        }
+      : null,
     pendingEvent: getPlayerPendingEvent(round, teamId),
-    currentQuestion: pending && !pending.answered ? stripQuestionAnswer(pending.question) : null,
+    currentQuestion:
+      pending && !pending.answered && questionControl?.answerOpen
+        ? stripQuestionAnswer(pending.question)
+        : null,
     pendingAnswer: pending
       ? {
           direction: pending.direction,
           answered: pending.answered,
+          waitingForHost: Boolean(!pending.answered && !questionControl?.answerOpen),
           result: pending.result || null
         }
       : null
@@ -67,6 +82,7 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
     : state.teams.map((item) => item.id);
   state.round.turnOrder = turnOrder;
   state.round.activeTeamId = state.round.activeTeamId || turnOrder[0] || null;
+  ensureTurnEnergy(state, state.round.activeTeamId);
 
   if (state.round.phase !== ROUND_PHASES.MOVEMENT) {
     return { ok: false, error: "Hiện chưa mở phần di chuyển." };
@@ -74,6 +90,10 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
 
   if (state.round.pendingEvents?.[teamId]) {
     return { ok: false, error: "H?y x? l? s? ki?n hi?n t?i tr??c khi ?i ti?p." };
+  }
+
+  if (state.round.questionControl?.teamId === teamId && state.round.questionControl.answered && !state.round.questionControl.reveal) {
+    return { ok: false, error: "Chờ host reveal đáp án trước khi đi tiếp." };
   }
 
   const existing = state.round.pendingAnswers[teamId];
@@ -98,6 +118,7 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
 
   if (revisitingKnownCell) {
     state.round.currentQuestion = null;
+    state.round.questionControl = null;
     return {
       ok: true,
       instant: true,
@@ -110,22 +131,21 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
   }
 
   if (movement.blocked) {
+    const spent = spendTurnEnergy(state, teamId);
+    if (!spent.ok) return spent;
     const result = resolveMovement(state, team, teamId, direction, {
       usedQuestion: false,
       correct: true,
       awardScore: false
     });
 
-    state.round.pendingAnswers[teamId] = {
-      teamId,
-      direction,
-      question: null,
-      answered: true,
-      result
-    };
+    state.round.questionControl = null;
     state.round.currentQuestion = null;
 
-    return { ok: true, instant: true, result, roundComplete: maybeFinishMovementRound(state) };
+    const roundComplete = spent.energy.remaining <= 0
+      ? finishTeamTurn(state, teamId, result)
+      : false;
+    return { ok: true, instant: true, result, roundComplete };
   }
 
   const question = chooseQuestion(questions, random);
@@ -141,8 +161,34 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
     result: null
   };
   state.round.currentQuestion = question;
+  state.round.questionControl = {
+    teamId,
+    direction,
+    question,
+    answerOpen: false,
+    answered: false,
+    answerIndex: null,
+    correct: null,
+    result: null,
+    reveal: false
+  };
 
   return { ok: true, teamId, direction, question };
+};
+
+export const openQuestionForAnswer = (state, teamId = null) => {
+  const control = state.round.questionControl;
+  if (!control || control.answered) return { ok: false, error: "Không có câu hỏi đang chờ mở." };
+  if (teamId && control.teamId !== teamId) return { ok: false, error: "Câu hỏi không thuộc đội này." };
+  control.answerOpen = true;
+  return { ok: true, question: stripQuestionAnswer(control.question) };
+};
+
+export const revealQuestionExplanation = (state) => {
+  const control = state.round.questionControl;
+  if (!control || !control.answered) return { ok: false, error: "Chưa có kết quả câu hỏi để reveal." };
+  control.reveal = true;
+  return { ok: true, questionControl: control };
 };
 
 const addDiscoveredCell = (team, point) => {
@@ -266,6 +312,12 @@ export const answerQuestion = (state, teamId, payload) => {
   }
 
   const correct = answerIndex === pending.question.correctIndex;
+  const control = state.round.questionControl;
+  if (!control?.answerOpen || control.teamId !== teamId) {
+    return { ok: false, error: "Host chưa mở quyền trả lời câu hỏi này." };
+  }
+  const spent = spendTurnEnergy(state, teamId);
+  if (!spent.ok) return spent;
   recordAnswer(team, correct);
   const result = resolveMovement(state, team, teamId, pending.direction, {
     usedQuestion: true,
@@ -273,14 +325,24 @@ export const answerQuestion = (state, teamId, payload) => {
     awardScore: true
   });
 
-  const turnEnded = !result.success || Boolean(result.event?.endsTurn);
+  const turnEnded = Boolean(result.event?.endsTurn);
+  const energyEnded = spent.energy.remaining <= 0;
   let roundComplete = false;
 
-  if (turnEnded) {
+  state.round.questionControl = {
+    ...control,
+    answered: true,
+    answerIndex,
+    correct,
+    result,
+    reveal: false
+  };
+
+  if (turnEnded || energyEnded) {
     pending.answered = true;
     pending.result = result;
 
-    roundComplete = maybeFinishMovementRound(state);
+    roundComplete = finishTeamTurn(state, teamId, result);
   } else {
     delete state.round.pendingAnswers[teamId];
     state.round.currentQuestion = null;

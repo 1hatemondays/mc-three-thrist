@@ -421,6 +421,31 @@ dd {
   align-items: flex-start;
 }
 
+.energy-pips {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.energy-pips span {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid rgba(29, 51, 41, 0.35);
+  background: rgba(29, 51, 41, 0.08);
+}
+
+.energy-pips span.filled {
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(240, 185, 75, 0.18);
+}
+
+.energy-pips strong {
+  margin-left: 4px;
+  color: var(--muted);
+}
+
 .section-head h2 {
   font-size: 22px;
   line-height: 1.08;

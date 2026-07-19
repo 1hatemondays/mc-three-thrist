@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ROUND_PHASES } from "../shared/constants.js";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES } from "../shared/gameContent.js";
-import { applyEventTileEffect } from "./eventLogic.js";
+import { applyEventTileEffect, resolvePendingEvent } from "./eventLogic.js";
 import { getHostCombatState, getPlayerCombatState, submitCombatBet } from "./combatLogic.js";
 
 const makeTeam = (id, score = 50) => ({
@@ -32,19 +32,33 @@ const makeState = () => ({
   }
 });
 
-test("duel event opens real sealed combat and resolves HP loss", () => {
+test("duel event lets the triggering team choose an opponent and resolves HP loss", () => {
   const state = makeState();
+  state.teams.push(makeTeam("team3"));
   const event = applyEventTileEffect(state, "team1", { type: EVENT_TILE_TYPES.DUEL, x: 1, y: 0 }, () => 0);
 
   assert.equal(event.type, EVENT_TILE_TYPES.DUEL);
+  assert.equal(state.round.phase, ROUND_PHASES.MOVEMENT);
+  assert.equal(state.round.pendingEvents.team1.type, EVENT_TILE_TYPES.DUEL);
+  assert.deepEqual(
+    event.options.map((option) => option.id),
+    ["team2", "team3"]
+  );
+
+  const chosen = resolvePendingEvent(state, "team1", { targetTeamId: "team2" });
+  assert.equal(chosen.ok, true);
   assert.equal(state.round.phase, ROUND_PHASES.COMBAT);
   assert.equal(state.round.combat.attackerId, "team1");
   assert.equal(state.round.combat.defenderId, "team2");
 
   const playerCombat = getPlayerCombatState(state, "team1");
+  const unrelatedCombat = getPlayerCombatState(state, "team3");
   const hostCombat = getHostCombatState(state);
   assert.equal(playerCombat.opponentName, "team2");
-  assert.deepEqual(playerCombat.attacker, { id: "team1", name: "team1", hp: 100, score: 50 });
+  assert.deepEqual(playerCombat.attacker, { id: "team1", name: "team1" });
+  assert.equal(playerCombat.maxBid, 50);
+  assert.equal(unrelatedCombat, null);
+  assert.deepEqual(hostCombat.attacker, { id: "team1", name: "team1" });
   assert.equal("bets" in playerCombat, false);
   assert.equal("bets" in hostCombat, false);
 
@@ -62,6 +76,7 @@ test("shield blocks one combat loss", () => {
   const state = makeState();
   state.teams[0].supportItems.push({ type: SUPPORT_ITEM_TYPES.SHIELD, instanceId: "shield:1" });
   applyEventTileEffect(state, "team1", { type: EVENT_TILE_TYPES.DUEL, x: 1, y: 0 }, () => 0);
+  resolvePendingEvent(state, "team1", { targetTeamId: "team2" });
 
   submitCombatBet(state, "team1", { amount: 5 });
   submitCombatBet(state, "team2", { amount: 10 });

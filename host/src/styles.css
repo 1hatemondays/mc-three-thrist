@@ -110,6 +110,29 @@ main {
   padding: 10px 12px;
 }
 
+.active-spotlight {
+  border-color: rgba(240, 185, 75, 0.75);
+  background: linear-gradient(145deg, #fff6d7, #f2e4bd);
+}
+
+.host-question-box {
+  grid-column: 1 / -1;
+}
+
+.host-question-box ol {
+  margin: 10px 0 0;
+  padding-left: 22px;
+}
+
+.host-question-box li {
+  margin: 4px 0;
+  font-weight: 800;
+}
+
+.host-question-box li.correct {
+  color: #0f7a4f;
+}
+
 .team-card,
 .leaderboard {
   border: 1px solid rgba(29, 51, 41, 0.22);
@@ -465,9 +488,16 @@ main {
 
 .guide-map {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-template-rows: repeat(6, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns:
+    var(--maze-edge)
+    repeat(5, minmax(0, 1fr) var(--maze-edge))
+    minmax(0, 1fr)
+    var(--maze-edge);
+  grid-template-rows:
+    var(--maze-edge)
+    repeat(5, minmax(0, 1fr) var(--maze-edge))
+    minmax(0, 1fr)
+    var(--maze-edge);
   width: min(100%, 78vh);
   max-width: 980px;
   aspect-ratio: 1;
@@ -486,8 +516,19 @@ main {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid rgba(240, 185, 75, 0.24);
+  border: 1px solid rgba(29, 51, 41, 0.16);
   background: var(--paper);
+  z-index: 1;
+}
+
+.guide-edge {
+  min-width: 0;
+  min-height: 0;
+  background: rgba(29, 51, 41, 0.14);
+}
+
+.guide-edge.border {
+  background: var(--line);
 }
 
 .guide-coord {
@@ -500,11 +541,17 @@ main {
 }
 
 .guide-markers {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  padding: 18px 8px 8px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(2px, 0.5vw, 6px);
+  max-height: calc(100% - 8px);
+  max-width: calc(100% - 8px);
+  place-items: center;
+  position: relative;
+}
+
+.guide-cell.has-stack .guide-markers {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .team-marker {
@@ -516,6 +563,34 @@ main {
   color: var(--ink);
   background: var(--team-color);
   box-shadow: 3px 3px 0 rgba(16, 23, 19, 0.86);
+  font-weight: 1000;
+}
+
+.guide-markers .team-marker {
+  width: min(clamp(30px, 3.6vw, 48px), calc((78vh - 7 * var(--maze-edge) - 28px) / 6 - 10px));
+}
+
+.guide-markers .team-marker.mini {
+  width: min(clamp(22px, 2.25vw, 34px), calc((78vh - 7 * var(--maze-edge) - 28px) / 12 - 4px));
+  box-shadow: 2px 2px 0 rgba(16, 23, 19, 0.72);
+  font-size: clamp(11px, 1.2vw, 16px);
+}
+
+.team-marker-overflow {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 5px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--ink);
+  box-shadow: 2px 2px 0 rgba(16, 23, 19, 0.75);
+  font-size: 12px;
   font-weight: 1000;
 }
 

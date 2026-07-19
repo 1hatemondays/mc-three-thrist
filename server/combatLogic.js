@@ -3,17 +3,14 @@ import { isGameOver } from "./gameOver.js";
 import { addRoundMessage } from "./roundFlow.js";
 import { consumeShield } from "./supportLogic.js";
 
-const choose = (items, random = Math.random) => {
-  if (!items.length) return null;
-  return items[Math.min(Math.floor(random() * items.length), items.length - 1)];
-};
 const findTeam = (state, teamId) => state.teams.find((team) => team.id === teamId);
-const publicTeam = (team) => team && ({ id: team.id, name: team.name, hp: team.hp, score: team.score });
+const publicTeam = (team) => team && ({ id: team.id, name: team.name });
 
-export const startCombat = (state, attackerId, random = Math.random) => {
+export const startCombat = (state, attackerId, defenderId) => {
   if (isGameOver(state)) return null;
   const attacker = findTeam(state, attackerId);
-  const defender = choose(state.teams.filter((team) => team.id !== attackerId), random);
+  const defender = findTeam(state, defenderId);
+  if (attackerId === defenderId) return null;
   if (!attacker || !defender) return null;
 
   state.round.phase = ROUND_PHASES.COMBAT;
@@ -39,6 +36,8 @@ export const getPlayerCombatState = (state, teamId) => {
   const defender = findTeam(state, combat.defenderId);
   const opponentId = teamId === combat.attackerId ? combat.defenderId : combat.attackerId;
   const opponent = findTeam(state, opponentId);
+  if (!involved) return null;
+  const currentTeam = findTeam(state, teamId);
   return {
     active: state.round.phase === ROUND_PHASES.COMBAT,
     involved,
@@ -46,6 +45,7 @@ export const getPlayerCombatState = (state, teamId) => {
     attacker: publicTeam(attacker),
     defender: publicTeam(defender),
     opponentName: involved ? opponent?.name || opponentId : null,
+    maxBid: currentTeam?.score || 0,
     submitted: Boolean(combat.bets?.[teamId]),
     submittedCount: Object.keys(combat.bets || {}).length,
     result: publicCombatResult(combat)

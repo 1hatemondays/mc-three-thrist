@@ -1,4 +1,4 @@
-import { ROUND_PHASES } from "../shared/constants.js";
+import { ROUND_PHASES, TURN_ENERGY_MAX } from "../shared/constants.js";
 
 export const makeAuctionState = () => ({ bids: {}, result: null });
 
@@ -22,6 +22,42 @@ export const addRoundMessage = (state, teamId, message) => {
 const turnOrderOf = (state) =>
   state.round.turnOrder?.length ? state.round.turnOrder : state.teams.map((team) => team.id);
 
+export const setActiveTurn = (state, teamId) => {
+  state.round.activeTeamId = teamId || null;
+  state.round.questionControl = null;
+  state.round.turnEnergy = teamId
+    ? { teamId, remaining: TURN_ENERGY_MAX, max: TURN_ENERGY_MAX }
+    : null;
+};
+
+export const ensureTurnEnergy = (state, teamId) => {
+  if (!teamId) return null;
+  if (state.round.turnEnergy?.teamId !== teamId) {
+    state.round.turnEnergy = { teamId, remaining: TURN_ENERGY_MAX, max: TURN_ENERGY_MAX };
+  }
+  return state.round.turnEnergy;
+};
+
+export const spendTurnEnergy = (state, teamId, amount = 1) => {
+  const energy = ensureTurnEnergy(state, teamId);
+  if (!energy) return { ok: false, error: "Không có lượt đang hoạt động." };
+  if (energy.remaining < amount) return { ok: false, error: "Đội đã hết năng lượng cho lượt này." };
+  energy.remaining -= amount;
+  return { ok: true, energy };
+};
+
+export const finishTeamTurn = (state, teamId, result = null) => {
+  const team = state.teams.find((item) => item.id === teamId);
+  state.round.pendingAnswers[teamId] = {
+    teamId,
+    direction: null,
+    question: null,
+    answered: true,
+    result: result || { teamId, success: false, newPosition: team?.position || null, scoreDelta: 0 }
+  };
+  return maybeFinishMovementRound(state);
+};
+
 const consumeSkippedTurns = (state) => {
   for (const teamId of turnOrderOf(state)) {
     if (state.round.pendingAnswers[teamId]?.answered) continue;
@@ -44,7 +80,7 @@ const consumeSkippedTurns = (state) => {
 export const beginAuction = (state) => {
   ensureRoundCollections(state);
   state.round.phase = ROUND_PHASES.AUCTION;
-  state.round.activeTeamId = null;
+  setActiveTurn(state, null);
   state.round.auction = makeAuctionState();
 };
 
@@ -59,7 +95,7 @@ export const finishMovementRound = (state) => {
   } else {
     state.round.roundNumber = completedRound + 1;
     state.round.phase = ROUND_PHASES.MOVEMENT;
-    state.round.activeTeamId = turnOrderOf(state)[0] || null;
+    setActiveTurn(state, turnOrderOf(state)[0] || null);
     maybeFinishMovementRound(state);
   }
   return true;
@@ -71,7 +107,8 @@ export const maybeFinishMovementRound = (state) => {
     (teamId) => !state.round.pendingAnswers[teamId]?.answered
   );
   if (nextTeamId) {
-    state.round.activeTeamId = nextTeamId;
+    if (state.round.activeTeamId !== nextTeamId) setActiveTurn(state, nextTeamId);
+    else ensureTurnEnergy(state, nextTeamId);
     return false;
   }
 

@@ -109,7 +109,7 @@ export const getPlayerState = (teamId) => {
       revealedWalls: team.revealedWalls,
       supportItems: team.supportItems
     },
-    leaderboard: gameState.teams.map(({ id, name, hp, score }) => ({ id, name, hp, score })),
+    teams: gameState.teams.map(({ id, name }) => ({ id, name })),
     round: {
       ...getPlayerRoundState(gameState.round, teamId),
       auction: getPlayerAuctionState(gameState, teamId),

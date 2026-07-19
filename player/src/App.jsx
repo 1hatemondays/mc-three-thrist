@@ -598,6 +598,8 @@ const PendingEventCard = ({ event, onResolve }) => {
     );
   }
 
+  const isDuel = event.type === EVENT_TILE_TYPES.DUEL;
+
   return (
     <section className="game-card pending-event-card">
       <div className="section-head">
@@ -608,17 +610,23 @@ const PendingEventCard = ({ event, onResolve }) => {
         <span className="game-event" style={{ "--event-color": event.color }}>
           {event.symbol}
         </span>
-        <p>{"Chọn đội để trao đổi vị trí, hoặc bỏ qua sự kiện này."}</p>
+        <p>{isDuel ? "Chọn một đội để đối kháng." : "Chọn đội để trao đổi vị trí, hoặc bỏ qua sự kiện này."}</p>
       </div>
       <div className="event-actions">
         {(event.options || []).map((option) => (
-          <button key={option.id} onClick={() => onResolve({ action: "swap", targetTeamId: option.id })} type="button">
+          <button
+            key={option.id}
+            onClick={() => onResolve(isDuel ? { targetTeamId: option.id } : { action: "swap", targetTeamId: option.id })}
+            type="button"
+          >
             {option.name}
           </button>
         ))}
-        <button className="secondary-button" onClick={() => onResolve({ action: "skip" })} type="button">
-          {"Bỏ qua"}
-        </button>
+        {!isDuel && (
+          <button className="secondary-button" onClick={() => onResolve({ action: "skip" })} type="button">
+            {"Bỏ qua"}
+          </button>
+        )}
       </div>
     </section>
   );
@@ -720,7 +728,6 @@ const AuctionPanel = ({ auction, active, onBid }) => {
 const CombatTeamCard = ({ mark, role, team, result }) => {
   const winner = result?.winnerId === team?.id;
   const loser = result?.loserId === team?.id;
-  const hp = Math.max(0, Math.min(100, team?.hp || 0));
 
   return (
     <article className={"combat-team-card" + (winner ? " is-winner" : "") + (loser ? " is-loser" : "")}>
@@ -729,13 +736,6 @@ const CombatTeamCard = ({ mark, role, team, result }) => {
         <span>{role}</span>
       </div>
       <strong>{team?.name || "Đang chọn đội"}</strong>
-      <div className="combat-team-stats">
-        <span>{team?.score ?? 0} điểm</span>
-        <span>{hp} HP</span>
-      </div>
-      <div className="combat-hp" aria-label={(team?.name || "Đội") + " còn " + hp + " máu"}>
-        <span style={{ "--hp-width": hp + "%" }} />
-      </div>
       {winner && <em>Thắng</em>}
       {loser && <em>Thua</em>}
     </article>
@@ -745,8 +745,7 @@ const CombatTeamCard = ({ mark, role, team, result }) => {
 const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
   const dialogRef = useRef(null);
   const [amount, setAmount] = useState(0);
-  const myTeam = [combat?.attacker, combat?.defender].find((team) => team?.id === currentTeamId);
-  const maxBid = myTeam?.score || 0;
+  const maxBid = combat?.maxBid || 0;
   const bid = Number(amount);
   const canSubmit = Number.isInteger(bid) && bid >= 0 && bid <= maxBid;
 
@@ -970,6 +969,18 @@ const GameOverPanel = ({ gameOver }) => {
   );
 };
 
+const EnergyPips = ({ energy }) => {
+  if (!energy) return null;
+  return (
+    <div className="energy-pips" aria-label={`Còn ${energy.remaining}/${energy.max} năng lượng`}>
+      {Array.from({ length: energy.max || 3 }, (_, index) => (
+        <span className={index < energy.remaining ? "filled" : ""} key={index} />
+      ))}
+      <strong>{energy.remaining}/{energy.max}</strong>
+    </div>
+  );
+};
+
 const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onAnswer, onCombatBet, onResolveEvent }) => {
   if (state.gameOver) {
     return (
@@ -1008,8 +1019,10 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
   const isMyTurn = round?.activeTeamId === state.team.id;
   const finishedTurn = movementOpen && pending?.answered;
   const waitingForTurn = movementOpen && !isMyTurn && !finishedTurn;
-  const activeTeam = state.leaderboard?.find((team) => team.id === round?.activeTeamId);
-  const canChooseDirection = movementOpen && isMyTurn && !pending;
+  const activeTeam = state.teams?.find((team) => team.id === round?.activeTeamId);
+  const waitingForReveal = Boolean(round?.questionControl?.answered && !round?.questionControl?.reveal);
+  const canChooseDirection = movementOpen && isMyTurn && !pending && !waitingForReveal;
+  const waitingForHostQuestion = Boolean(pending?.waitingForHost);
 
   return (
     <section className="gameplay two-col">
@@ -1019,6 +1032,7 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
             <p>{"V\u00f2ng " + (round?.roundNumber || 1) + " / " + (phaseLabels[round?.phase] || "Di chuy\u1ec3n")}</p>
             <h2>{"Khung di chuyển"}</h2>
           </div>
+          <EnergyPips energy={round?.turnEnergy} />
           <MovementViewport
             disabled={!canChooseDirection}
             lastResult={result}
@@ -1028,7 +1042,9 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
           />
           <div className="turn-note">
             {canChooseDirection && "Rê chuột vào cạnh để hiện hướng, hoặc chạm cạnh hai lần trên điện thoại để di chuyển."}
+            {waitingForHostQuestion && "Đã khóa hướng: " + directionLabels[pending.direction] + ". Chờ host mở câu hỏi."}
             {waitingForAnswer && "\u0110\u00e3 khóa hướng: " + directionLabels[pending.direction] + ". Trả lời câu hỏi để thử di chuyển."}
+            {waitingForReveal && "Đã trả lời. Chờ host reveal đáp án trước khi đi tiếp."}
             {finishedTurn && "\u0110\u00e3 xong l\u01b0\u1ee3t. \u0110ang ch\u1edd \u0111\u1ed9i ti\u1ebfp theo."}
             {waitingForTurn && "\u0110ang ch\u1edd l\u01b0\u1ee3t. Hi\u1ec7n l\u00e0 l\u01b0\u1ee3t c\u1ee7a " + (activeTeam?.name || "\u0111\u1ed9i kh\u00e1c") + "."}
             {round?.phase === ROUND_PHASES.AUCTION && "Đang mở vòng đấu giá kín."}
@@ -1049,7 +1065,6 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
         />
         <ResultCard result={result} />
         <NoticePanel messages={round?.messages || []} />
-        <Leaderboard teams={state.leaderboard || []} />
       </div>
     </section>
   );
