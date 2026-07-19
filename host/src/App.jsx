@@ -15,6 +15,31 @@ const SERVER_URL =
 const GUIDE_URL = `${import.meta.env.BASE_URL}guide`;
 const BOARD_SIZE = 6;
 const APP_TITLE = "M\u00ea Cung Tri Th\u1ee9c";
+const HOST_ACCESS_KEY_STORAGE = "maze-of-knowledge:host-access-key";
+
+const loadHostAccessKey = () => {
+  try {
+    return window.sessionStorage.getItem(HOST_ACCESS_KEY_STORAGE) || "";
+  } catch {
+    return "";
+  }
+};
+
+const saveHostAccessKey = (accessKey) => {
+  try {
+    window.sessionStorage.setItem(HOST_ACCESS_KEY_STORAGE, accessKey);
+  } catch {
+    // The current tab can stay unlocked even when storage is unavailable.
+  }
+};
+
+const clearHostAccessKey = () => {
+  try {
+    window.sessionStorage.removeItem(HOST_ACCESS_KEY_STORAGE);
+  } catch {
+    // Nothing else is required when storage is unavailable.
+  }
+};
 
 const TEAM_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#f4e06d", "#8bd6e8", "#f7a6c8"];
 const TEAM_ICONS = ["♠", "♥", "◆", "♣", "★", "✦", "●", "▲"];
@@ -343,12 +368,19 @@ export default function App() {
   const [tvBanner, setTvBanner] = useState(null);
   const [confettiSeed, setConfettiSeed] = useState(0);
   const [flashSeed, setFlashSeed] = useState(0);
+  const [hostAccessKey, setHostAccessKey] = useState(loadHostAccessKey);
+  const [hostKeyDraft, setHostKeyDraft] = useState("");
+  const [hostAuthError, setHostAuthError] = useState("");
   const socketRef = useRef(null);
   const teamsRef = useRef([]);
   const bannerTimerRef = useRef(null);
 
   useEffect(() => {
-    const socket = io(SERVER_URL, { auth: { role: "host" } });
+    if (!hostAccessKey) return undefined;
+
+    const socket = io(SERVER_URL, {
+      auth: { role: "host", accessKey: hostAccessKey }
+    });
     socketRef.current = socket;
 
     const showBanner = (banner, celebrate) => {
@@ -394,19 +426,56 @@ export default function App() {
       );
     };
 
+    const onConnectError = (error) => {
+      if (!["host_access_denied", "host_access_not_configured"].includes(error?.message)) return;
+
+      clearHostAccessKey();
+      setState(null);
+      setHostAccessKey("");
+      setHostAuthError(
+        error.message === "host_access_not_configured"
+          ? "M\u00e1y ch\u1ee7 ch\u01b0a c\u1ea5u h\u00ecnh m\u00e3 truy c\u1eadp Host."
+          : "M\u00e3 truy c\u1eadp kh\u00f4ng \u0111\u00fang."
+      );
+    };
+
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
     socket.on(EVENTS.COMBAT_RESULT, onCombatResult);
+    socket.on("connect_error", onConnectError);
 
     return () => {
       clearTimeout(bannerTimerRef.current);
       socket.off(EVENTS.GAME_STATE, onState);
       socket.off(EVENTS.ROUND_RESULT, onRoundResult);
       socket.off(EVENTS.COMBAT_RESULT, onCombatResult);
+      socket.off("connect_error", onConnectError);
       socketRef.current = null;
       socket.disconnect();
     };
-  }, []);
+  }, [hostAccessKey]);
+
+  const unlockHost = (event) => {
+    event.preventDefault();
+    const accessKey = hostKeyDraft.trim();
+
+    if (!/^\d{4}$/.test(accessKey)) {
+      setHostAuthError("M\u00e3 truy c\u1eadp g\u1ed3m 4 ch\u1eef s\u1ed1.");
+      return;
+    }
+
+    saveHostAccessKey(accessKey);
+    setHostAuthError("");
+    setHostKeyDraft("");
+    setHostAccessKey(accessKey);
+  };
+
+  const lockHost = () => {
+    clearHostAccessKey();
+    setState(null);
+    setHostAuthError("");
+    setHostAccessKey("");
+  };
 
   const teams = state?.teams || [];
   const submitted = new Set(Object.keys(state?.setup?.submissions || {}));
@@ -435,6 +504,31 @@ export default function App() {
     socketRef.current?.emit(EVENTS.SETUP_START_GAME);
   };
 
+  if (!hostAccessKey) {
+    return (
+      <main className="host-auth-shell">
+        <form className="host-auth-panel" onSubmit={unlockHost}>
+          <p>{"M\u00e0n h\u00ecnh qu\u1ea3n tr\u1ecb"}</p>
+          <h1>{APP_TITLE}</h1>
+          <label htmlFor="host-access-key">{"M\u00e3 truy c\u1eadp Host"}</label>
+          <input
+            autoComplete="current-password"
+            autoFocus
+            id="host-access-key"
+            inputMode="numeric"
+            maxLength={4}
+            onChange={(event) => setHostKeyDraft(event.target.value)}
+            pattern="[0-9]{4}"
+            placeholder={"Nh\u1eadp m\u00e3"}
+            type="password"
+            value={hostKeyDraft}
+          />
+          {hostAuthError && <div className="host-auth-error">{hostAuthError}</div>}
+          <button type="submit">{"M\u1edf kh\u00f3a"}</button>
+        </form>
+      </main>
+    );
+  }
 
   if (isGuideScreen) {
     return (
@@ -466,6 +560,9 @@ export default function App() {
           <a className="guide-link" href={GUIDE_URL} rel="noreferrer" target="_blank">
             {"M\u00e0n d\u1eabn"}
           </a>
+          <button className="lock-host-button" onClick={lockHost} type="button">
+            {"Kh\u00f3a Host"}
+          </button>
         </div>
 
           <span>

@@ -8,6 +8,7 @@ services:
       HOST: 0.0.0.0
       PORT: 8080
       TEAM_COUNT: 4
+      HOST_ACCESS_KEY: ${HOST_ACCESS_KEY:?Set HOST_ACCESS_KEY in .env}
     ports:
       - "7020:8080"
     networks:

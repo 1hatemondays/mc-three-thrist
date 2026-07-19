@@ -15,6 +15,7 @@ import { registerMovementHandlers } from "./handlers/movement.js";
 import { registerMeteorHandlers } from "./handlers/meteor.js";
 import { registerSetupHandlers } from "./handlers/setup.js";
 import { registerSupportHandlers } from "./handlers/support.js";
+import { isValidHostAccessKey } from "./hostAuth.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -48,27 +49,8 @@ if (hasFrontendBuilds) {
 app.get("/", (req, res) => {
   const host = req.hostname === "0.0.0.0" ? "localhost" : req.hostname;
   const playerUrl = hasFrontendBuilds ? "/player/" : `http://${host}:5174/`;
-  const hostUrl = hasFrontendBuilds ? "/host/" : `http://${host}:5173/`;
-  const guideUrl = hasFrontendBuilds ? "/host/guide" : `http://${host}:5173/guide`;
 
-  res.type("html").send(`<!doctype html>
-<html lang="vi">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>M\u00ea Cung Tri Th\u1ee9c</title>
-  </head>
-  <body>
-    <h1>M\u00ea Cung Tri Th\u1ee9c</h1>
-    <p>M\u1edf giao di\u1ec7n tr\u00f2 ch\u01a1i:</p>
-    <ul>
-      <li><a href="${playerUrl}">M\u00e0n h\u00ecnh \u0111\u1ed9i ch\u01a1i</a></li>
-      <li><a href="${hostUrl}">M\u00e0n h\u00ecnh host</a></li>
-      <li><a href="${guideUrl}">M\u00e0n h\u00ecnh d\u1eabn tr\u00f2 ch\u01a1i</a></li>
-    </ul>
-    <p>Ki\u1ec3m tra m\u00e1y ch\u1ee7: <a href="/health">/health</a></p>
-  </body>
-</html>`);
+  res.redirect(302, playerUrl);
 });
 
 app.get("/health", (_req, res) => {
@@ -78,6 +60,25 @@ app.get("/health", (_req, res) => {
 const emitHostState = () => {
   io.to(ROOMS.HOSTS).emit(EVENTS.GAME_STATE, getHostState());
 };
+
+io.use((socket, next) => {
+  if (socket.handshake.auth?.role !== "host") {
+    next();
+    return;
+  }
+
+  if (!config.hostAccessKey) {
+    next(new Error("host_access_not_configured"));
+    return;
+  }
+
+  if (!isValidHostAccessKey(socket.handshake.auth?.accessKey, config.hostAccessKey)) {
+    next(new Error("host_access_denied"));
+    return;
+  }
+
+  next();
+});
 
 io.on("connection", (socket) => {
   if (socket.handshake.auth?.role === "host") {
