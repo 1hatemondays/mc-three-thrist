@@ -12,6 +12,7 @@ export const EVENTS = {
   SUPPORT_USE: "support:use",
   METEOR_BUZZ: "meteor:buzz",
   METEOR_ANSWER: "meteor:answer",
+  GAME_RESTART: "game:restart",
   GAME_STATE: "game:state",
   ROUND_QUESTION: "round:question",
   ROUND_RESULT: "round:result",

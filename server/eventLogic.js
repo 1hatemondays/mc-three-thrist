@@ -121,15 +121,11 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
   }
 
   if (tile.type === EVENT_TILE_TYPES.TELEPORT) {
-    const point = choose(allCells(state.config.boardSize), random);
-    team.position = point;
-    discover(team, point);
-    const gameOver = finishGameIfNeeded(state, teamId);
+    state.round.pendingEvents = state.round.pendingEvents || {};
+    state.round.pendingEvents[teamId] = { type: EVENT_TILE_TYPES.TELEPORT };
 
     return makeEventResult(tile, {
-      newPosition: point,
-      gameOver,
-      message: "D\u1ecbch chuy\u1ec3n \u0111\u1ebfn (" + (point.x + 1) + ", " + (point.y + 1) + ")"
+      message: "Ch\u1ecdn \u00f4 mu\u1ed1n d\u1ecbch chuy\u1ec3n \u0111\u1ebfn ho\u1eb7c \u1edf l\u1ea1i"
     });
   }
 
@@ -343,6 +339,42 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
       text: correct ? "Trả lời đúng câu hỏi khó, nhận thêm 10 điểm." : "Trả lời sai câu hỏi khó."
     });
     return { ok: true, result: { type: pending.type, correct, scoreDelta } };
+  }
+
+  if (pending.type === EVENT_TILE_TYPES.TELEPORT) {
+    if (payload.action === "skip") {
+      delete state.round.pendingEvents[teamId];
+      return { ok: true, result: { type: pending.type, skipped: true } };
+    }
+
+    const team = state.teams.find((item) => item.id === teamId);
+    const point = { x: payload.position?.x, y: payload.position?.y };
+    const validPoint =
+      Number.isInteger(point.x) &&
+      Number.isInteger(point.y) &&
+      point.x >= 0 &&
+      point.y >= 0 &&
+      point.x < state.config.boardSize &&
+      point.y < state.config.boardSize;
+
+    if (!team || !validPoint) {
+      return { ok: false, error: "H\u00e3y ch\u1ecdn t\u1ecda \u0111\u1ed9 h\u1ee3p l\u1ec7 \u0111\u1ec3 d\u1ecbch chuy\u1ec3n." };
+    }
+
+    team.position = point;
+    discover(team, point);
+    const gameOver = finishGameIfNeeded(state, teamId);
+    delete state.round.pendingEvents[teamId];
+
+    return {
+      ok: true,
+      result: {
+        type: pending.type,
+        newPosition: point,
+        gameOver,
+        message: "D\u1ecbch chuy\u1ec3n \u0111\u1ebfn (" + (point.x + 1) + ", " + (point.y + 1) + ")"
+      }
+    };
   }
 
   if (pending.type !== EVENT_TILE_TYPES.POSITION_SWAP) {

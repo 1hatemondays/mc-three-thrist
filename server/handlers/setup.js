@@ -1,5 +1,5 @@
 import { EVENTS } from "../../shared/constants.js";
-import { gameState } from "../gameState.js";
+import { gameState, resetGameState } from "../gameState.js";
 import { applyMazeSubmission, configureTeamCount, setTurnOrder, startGame } from "../setupLogic.js";
 import { emitAllStates, emitHostError, emitPlayerError } from "../socketState.js";
 
@@ -40,6 +40,14 @@ export const registerSetupHandlers = (io, socket) => {
       return;
     }
 
+    emitAllStates(io);
+  });
+
+  socket.on(EVENTS.GAME_RESTART, () => {
+    if (socket.data.role !== "host") return;
+
+    resetGameState();
+    io.emit(EVENTS.GAME_RESTART);
     emitAllStates(io);
   });
 

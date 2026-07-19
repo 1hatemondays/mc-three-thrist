@@ -29,7 +29,7 @@ const makeTeam = (teamId, index, teamName) => ({
   effects: {}
 });
 
-export const gameState = {
+const createInitialGameState = () => ({
   config: {
     teamCount: 0,
     boardSize: 6
@@ -53,7 +53,10 @@ export const gameState = {
     meteorShower: null,
     bomb: null
   }
-};
+});
+
+export const gameState = createInitialGameState();
+export const resetGameState = () => Object.assign(gameState, createInitialGameState());
 
 export const findTeam = (teamId) => gameState.teams.find((team) => team.id === teamId);
 

@@ -98,14 +98,25 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
 
   if (revisitingKnownCell) {
     state.round.currentQuestion = null;
+    const result = resolveMovement(state, team, teamId, direction, {
+      usedQuestion: false,
+      correct: true,
+      awardScore: false
+    });
+    if (result.event?.endsTurn) {
+      state.round.pendingAnswers[teamId] = {
+        teamId,
+        direction,
+        question: null,
+        answered: true,
+        result
+      };
+      return { ok: true, instant: true, result, roundComplete: maybeFinishMovementRound(state) };
+    }
     return {
       ok: true,
       instant: true,
-      result: resolveMovement(state, team, teamId, direction, {
-        usedQuestion: false,
-        correct: true,
-        awardScore: false
-      })
+      result
     };
   }
 

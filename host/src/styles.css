@@ -268,10 +268,10 @@ main {
 
 .admin-controls {
   display: grid;
-  grid-template-columns: auto auto auto;
+  grid-template-columns: repeat(4, auto);
   gap: 10px;
   align-items: center;
-  min-width: min(100%, 360px);
+  min-width: min(100%, 520px);
 }
 
 .admin-controls button,
@@ -301,6 +301,16 @@ main {
   color: var(--paper);
   background: rgba(255, 249, 233, 0.08);
   white-space: nowrap;
+}
+
+.admin-controls .restart-button {
+  color: var(--paper);
+  background: #8f302b;
+}
+
+.admin-controls button:active,
+.guide-link:active {
+  transform: translateY(1px);
 }
 
 .admin-controls button:disabled {
@@ -471,6 +481,16 @@ main {
 
   .layout {
     grid-template-columns: 1fr;
+  }
+
+  .admin-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+    width: 100%;
+  }
+
+  .joined-pill {
+    grid-column: 1 / -1;
   }
 }
 
@@ -704,8 +724,73 @@ main {
   position: relative;
 }
 
-.tv-confetti {
+.tv-event-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 28px;
+  pointer-events: none;
+}
+
+.tv-event-layer::before {
   position: absolute;
+  inset: 0;
+  z-index: 0;
+  content: "";
+  opacity: 0;
+}
+
+.tv-event-layer.global {
+  align-items: center;
+}
+
+.tv-event-layer.global .tv-banner {
+  max-width: 860px;
+  padding: 22px 26px;
+}
+
+.tv-event-layer.event-monster_attack::before {
+  background: repeating-linear-gradient(125deg, rgba(143, 48, 43, 0.64) 0 18px, rgba(16, 23, 19, 0.18) 18px 40px);
+  animation: evDangerWash 4.2s ease both;
+}
+
+.tv-event-layer.event-meteor_strike::before {
+  background: repeating-linear-gradient(115deg, transparent 0 9%, rgba(255, 120, 79, 0.55) 10% 11%, transparent 12% 23%);
+  animation: evMeteorWash 4.2s linear both;
+}
+
+.tv-event-layer.event-blessing::before {
+  background: radial-gradient(circle, rgba(101, 200, 162, 0.56), rgba(101, 200, 162, 0.08) 42%, transparent 68%);
+  animation: evBlessWash 4.2s ease both;
+}
+
+.tv-event-layer.event-prison::before {
+  background: repeating-linear-gradient(90deg, transparent 0 8%, rgba(16, 23, 19, 0.34) 8% 12%);
+  animation: evPrisonBars 4.2s ease both;
+}
+
+.event-teleport .tv-banner-icon,
+.event-position_swap .tv-banner-icon {
+  animation: evWarpIcon 0.8s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.event-mystery_box .tv-banner-icon,
+.event-knowledge .tv-banner-icon,
+.event-blessing .tv-banner-icon {
+  animation: evRewardIcon 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.event-monster_attack .tv-banner-icon,
+.event-duel .tv-banner-icon,
+.event-meteor_strike .tv-banner-icon {
+  animation: evImpactIcon 0.55s ease both;
+}
+
+.tv-confetti {
+  position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
@@ -718,7 +803,7 @@ main {
 }
 
 .tv-flash {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 7;
   pointer-events: none;
@@ -727,11 +812,9 @@ main {
 }
 
 .tv-banner {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
-  z-index: 9;
+  position: relative;
+  z-index: 2;
+  width: min(100%, 980px);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -765,4 +848,61 @@ main {
   color: rgba(16, 23, 19, 0.72);
   font-size: 14px;
   font-weight: 900;
+}
+
+
+@keyframes evDangerWash {
+  0%, 100% { opacity: 0; }
+  8%, 88% { opacity: 0.72; }
+}
+
+@keyframes evMeteorWash {
+  0% { opacity: 0; transform: translate3d(-12%, -12%, 0); }
+  10%, 86% { opacity: 0.8; }
+  100% { opacity: 0; transform: translate3d(12%, 12%, 0); }
+}
+
+@keyframes evBlessWash {
+  0%, 100% { opacity: 0; transform: scale(0.72); }
+  12%, 84% { opacity: 1; transform: scale(1.18); }
+}
+
+@keyframes evPrisonBars {
+  0%, 100% { opacity: 0; transform: translateY(-10%); }
+  12%, 86% { opacity: 0.72; transform: translateY(0); }
+}
+
+@keyframes evWarpIcon {
+  0% { opacity: 0; transform: scale(0.2) rotate(-180deg); }
+  70% { opacity: 1; transform: scale(1.2) rotate(12deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes evRewardIcon {
+  0% { opacity: 0; transform: scale(0.2); }
+  55% { opacity: 1; transform: scale(1.35); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes evImpactIcon {
+  0% { opacity: 0; transform: translateX(-18px) rotate(-12deg); }
+  45% { opacity: 1; transform: translateX(10px) rotate(8deg); }
+  70% { transform: translateX(-5px) rotate(-3deg); }
+  100% { opacity: 1; transform: translateX(0) rotate(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-event-layer::before,
+  .tv-banner,
+  .tv-banner-icon,
+  .guide-event-marker,
+  .guide-event-ring,
+  .team-marker.bob {
+    animation: none !important;
+  }
+
+  .tv-confetti,
+  .tv-flash {
+    display: none;
+  }
 }

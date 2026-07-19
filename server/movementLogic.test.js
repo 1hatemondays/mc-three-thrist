@@ -10,6 +10,19 @@ test("prison event ends the triggering team's turn", () => {
   assert.equal(state.round.pendingAnswers.team1.answered, true);
   assert.equal(state.round.activeTeamId, "team2");
 });
+
+test("prison also ends a free move into an already explored cell", () => {
+  const state = makeState();
+  state.teams[0].discoveredCells.push({ x: 1, y: 0 });
+  state.round.eventTiles = [{ type: EVENT_TILE_TYPES.PRISON, x: 1, y: 0 }];
+
+  const result = chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+
+  assert.equal(result.instant, true);
+  assert.equal(result.result.event.endsTurn, true);
+  assert.equal(state.round.pendingAnswers.team1.answered, true);
+  assert.equal(state.round.activeTeamId, "team2");
+});
 import assert from "node:assert/strict";
 import test from "node:test";
 import { MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
