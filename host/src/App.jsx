@@ -202,7 +202,7 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
       <MeteorShowerOverlay meteor={state?.round?.meteorShower} />
       <header className="guide-top">
         <div>
-          <p>{"M\u00e0n d\u1eabn tr\u00f2 ch\u01a1i"}</p>
+          <p>Màn dẫn trò chơi</p>
           <h1>{APP_TITLE}</h1>
         </div>
         <strong>
@@ -210,15 +210,15 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
             ? gameOver
               ? "Chung cuộc"
               : setupStarted
-              ? "V\u00f2ng " + (round?.roundNumber || 1)
-              : "\u0110ang thi\u1ebft l\u1eadp"
-            : "\u0110ang k\u1ebft n\u1ed1i..."}
+              ? "Vòng " + (round?.roundNumber || 1)
+              : "Đang thiết lập"
+            : "Đang kết nối..."}
         </strong>
       </header>
 
       <section className="guide-layout">
         <div className="guide-map-wrap">
-          <div className="guide-map" aria-label={"B\u1ea3n \u0111\u1ed3 ch\u00ednh 6x6"}>
+          <div className="guide-map" aria-label="Bản đồ chính 6x6">
             {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
               const x = index % BOARD_SIZE;
               const y = Math.floor(index / BOARD_SIZE);

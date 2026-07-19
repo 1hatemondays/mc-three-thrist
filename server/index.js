@@ -29,20 +29,30 @@ const playerDist = path.resolve(serverDirectory, "../player/dist");
 const hasFrontendBuilds =
   existsSync(path.join(hostDist, "index.html")) &&
   existsSync(path.join(playerDist, "index.html"));
+const frontendStaticOptions = {
+  setHeaders(res, filePath) {
+    if (path.basename(filePath) === "index.html") {
+      res.setHeader("Cache-Control", "no-store");
+    }
+  }
+};
+const frontendIndexOptions = {
+  headers: { "Cache-Control": "no-store" }
+};
 
 app.use(cors());
 app.use(express.json());
 
 if (hasFrontendBuilds) {
-  app.use("/host", express.static(hostDist));
-  app.use("/player", express.static(playerDist));
+  app.use("/host", express.static(hostDist, frontendStaticOptions));
+  app.use("/player", express.static(playerDist, frontendStaticOptions));
 
   app.get(["/host", "/host/*"], (_req, res) => {
-    res.sendFile(path.join(hostDist, "index.html"));
+    res.sendFile(path.join(hostDist, "index.html"), frontendIndexOptions);
   });
 
   app.get(["/player", "/player/*"], (_req, res) => {
-    res.sendFile(path.join(playerDist, "index.html"));
+    res.sendFile(path.join(playerDist, "index.html"), frontendIndexOptions);
   });
 }
 
