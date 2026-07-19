@@ -12,6 +12,7 @@ export const registerSupportHandlers = (io, socket) => {
       return;
     }
 
+    io.emit(EVENTS.SUPPORT_RESULT, result.result);
     emitAllStates(io);
   });
 };

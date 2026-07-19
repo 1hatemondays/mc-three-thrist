@@ -147,7 +147,14 @@ export const useSupportItem = (state, teamId, payload = {}, random = Math.random
     };
     addRoundMessage(state, target.id, { title: "Bị đóng băng", text: "Đội bị mất lượt hiện tại." });
     maybeFinishMovementRound(state);
-    const result = { type: item.type, targetTeamId: target.id };
+    const result = {
+      type: item.type,
+      sourceTeamId: team.id,
+      sourceTeamName: team.name,
+      targetTeamId: target.id,
+      targetTeamName: target.name,
+      resolvedAt: Date.now()
+    };
     return { ok: true, result, roundComplete: false };
   }
 

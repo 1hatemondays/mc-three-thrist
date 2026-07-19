@@ -1,6 +1,7 @@
-@keyframes gameOverEnter {
-  from { opacity: 0; transform: translateY(28px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes gameOverFade {
+  0% { opacity: 0; }
+  8%, 88% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
 }
 
 @keyframes gameOverParticle {
@@ -9,190 +10,118 @@
   100% { opacity: 0; transform: translateY(112vh) rotate(calc(var(--go-spin) + 620deg)); }
 }
 
+@keyframes trophyRise {
+  0% { opacity: 0; transform: translate(-50%, -32%) scale(0.4) rotate(-8deg); }
+  58% { opacity: 1; transform: translate(-50%, -52%) scale(1.1) rotate(2deg); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+}
+
+@keyframes trophyShine {
+  0%, 100% { filter: drop-shadow(0 0 14px rgba(240, 185, 75, 0.5)); }
+  50% { filter: drop-shadow(0 0 38px rgba(255, 233, 168, 1)); }
+}
+
+@keyframes trophySweep {
+  0%, 20% { transform: translateX(-160%) skewX(-18deg); }
+  70%, 100% { transform: translateX(330%) skewX(-18deg); }
+}
+
+@keyframes heraldFloat {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-18px) rotate(5deg); }
+}
+
+@keyframes heraldWing {
+  0%, 100% { transform: rotate(12deg) scaleY(1); }
+  50% { transform: rotate(-12deg) scaleY(0.78); }
+}
+
+@keyframes musicRise {
+  0% { opacity: 0; transform: translate(0, 12px) scale(0.7); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(34px, -64px) scale(1.2); }
+}
+
+@keyframes winnerSlam {
+  0%, 18% { opacity: 0; transform: translate(-50%, 44px) scale(1.3); }
+  54% { opacity: 1; transform: translate(-50%, -5px) scale(0.96); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
 .game-over-overlay {
   position: fixed;
   inset: 0;
-  z-index: 100;
-  display: grid;
-  place-items: center;
+  z-index: 180;
   min-height: 100dvh;
-  padding: clamp(16px, 4vw, 48px);
   overflow: hidden;
   color: #fff9e9;
   background:
-    radial-gradient(circle at 18% 12%, rgba(47, 138, 104, 0.36), transparent 34%),
-    radial-gradient(circle at 82% 85%, rgba(240, 185, 75, 0.2), transparent 30%),
-    rgba(8, 20, 14, 0.97);
+    radial-gradient(circle at 50% 42%, rgba(240, 185, 75, 0.22), transparent 42%),
+    radial-gradient(circle at 50% 42%, rgba(123, 183, 255, 0.12), transparent 68%),
+    #0b1a14;
+  animation: gameOverFade 5.2s ease both;
 }
 
 .game-over-overlay::before {
-  content: "";
   position: absolute;
   inset: 0;
-  opacity: 0.18;
   background:
-    linear-gradient(90deg, rgba(255, 249, 233, 0.14) 1px, transparent 1px) 0 0 / 48px 48px,
-    linear-gradient(rgba(255, 249, 233, 0.12) 1px, transparent 1px) 0 0 / 48px 48px;
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px) 0 0 / 48px 48px;
+  content: "";
 }
 
-.game-over-particles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
+.game-over-particles { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.game-over-particles i { position: absolute; top: -20px; left: var(--go-left); width: 8px; height: 18px; background: #f0b94b; animation: gameOverParticle 4.2s linear var(--go-delay) infinite; }
+.game-over-particles i:nth-child(3n) { background: #2f8a68; }
+.game-over-particles i:nth-child(3n + 1) { width: 14px; height: 7px; background: #ef8f6b; }
+.game-over-particles i:nth-child(4n) { background: #7bb7ff; }
 
-.game-over-particles i {
-  position: absolute;
-  top: -20px;
-  left: var(--go-left);
-  width: 8px;
-  height: 18px;
-  background: var(--gold, #f0b94b);
-  animation: gameOverParticle 4.8s linear var(--go-delay) infinite;
-}
+.game-over-stage { position: relative; z-index: 2; width: 100%; height: 100dvh; min-height: 540px; overflow: hidden; }
+.game-over-kicker { position: absolute; top: clamp(24px, 6vh, 66px); left: 50%; margin: 0; color: #f0b94b; font-size: 13px; font-weight: 1000; text-transform: uppercase; transform: translateX(-50%); }
+.game-over-stage > h2 { position: absolute; top: clamp(48px, 10vh, 100px); left: 50%; width: min(94vw, 980px); margin: 0; font-family: "Times New Roman", Georgia, serif; font-size: clamp(38px, 7vw, 82px); line-height: 0.95; text-align: center; transform: translateX(-50%); }
 
-.game-over-particles i:nth-child(3n) { background: var(--jade, #2f8a68); }
-.game-over-particles i:nth-child(3n + 1) { width: 14px; height: 7px; background: var(--coral, #ef8f6b); }
+.game-over-rays { position: absolute; top: 45%; left: 50%; width: min(72vw, 620px); aspect-ratio: 1; border-radius: 50%; background: conic-gradient(from 0deg, transparent, rgba(240,185,75,0.18), transparent 12%, rgba(240,185,75,0.18), transparent 25%); transform: translate(-50%, -50%); }
 
-.game-over-card {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.88fr);
-  width: min(100%, 900px);
-  max-height: calc(100dvh - 32px);
-  overflow: auto;
-  border: 2px solid var(--gold, #f0b94b);
-  background: #101713;
-  box-shadow: 12px 12px 0 rgba(240, 185, 75, 0.26);
-  animation: gameOverEnter 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
+.game-over-trophy { position: absolute; top: 46%; left: 50%; width: 230px; height: 280px; transform: translate(-50%, -50%); animation: trophyRise 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.2) both, trophyShine 2.4s 0.8s ease-in-out infinite; }
+.game-over-trophy > span { position: absolute; top: 15px; left: 50%; display: grid; width: 150px; height: 130px; place-items: center; overflow: hidden; border: 4px solid #8a5a12; border-radius: 18px 18px 74px 74px; color: #8a5a12; background: linear-gradient(155deg, #ffe9a8, #f0b94b 45%, #c9971f); font-family: "Times New Roman", Georgia, serif; font-size: 62px; transform: translateX(-50%); }
+.game-over-trophy > span::after { position: absolute; top: -10%; bottom: -10%; left: -35px; width: 34px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent); content: ""; animation: trophySweep 2.8s 0.9s ease-in-out infinite; }
+.game-over-trophy-left, .game-over-trophy-right { position: absolute; top: 30px; width: 72px; height: 86px; border: 13px solid #d7a72f; border-radius: 50%; }
+.game-over-trophy-left { left: 4px; }
+.game-over-trophy-right { right: 4px; }
+.game-over-trophy-stem { position: absolute; top: 143px; left: 50%; width: 24px; height: 56px; background: linear-gradient(#f0b94b, #9f7418); transform: translateX(-50%); }
+.game-over-trophy-base { position: absolute; top: 195px; left: 50%; width: 142px; height: 32px; border: 4px solid #8a5a12; background: linear-gradient(#f0b94b, #a87c1d); transform: translateX(-50%); }
 
-.game-over-heading {
-  grid-column: 1 / -1;
-  padding: clamp(22px, 5vw, 46px);
-  border-bottom: 1px solid rgba(240, 185, 75, 0.34);
-}
+.game-over-heralds { position: absolute; inset: 0; }
+.game-over-herald { position: absolute; display: block; width: 92px; height: 82px; animation: heraldFloat 2.2s var(--herald-delay) ease-in-out infinite; }
+.game-over-herald.is-left { top: 42%; left: 15%; }
+.game-over-herald.is-right { top: 35%; right: 14%; transform: scaleX(-1); }
+.game-over-herald.is-top { top: 22%; left: 67%; transform: scale(0.8); }
+.herald-head { position: absolute; top: 6px; left: 38px; width: 20px; height: 20px; border: 2px solid #8a5a12; border-radius: 50%; background: #ffe3b8; }
+.herald-body { position: absolute; top: 28px; left: 35px; width: 28px; height: 40px; border: 2px solid #8a5a12; border-radius: 16px 16px 8px 8px; background: #fff9e9; }
+.herald-wing { position: absolute; top: 28px; width: 34px; height: 44px; border: 3px solid #f0b94b; border-radius: 70% 15% 70% 15%; animation: heraldWing 0.8s ease-in-out infinite; }
+.herald-wing.left { left: 7px; }
+.herald-wing.right { right: 4px; transform: scaleX(-1); }
+.herald-horn { position: absolute; top: 18px; right: -22px; width: 52px; height: 12px; clip-path: polygon(0 35%, 74% 35%, 100% 0, 100% 100%, 74% 65%, 0 65%); background: #f0b94b; transform: rotate(-10deg); }
+.game-over-herald b { position: absolute; top: -6px; right: -35px; color: #fff0bd; font-size: 25px; animation: musicRise 1.6s var(--herald-delay) ease-out infinite; }
 
-.game-over-heading p {
-  margin: 0 0 8px;
-  color: var(--gold, #f0b94b);
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.game-over-heading h2 {
-  margin: 0;
-  color: #fff9e9;
-  font-family: Cambria, "Times New Roman", serif;
-  font-size: clamp(62px, 12vw, 126px);
-  font-weight: 900;
-  line-height: 0.78;
-  letter-spacing: -0.06em;
-}
-
-.game-over-heading h2 strong {
-  color: var(--gold, #f0b94b);
-  font-weight: inherit;
-}
-
-.game-over-champion {
-  display: flex;
-  min-height: 250px;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: clamp(24px, 5vw, 46px);
-  color: #101713;
-  background: var(--gold, #f0b94b);
-}
-
-.game-over-champion > span {
-  font-size: 12px;
-  font-weight: 1000;
-  letter-spacing: 0.12em;
-}
-
-.game-over-champion > strong {
-  margin: 8px 0 12px;
-  overflow-wrap: anywhere;
-  font-size: clamp(34px, 6vw, 62px);
-  font-weight: 1000;
-  line-height: 0.92;
-}
-
-.game-over-champion p {
-  margin: 0;
-  color: rgba(16, 23, 19, 0.72);
-  font-weight: 900;
-}
-
-.game-over-standings {
-  padding: 28px;
-  background: #17241d;
-}
-
-.game-over-standings h3 {
-  margin: 0 0 18px;
-  color: #fff9e9;
-  font-size: 18px;
-}
-
-.game-over-standings ol {
-  display: grid;
-  gap: 8px;
-  max-height: 260px;
-  margin: 0;
-  padding: 0;
-  overflow: auto;
-  list-style: none;
-}
-
-.game-over-standings li {
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  gap: 2px 10px;
-  align-items: center;
-  padding: 11px 12px;
-  border-left: 3px solid rgba(255, 249, 233, 0.18);
-  background: rgba(255, 249, 233, 0.06);
-}
-
-.game-over-standings li.is-winner {
-  border-left-color: var(--gold, #f0b94b);
-  background: rgba(240, 185, 75, 0.12);
-}
-
-.game-over-standings li b {
-  grid-row: 1 / 3;
-  color: var(--gold, #f0b94b);
-  font-size: 18px;
-}
-
-.game-over-standings li span {
-  overflow: hidden;
-  font-weight: 900;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.game-over-standings li small {
-  color: rgba(255, 249, 233, 0.62);
-  font-weight: 800;
-}
+.game-over-winner-banner { position: absolute; bottom: clamp(28px, 7vh, 72px); left: 50%; display: grid; width: min(90vw, 760px); gap: 4px; padding: 14px 22px; border: 3px solid #1d3329; color: #101713; background: #f0b94b; box-shadow: 7px 7px 0 rgba(29,51,41,0.68); text-align: center; animation: winnerSlam 1.2s 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.game-over-winner-banner small { font-weight: 1000; text-transform: uppercase; }
+.game-over-winner-banner strong { overflow-wrap: anywhere; font-family: "Times New Roman", Georgia, serif; font-size: clamp(30px, 7vw, 66px); line-height: 0.95; }
+.game-over-winner-banner span { color: rgba(16,23,19,0.72); font-weight: 900; }
 
 @media (max-width: 700px) {
-  .game-over-overlay { padding: 14px; }
-  .game-over-card { grid-template-columns: 1fr; }
-  .game-over-heading { grid-column: auto; }
-  .game-over-heading h2 span,
-  .game-over-heading h2 strong { display: block; }
-  .game-over-heading h2 { line-height: 0.82; }
-  .game-over-champion { min-height: 180px; }
+  .game-over-stage > h2 { top: 76px; }
+  .game-over-trophy { top: 44%; transform: translate(-50%, -50%) scale(0.78); }
+  .game-over-herald.is-left { left: 2%; }
+  .game-over-herald.is-right { right: 2%; }
+  .game-over-herald.is-top { display: none; }
+  .game-over-winner-banner { bottom: 24px; padding: 12px 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .game-over-card { animation: none; }
-  .game-over-particles { display: none; }
+  .game-over-overlay,
+  .game-over-overlay * { animation: none !important; }
+  .game-over-particles,
+  .game-over-heralds { display: none; }
 }

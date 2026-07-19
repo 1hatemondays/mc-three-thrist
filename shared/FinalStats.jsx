@@ -172,6 +172,7 @@ export const FinalStatsScreen = ({
   children,
   gameOver,
   mode = "player",
+  onBack,
   onShowLeaderboard,
   summary
 }) => {
@@ -186,11 +187,18 @@ export const FinalStatsScreen = ({
           <p>Kết thúc trò chơi</p>
           <h1>{gameOver.winnerName} về đích đầu tiên</h1>
         </div>
-        {onShowLeaderboard && !isLeaderboard && (
-          <button onClick={onShowLeaderboard} type="button">
-            Hiện bảng xếp hạng cuối
-          </button>
-        )}
+        <div className="final-screen-actions">
+          {onShowLeaderboard && !isLeaderboard && (
+            <button onClick={onShowLeaderboard} type="button">
+              Hiện bảng xếp hạng cuối
+            </button>
+          )}
+          {onBack && (
+            <button className="final-back-button" onClick={onBack} type="button">
+              <span aria-hidden="true">←</span> Quay về
+            </button>
+          )}
+        </div>
       </header>
 
       {children}

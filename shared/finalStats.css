@@ -75,6 +75,26 @@
   font-weight: 1000;
 }
 
+.final-screen-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.final-screen-head .final-back-button {
+  color: #fff9e9;
+  background: #218859;
+}
+
+.final-screen-player .final-screen-head .final-back-button {
+  color: #fff9e9;
+  box-shadow: 4px 4px 0 rgba(23, 53, 41, 0.28);
+}
+
+.final-back-button span { margin-right: 5px; font-size: 20px; }
+
 .final-screen-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -367,6 +387,9 @@
     align-items: stretch;
     flex-direction: column;
   }
+
+  .final-screen-actions { justify-content: flex-start; }
+  .final-screen-actions button { flex: 1 1 180px; }
 
   .final-screen-stats,
   .final-screen-stats.single .final-stats-card {

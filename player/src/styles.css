@@ -1368,6 +1368,45 @@ dd {
   text-transform: uppercase;
 }
 
+.combat-countdown {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.combat-countdown > strong {
+  min-width: 58px;
+  padding: 5px 8px;
+  border: 2px solid var(--line);
+  color: var(--line);
+  background: var(--gold);
+  font-family: "Times New Roman", Georgia, serif;
+  font-size: 21px;
+  text-align: center;
+}
+
+.combat-countdown > span {
+  height: 12px;
+  border: 2px solid var(--line);
+  background: rgba(16, 23, 19, 0.1);
+}
+
+.combat-countdown i {
+  display: block;
+  width: var(--combat-time);
+  height: 100%;
+  background: var(--coral);
+  transition: width 200ms linear;
+}
+
+.combat-countdown small {
+  color: var(--muted);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .combat-arena {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
@@ -1399,6 +1438,26 @@ dd {
   line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.combat-revealed-bid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  animation: combatBidFlip 0.45s ease both;
+}
+
+.combat-revealed-bid small { color: var(--muted); font-size: 9px; font-weight: 1000; text-transform: uppercase; }
+.combat-revealed-bid b { font-family: "Times New Roman", Georgia, serif; font-size: 18px; }
+
+@keyframes combatBidFlip {
+  from { opacity: 0; transform: perspective(500px) rotateX(-75deg); }
+  to { opacity: 1; transform: perspective(500px) rotateX(0); }
 }
 
 .combat-team-top,
@@ -1671,6 +1730,9 @@ dd {
     display: grid;
   }
 
+  .combat-countdown { grid-template-columns: auto minmax(0, 1fr); }
+  .combat-countdown small { grid-column: 1 / -1; white-space: normal; }
+
   .combat-status {
     justify-self: start;
   }
@@ -1712,6 +1774,9 @@ dd {
   .combat-team-card {
     transition: none;
   }
+
+  .combat-countdown i,
+  .combat-revealed-bid { animation: none; transition: none; }
 }
 .compact-choices button {
   min-height: 52px;

@@ -3,7 +3,13 @@ import test from "node:test";
 import { ROUND_PHASES } from "../shared/constants.js";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES } from "../shared/gameContent.js";
 import { applyEventTileEffect, resolvePendingEvent } from "./eventLogic.js";
-import { getHostCombatState, getPlayerCombatState, submitCombatBet } from "./combatLogic.js";
+import {
+  getHostCombatState,
+  getPlayerCombatState,
+  resolveCombatTimeout,
+  startCombat,
+  submitCombatBet
+} from "./combatLogic.js";
 
 const makeTeam = (id, score = 50) => ({
   id,
@@ -68,8 +74,31 @@ test("duel event lets the triggering team choose an opponent and resolves HP los
   assert.equal(result.resolved, true);
   assert.equal(state.round.phase, ROUND_PHASES.MOVEMENT);
   assert.equal(state.round.combat.result.winnerId, "team2");
+  assert.equal(state.round.combat.result.attackerBet, 5);
+  assert.equal(state.round.combat.result.defenderBet, 20);
   assert.equal(state.teams[0].hp, 85);
   assert.equal(state.round.combat.bets, undefined);
+});
+
+test("combat publishes a 20 second deadline and resolves missing bids as zero", () => {
+  const state = makeState();
+  startCombat(state, "team1", "team2", 1_000);
+
+  const activeHostState = getHostCombatState(state);
+  const activePlayerState = getPlayerCombatState(state, "team1");
+  assert.equal(activeHostState.deadline, 21_000);
+  assert.equal(activePlayerState.deadline, 21_000);
+  assert.equal("attackerBet" in activeHostState, false);
+
+  submitCombatBet(state, "team2", { amount: 12 });
+  assert.equal(resolveCombatTimeout(state, 20_999), null);
+
+  const result = resolveCombatTimeout(state, 21_000);
+  assert.equal(result.attackerBet, 0);
+  assert.equal(result.defenderBet, 12);
+  assert.equal(result.winnerId, "team2");
+  assert.equal(state.round.phase, ROUND_PHASES.MOVEMENT);
+  assert.equal(resolveCombatTimeout(state, 21_001), null);
 });
 
 test("shield blocks one combat loss", () => {

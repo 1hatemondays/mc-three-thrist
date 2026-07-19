@@ -8,6 +8,8 @@ import { FinalStatsScreen } from "../../shared/FinalStats.jsx";
 import { AnimatedScore } from "../../shared/AnimatedScore.jsx";
 import { AuctionRevealOverlay } from "../../shared/AuctionRevealOverlay.jsx";
 import { shouldRevealAuctionResult } from "../../shared/auctionReveal.js";
+import { EventEffectOverlay } from "../../shared/EventEffectOverlay.jsx";
+import { normalizeCombatEffect, normalizeRoundEffect, normalizeSupportEffect } from "../../shared/eventEffects.js";
 import { CUSTOM_ICON_TYPES, GameIcon } from "../../shared/GameIcon.jsx";
 import { EVENT_TILE_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { hasWall } from "../../shared/maze.js";
@@ -112,6 +114,74 @@ const EventAnnouncement = ({ banner }) => {
           <span>{banner.text}</span>
         </div>
       </div>
+    </div>
+  );
+};
+
+const HostCombatSpotlight = ({ combat, reveal, teams = [] }) => {
+  const [now, setNow] = useState(Date.now());
+  const active = Boolean(combat?.active && !reveal);
+  const result = reveal || null;
+
+  useEffect(() => {
+    if (!active) return undefined;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 200);
+    return () => clearInterval(timer);
+  }, [active, combat?.deadline]);
+
+  if (!combat || (!active && !result)) return null;
+
+  const remainingMs = active ? Math.max(0, (combat.deadline || 0) - now) : 0;
+  const remainingSeconds = Math.ceil(remainingMs / 1000);
+  const progress = active && combat.deadline ? Math.max(0, Math.min(100, (remainingMs / 20_000) * 100)) : 0;
+  const attacker = teams.find((team) => team.id === combat.attacker?.id);
+  const defender = teams.find((team) => team.id === combat.defender?.id);
+  const fighter = (role, team, liveTeam, amount) => {
+    const winner = result?.winnerId === team?.id;
+    const loser = result?.loserId === team?.id;
+    return (
+      <article className={`combat-spotlight-team${winner ? " is-winner" : ""}${loser ? " is-loser" : ""}`}>
+        <span>{role}</span>
+        <strong>{team?.name || "Đang chọn đội"}</strong>
+        <small>{liveTeam?.hp ?? 100} máu · {liveTeam?.score ?? 0} điểm</small>
+        <div className="combat-spotlight-hp"><i style={{ "--combat-hp": `${Math.min(100, Math.max(0, liveTeam?.hp ?? 100))}%` }} /></div>
+        <div className="combat-spotlight-bid">
+          <small>Điểm cược</small>
+          <b>{result ? `${amount} điểm` : "●●●"}</b>
+        </div>
+      </article>
+    );
+  };
+
+  return (
+    <div aria-labelledby="hostCombatTitle" aria-modal="true" className={`combat-spotlight${result ? " is-result" : ""}`} role="dialog">
+      <section>
+        <header>
+          <div>
+            <p>Đối kháng trực tiếp · cược kín</p>
+            <h2 id="hostCombatTitle">{result ? "Công bố kết quả" : "Hai đội đang khóa điểm"}</h2>
+          </div>
+          <strong>{result ? "ĐÃ CHỐT" : `${remainingSeconds}s`}</strong>
+        </header>
+        {!result && <div className="combat-spotlight-timer"><span style={{ "--combat-time": `${progress}%` }} /></div>}
+        <div className="combat-spotlight-arena">
+          {fighter("Thách đấu", combat.attacker, attacker, result?.attackerBet)}
+          <b className="combat-spotlight-vs">VS</b>
+          {fighter("Phòng thủ", combat.defender, defender, result?.defenderBet)}
+        </div>
+        {result ? (
+          <div className={`combat-spotlight-result${result.shielded ? " is-shielded" : ""}`}>
+            <b>{result.shielded ? "CHẮN" : "THẮNG"}</b>
+            <div>
+              <strong>{result.winnerName} chiến thắng</strong>
+              <span>{result.shielded ? `Lá chắn của ${result.loserName} đã chặn sát thương.` : `${result.loserName} mất ${result.hpLoss} máu.`}</span>
+            </div>
+          </div>
+        ) : (
+          <p className="combat-spotlight-note">Điểm cược đang được niêm phong · hết giờ tự động cược 0 điểm</p>
+        )}
+      </section>
     </div>
   );
 };
@@ -221,7 +291,7 @@ const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
   );
 };
 
-const GuideScreen = ({ state, activeTeam, auctionReveal, banner, confettiSeed, flashSeed, onCloseAuctionReveal, onOpenQuestion, onRevealQuestion, onShowLeaderboard }) => {
+const GuideScreen = ({ state, activeTeam, auctionReveal, banner, combatReveal, confettiSeed, eventEffect, flashSeed, onBack, onCloseAuctionReveal, onOpenQuestion, onRevealQuestion, onShowLeaderboard }) => {
   const teams = state?.teams || [];
   const round = state?.round;
   const gameOver = state?.gameOver || null;
@@ -231,14 +301,19 @@ const GuideScreen = ({ state, activeTeam, auctionReveal, banner, confettiSeed, f
 
   if (gameOver) {
     return (
-      <FinalStatsScreen gameOver={gameOver} mode="host" onShowLeaderboard={onShowLeaderboard}>
-        <p className="final-screen-label">Màn dẫn trò chơi</p>
-      </FinalStatsScreen>
+      <>
+        <GameOverOverlay gameOver={gameOver} />
+        <FinalStatsScreen gameOver={gameOver} mode="host" onBack={onBack} onShowLeaderboard={onShowLeaderboard}>
+          <p className="final-screen-label">Màn dẫn trò chơi</p>
+        </FinalStatsScreen>
+      </>
     );
   }
 
   return (
     <main className="guide-screen">
+      <EventEffectOverlay effect={eventEffect} />
+      <HostCombatSpotlight combat={round?.combat} reveal={combatReveal} teams={teams} />
       <AuctionRevealOverlay mode="host" onClose={onCloseAuctionReveal} result={auctionReveal} />
       <GameOverOverlay gameOver={state?.gameOver} />
       <BombOverlay bomb={state?.round?.bomb} />
@@ -408,13 +483,25 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
       )}
 
       {questionControl && !gameOver && (
-        <section className="host-box host-question-box">
+        <section className={`host-box host-question-box${questionControl.answerOpen ? " is-open" : ""}${questionControl.reveal ? " is-revealed" : ""}`}>
           <p>{"Câu hỏi người dẫn"}</p>
           <strong>{questionControl.question?.text}</strong>
           <ol>
             {(questionControl.question?.choices || []).map((choice, index) => (
-              <li className={questionControl.reveal && index === questionControl.question.correctIndex ? "correct" : ""} key={choice}>
+              <li
+                className={
+                  questionControl.reveal && index === questionControl.question.correctIndex
+                    ? "correct"
+                    : questionControl.reveal && index === questionControl.answerIndex
+                      ? "wrong-submitted"
+                      : questionControl.reveal
+                        ? "dimmed"
+                        : ""
+                }
+                key={choice}
+              >
                 {String.fromCharCode(65 + index)}. {choice}
+                {questionControl.reveal && index === questionControl.question.correctIndex && <b>ĐÁP ÁN ĐÚNG</b>}
               </li>
             ))}
           </ol>
@@ -472,16 +559,21 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
   );
 };
 
-const HostEndGameScreen = ({ gameOver, onShowLeaderboard }) => (
-  <FinalStatsScreen gameOver={gameOver} mode="host" onShowLeaderboard={onShowLeaderboard}>
-    <p className="final-screen-label">Màn hình người dẫn</p>
-  </FinalStatsScreen>
+const HostEndGameScreen = ({ gameOver, onBack, onShowLeaderboard }) => (
+  <>
+    <GameOverOverlay gameOver={gameOver} />
+    <FinalStatsScreen gameOver={gameOver} mode="host" onBack={onBack} onShowLeaderboard={onShowLeaderboard}>
+      <p className="final-screen-label">Màn hình người dẫn</p>
+    </FinalStatsScreen>
+  </>
 );
 
 export default function App() {
   const [state, setState] = useState(null);
   const [tvBanner, setTvBanner] = useState(null);
   const [auctionReveal, setAuctionReveal] = useState(null);
+  const [eventEffect, setEventEffect] = useState(null);
+  const [combatReveal, setCombatReveal] = useState(null);
   const [confettiSeed, setConfettiSeed] = useState(0);
   const [flashSeed, setFlashSeed] = useState(0);
   const [hostAccessKey, setHostAccessKey] = useState(loadHostAccessKey);
@@ -491,6 +583,8 @@ export default function App() {
   const teamsRef = useRef([]);
   const auctionRevealIdRef = useRef(null);
   const bannerTimerRef = useRef(null);
+  const effectTimerRef = useRef(null);
+  const combatRevealTimerRef = useRef(null);
 
   useEffect(() => {
     if (!hostAccessKey) return undefined;
@@ -508,6 +602,13 @@ export default function App() {
       bannerTimerRef.current = setTimeout(() => setTvBanner(null), 4300);
     };
 
+    const showEffect = (effect, duration = 4600) => {
+      if (!effect) return;
+      clearTimeout(effectTimerRef.current);
+      setEventEffect({ ...effect, id: `${effect.id}:${Date.now()}` });
+      effectTimerRef.current = setTimeout(() => setEventEffect(null), duration);
+    };
+
     const onState = (nextState) => {
       console.log("host game:state", nextState);
       setState(nextState);
@@ -520,6 +621,7 @@ export default function App() {
     };
 
     const onRoundResult = (result) => {
+      showEffect(normalizeRoundEffect(result));
       const team = teamsRef.current.find((item) => item.id === result?.teamId);
       const teamName = team?.name || "Một đội";
 
@@ -575,6 +677,10 @@ export default function App() {
 
     const onCombatResult = (combat) => {
       if (!combat) return;
+      clearTimeout(combatRevealTimerRef.current);
+      setCombatReveal(combat);
+      combatRevealTimerRef.current = setTimeout(() => setCombatReveal(null), 6200);
+      if (combat.shielded) showEffect(normalizeCombatEffect(combat));
       showBanner(
         {
           title: (combat.winnerName || "Một đội") + " thắng đối kháng!",
@@ -587,6 +693,8 @@ export default function App() {
         true
       );
     };
+
+    const onSupportResult = (result) => showEffect(normalizeSupportEffect(result));
 
     const onConnectError = (error) => {
       if (!["host_access_denied", "host_access_not_configured"].includes(error?.message)) return;
@@ -615,15 +723,19 @@ export default function App() {
     socket.on(EVENTS.GAME_RESTART, onGameRestart);
     socket.on(EVENTS.AUCTION_RESULT, onAuctionResult);
     socket.on(EVENTS.COMBAT_RESULT, onCombatResult);
+    socket.on(EVENTS.SUPPORT_RESULT, onSupportResult);
     socket.on("connect_error", onConnectError);
 
     return () => {
       clearTimeout(bannerTimerRef.current);
+      clearTimeout(effectTimerRef.current);
+      clearTimeout(combatRevealTimerRef.current);
       socket.off(EVENTS.GAME_STATE, onState);
       socket.off(EVENTS.ROUND_RESULT, onRoundResult);
       socket.off(EVENTS.GAME_RESTART, onGameRestart);
       socket.off(EVENTS.AUCTION_RESULT, onAuctionResult);
       socket.off(EVENTS.COMBAT_RESULT, onCombatResult);
+      socket.off(EVENTS.SUPPORT_RESULT, onSupportResult);
       socket.off("connect_error", onConnectError);
       socketRef.current = null;
       socket.disconnect();
@@ -731,9 +843,12 @@ export default function App() {
         activeTeam={teams.find((team) => team.id === state?.round?.activeTeamId)}
         auctionReveal={auctionReveal}
         banner={tvBanner}
+        combatReveal={combatReveal}
         confettiSeed={confettiSeed}
+        eventEffect={eventEffect}
         flashSeed={flashSeed}
         onCloseAuctionReveal={() => setAuctionReveal(null)}
+        onBack={restartGame}
         onOpenQuestion={openQuestion}
         onRevealQuestion={revealQuestion}
         onShowLeaderboard={showFinalLeaderboard}
@@ -743,11 +858,13 @@ export default function App() {
   }
 
   if (gameOver) {
-    return <HostEndGameScreen gameOver={gameOver} onShowLeaderboard={showFinalLeaderboard} />;
+    return <HostEndGameScreen gameOver={gameOver} onBack={restartGame} onShowLeaderboard={showFinalLeaderboard} />;
   }
 
   return (
     <main>
+      <EventEffectOverlay effect={eventEffect} />
+      <HostCombatSpotlight combat={state?.round?.combat} reveal={combatReveal} teams={teams} />
       <AuctionRevealOverlay mode="host" onClose={() => setAuctionReveal(null)} result={auctionReveal} />
       <GameOverOverlay gameOver={state?.gameOver} />
       <BombOverlay bomb={state?.round?.bomb} />

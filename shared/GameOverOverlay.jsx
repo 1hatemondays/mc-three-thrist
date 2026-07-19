@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import "./gameOver.css";
 
-const PARTICLE_COUNT = 28;
+const PARTICLE_COUNT = 48;
+const HERALDS = [
+  { side: "left", delay: "0s", note: "♪" },
+  { side: "right", delay: "-0.8s", note: "♫" },
+  { side: "top", delay: "-1.4s", note: "♬" }
+];
 
 export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
   const [dismissedKey, setDismissedKey] = useState("");
@@ -10,7 +15,7 @@ export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
     if (!gameOver || gameOver.stage === "leaderboard") return undefined;
     const key = `${gameOver.winnerId}:${gameOver.stage || "stats"}`;
     setDismissedKey("");
-    const timer = setTimeout(() => setDismissedKey(key), 2600);
+    const timer = setTimeout(() => setDismissedKey(key), 5200);
     return () => clearTimeout(timer);
   }, [gameOver?.winnerId, gameOver?.stage]);
 
@@ -38,29 +43,36 @@ export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
         ))}
       </div>
 
-      <section className="game-over-card">
-        <header className="game-over-heading">
-          <p>{label}</p>
-          <h2 id="gameOverTitle"><span>KẾT</span> <strong>THÚC</strong></h2>
-        </header>
+      <section className="game-over-stage">
+        <p className="game-over-kicker">{label}</p>
+        <h2 id="gameOverTitle">KẾT THÚC TRÒ CHƠI</h2>
 
-        <div className="game-over-champion">
-          <span>{"NH\u00c0 V\u00d4 \u0110\u1ecaCH"}</span>
-          <strong>{gameOver.winnerName}</strong>
-          <p>{"\u0110\u00e3 t\u00ecm th\u1ea5y \u0111\u00edch \u0111\u1ebfn trong m\u00ea cung."}</p>
+        <div className="game-over-rays" aria-hidden="true" />
+        <div className="game-over-trophy" aria-hidden="true">
+          <i className="game-over-trophy-left" />
+          <i className="game-over-trophy-right" />
+          <span><b>1</b></span>
+          <i className="game-over-trophy-stem" />
+          <i className="game-over-trophy-base" />
         </div>
 
-        <div className="game-over-standings">
-          <h3>{"K\u1ebft qu\u1ea3 chung cu\u1ed9c"}</h3>
-          <ol>
-            {(gameOver.rankings || []).map((team, index) => (
-              <li className={team.teamId === gameOver.winnerId ? "is-winner" : ""} key={team.teamId}>
-                <b>{String(team.placement || index + 1).padStart(2, "0")}</b>
-                <span>{team.teamName}</span>
-                <small>{team.score} {"\u0111i\u1ec3m"} / {team.hp} {"m\u00e1u"}</small>
-              </li>
-            ))}
-          </ol>
+        <div className="game-over-heralds" aria-hidden="true">
+          {HERALDS.map((herald) => (
+            <i className={`game-over-herald is-${herald.side}`} key={herald.side} style={{ "--herald-delay": herald.delay }}>
+              <span className="herald-wing left" />
+              <span className="herald-head" />
+              <span className="herald-body" />
+              <span className="herald-wing right" />
+              <span className="herald-horn" />
+              <b>{herald.note}</b>
+            </i>
+          ))}
+        </div>
+
+        <div className="game-over-winner-banner">
+          <small>NHÀ VÔ ĐỊCH</small>
+          <strong>{gameOver.winnerName}</strong>
+          <span>Đã tìm thấy đích đến trong mê cung</span>
         </div>
       </section>
     </div>

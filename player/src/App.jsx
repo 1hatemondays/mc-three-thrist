@@ -9,8 +9,11 @@ import { GameIcon } from "../../shared/GameIcon.jsx";
 import { AnimatedScore } from "../../shared/AnimatedScore.jsx";
 import { AuctionRevealOverlay } from "../../shared/AuctionRevealOverlay.jsx";
 import { shouldRevealAuctionResult } from "../../shared/auctionReveal.js";
+import { EventEffectOverlay } from "../../shared/EventEffectOverlay.jsx";
+import { normalizeCombatEffect, normalizeRoundEffect, normalizeSupportEffect } from "../../shared/eventEffects.js";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, hasWall, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
+import { getOpponentTeams } from "../../shared/teamTargets.js";
 import "../../shared/scoreEffects.css";
 import "../../shared/auctionReveal.css";
 import smokeTexture from "./assets/smoke-2.png";
@@ -855,7 +858,7 @@ const AuctionPanel = ({ auction, active, onBid }) => {
   );
 };
 
-const CombatTeamCard = ({ mark, role, team, result }) => {
+const CombatTeamCard = ({ bid, mark, role, team, result }) => {
   const winner = result?.winnerId === team?.id;
   const loser = result?.loserId === team?.id;
 
@@ -866,35 +869,48 @@ const CombatTeamCard = ({ mark, role, team, result }) => {
         <span>{role}</span>
       </div>
       <strong>{team?.name || "Đang chọn đội"}</strong>
+      {result && <span className="combat-revealed-bid"><small>Điểm cược</small><b>{bid} điểm</b></span>}
       {winner && <em>Thắng</em>}
       {loser && <em>Thua</em>}
     </article>
   );
 };
 
-const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
+const CombatPanel = ({ combat, active, currentTeamId, onBet, reveal }) => {
   const dialogRef = useRef(null);
   const [amount, setAmount] = useState(0);
+  const [now, setNow] = useState(Date.now());
   const maxBid = combat?.maxBid || 0;
   const bid = Number(amount);
-  const canSubmit = Number.isInteger(bid) && bid >= 0 && bid <= maxBid;
+  const result = reveal || (active ? combat?.result : null);
+  const visible = Boolean(combat && (active || result));
+  const remainingMs = active ? Math.max(0, (combat?.deadline || 0) - now) : 0;
+  const remainingSeconds = Math.ceil(remainingMs / 1000);
+  const timeProgress = active && combat?.deadline ? Math.max(0, Math.min(100, (remainingMs / 20_000) * 100)) : 0;
+  const canSubmit = remainingMs > 0 && Number.isInteger(bid) && bid >= 0 && bid <= maxBid;
 
   useEffect(() => {
     setAmount(0);
   }, [active, combat?.attacker?.id, combat?.defender?.id]);
 
   useEffect(() => {
+    if (!active) return undefined;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 200);
+    return () => clearInterval(timer);
+  }, [active, combat?.deadline]);
+
+  useEffect(() => {
     const dialog = dialogRef.current;
-    if (!active || !dialog || dialog.open) return undefined;
+    if (!visible || !dialog || dialog.open) return undefined;
     dialog.showModal();
     return () => {
       if (dialog.open) dialog.close();
     };
-  }, [active]);
+  }, [visible]);
 
-  if (!combat || !active) return null;
+  if (!visible) return null;
 
-  const result = combat.result;
   const title = result
     ? "Kết quả đối kháng"
     : combat.involved
@@ -917,14 +933,22 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
           <h2 id="combatTitle">{title}</h2>
         </div>
         <span className="combat-status">
-          {result ? "Đã phân thắng bại" : combat.submittedCount + "/2 đã khóa"}
+          {result ? "Đã phân thắng bại" : remainingSeconds + "s · " + combat.submittedCount + "/2 đã khóa"}
         </span>
       </header>
 
+      {!result && (
+        <div className="combat-countdown" aria-label={`Còn ${remainingSeconds} giây`}>
+          <strong>{remainingSeconds}s</strong>
+          <span><i style={{ "--combat-time": `${timeProgress}%` }} /></span>
+          <small>hết giờ = cược 0 điểm</small>
+        </div>
+      )}
+
       <div className="combat-arena">
-        <CombatTeamCard mark="TĐ" role="Thách đấu" team={combat.attacker} result={result} />
+        <CombatTeamCard bid={result?.attackerBet} mark="TĐ" role="Thách đấu" team={combat.attacker} result={result} />
         <div className="combat-versus" aria-hidden="true">ĐẤU</div>
-        <CombatTeamCard mark="PT" role="Phòng thủ" team={combat.defender} result={result} />
+        <CombatTeamCard bid={result?.defenderBet} mark="PT" role="Phòng thủ" team={combat.defender} result={result} />
       </div>
 
       {active && combat.involved && !combat.submitted && (
@@ -1042,7 +1066,7 @@ const TrapPlacementPopup = ({ item, onClose, onPlace }) => {
 };
 
 const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
-  const opponents = teams.filter((team) => team.id !== currentTeamId);
+  const opponents = getOpponentTeams(teams, currentTeamId);
   const [targets, setTargets] = useState({});
   const [placingTrap, setPlacingTrap] = useState(null);
 
@@ -1073,9 +1097,10 @@ const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
               ) : item.type === SUPPORT_ITEM_TYPES.FREEZE_OPPONENT ? (
                 <div className="item-use-row">
                   <select value={targetDraft(item)} onChange={(event) => setTargets({ ...targets, [item.instanceId]: event.target.value })}>
+                    {!opponents.length && <option value="">Chưa có đối thủ</option>}
                     {opponents.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
                   </select>
-                  <button onClick={() => onUse({ itemInstanceId: item.instanceId, targetTeamId: targetDraft(item) })} type="button">{"Dùng"}</button>
+                  <button disabled={!targetDraft(item)} onClick={() => onUse({ itemInstanceId: item.instanceId, targetTeamId: targetDraft(item) })} type="button">{"Dùng"}</button>
                 </div>
               ) : item.type === SUPPORT_ITEM_TYPES.TRAP ? (
                 <button onClick={() => setPlacingTrap(item)} type="button">{"Mở bản đồ đặt bẫy"}</button>
@@ -1104,7 +1129,7 @@ const EnergyPips = ({ energy }) => {
   );
 };
 
-const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onAnswer, onCombatBet, onResolveEvent }) => {
+const GameplayPanel = ({ state, lastResult, combatReveal, onAuctionBid, onChooseDirection, onAnswer, onCombatBet, onResolveEvent }) => {
   if (state.gameOver) {
     return <FinalStatsScreen gameOver={state.gameOver} mode="player" summary={state.gameOver.summary} />;
   }
@@ -1166,6 +1191,7 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
           combat={round?.combat}
           currentTeamId={state.team.id}
           onBet={onCombatBet}
+          reveal={combatReveal}
         />
         <ResultCard result={result} />
         <NoticePanel messages={round?.messages || []} />
@@ -1258,13 +1284,24 @@ export default function App() {
   const [lastResult, setLastResult] = useState(null);
   const [reveal, setReveal] = useState(null);
   const [auctionReveal, setAuctionReveal] = useState(null);
+  const [eventEffect, setEventEffect] = useState(null);
+  const [combatReveal, setCombatReveal] = useState(null);
   const auctionRevealIdRef = useRef(null);
+  const effectTimerRef = useRef(null);
+  const combatRevealTimerRef = useRef(null);
   const teamIdRef = useRef(savedSession?.teamId || null);
   const teamNameRef = useRef(savedSession?.teamName || "");
   const socket = useMemo(() => io(SERVER_URL, { autoConnect: false }), []);
   const [socketStatus, setSocketStatus] = useState(socket.connected ? "đã kết nối" : "đang kết nối");
 
   useEffect(() => {
+    const showEffect = (effect, duration = 4600) => {
+      if (!effect) return;
+      clearTimeout(effectTimerRef.current);
+      setEventEffect({ ...effect, id: `${effect.id}:${Date.now()}` });
+      effectTimerRef.current = setTimeout(() => setEventEffect(null), duration);
+    };
+
     const onState = (nextState) => {
       console.log("player game:state", nextState);
       setState(nextState);
@@ -1282,6 +1319,7 @@ export default function App() {
       }
     };
     const onRoundResult = (result) => {
+      showEffect(normalizeRoundEffect(result, teamIdRef.current));
       if (result?.teamId === teamIdRef.current) {
         setLastResult({ ...result, clientNonce: Date.now() });
         if (result.event) {
@@ -1292,6 +1330,13 @@ export default function App() {
     const onAuctionResult = (result) => {
       if (result?.revealId) auctionRevealIdRef.current = result.revealId;
       setAuctionReveal({ ...(result || {}), nonce: Date.now() });
+    };
+    const onSupportResult = (result) => showEffect(normalizeSupportEffect(result, teamIdRef.current));
+    const onCombatResult = (result) => {
+      clearTimeout(combatRevealTimerRef.current);
+      setCombatReveal(result);
+      combatRevealTimerRef.current = setTimeout(() => setCombatReveal(null), 6200);
+      if (result?.shielded) showEffect(normalizeCombatEffect(result, teamIdRef.current));
     };
     const onConnect = () => {
       setSocketStatus("đã kết nối");
@@ -1318,6 +1363,8 @@ export default function App() {
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
     socket.on(EVENTS.AUCTION_RESULT, onAuctionResult);
+    socket.on(EVENTS.SUPPORT_RESULT, onSupportResult);
+    socket.on(EVENTS.COMBAT_RESULT, onCombatResult);
     socket.on(EVENTS.GAME_RESTART, onGameRestart);
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
@@ -1328,10 +1375,14 @@ export default function App() {
       socket.off(EVENTS.GAME_STATE, onState);
       socket.off(EVENTS.ROUND_RESULT, onRoundResult);
       socket.off(EVENTS.AUCTION_RESULT, onAuctionResult);
+      socket.off(EVENTS.SUPPORT_RESULT, onSupportResult);
+      socket.off(EVENTS.COMBAT_RESULT, onCombatResult);
       socket.off(EVENTS.GAME_RESTART, onGameRestart);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("connect_error", onConnectError);
+      clearTimeout(effectTimerRef.current);
+      clearTimeout(combatRevealTimerRef.current);
       socket.disconnect();
     };
   }, [socket]);
@@ -1406,12 +1457,29 @@ export default function App() {
 
   const visibleError = localError || state?.error;
 
+  const leaveFinalScreen = () => {
+    try {
+      window.localStorage.removeItem(TEAM_SESSION_KEY);
+    } catch {
+      // Reload still returns to the join screen when storage is unavailable.
+    }
+    teamIdRef.current = null;
+    teamNameRef.current = "";
+    window.location.reload();
+  };
+
   if (state?.gameOver && state?.team) {
-    return <FinalStatsScreen gameOver={state.gameOver} mode="player" summary={state.gameOver.summary} />;
+    return (
+      <>
+        <GameOverOverlay gameOver={state.gameOver} currentTeamId={state.team.id} />
+        <FinalStatsScreen gameOver={state.gameOver} mode="player" onBack={leaveFinalScreen} summary={state.gameOver.summary} />
+      </>
+    );
   }
 
   return (
     <main>
+      <EventEffectOverlay effect={eventEffect} />
       <GameOverOverlay gameOver={state?.gameOver} currentTeamId={state?.team?.id} />
       <EventReveal reveal={reveal} onClose={() => setReveal(null)} />
       <AuctionRevealOverlay
@@ -1478,7 +1546,7 @@ export default function App() {
                 currentTeamId={state.team.id}
                 items={state.team.supportItems || []}
                 onUse={useSupport}
-                teams={state.leaderboard || []}
+                teams={state.teams || []}
               />
             </div>
 
@@ -1486,6 +1554,7 @@ export default function App() {
               <SetupBoard state={state} onSubmit={submitMaze} />
             ) : (
               <GameplayPanel
+                combatReveal={combatReveal}
                 lastResult={lastResult}
                 onAnswer={answerQuestion}
                 onAuctionBid={submitAuctionBid}

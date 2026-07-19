@@ -82,6 +82,15 @@ test("freeze item immediately ends the target team's current movement turn", () 
   });
 
   assert.equal(result.ok, true);
+  assert.deepEqual(result.result, {
+    type: SUPPORT_ITEM_TYPES.FREEZE_OPPONENT,
+    sourceTeamId: "team1",
+    sourceTeamName: "team1",
+    targetTeamId: "team2",
+    targetTeamName: "team2",
+    resolvedAt: result.result.resolvedAt
+  });
+  assert.equal(Number.isFinite(result.result.resolvedAt), true);
   assert.equal(state.round.pendingAnswers.team2.answered, true);
   assert.equal(chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0).ok, false);
 });

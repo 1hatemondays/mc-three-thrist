@@ -12,6 +12,7 @@ export const EVENTS = {
   COMBAT_BET: "combat:bet",
   EVENT_RESOLVE: "event:resolve",
   SUPPORT_USE: "support:use",
+  SUPPORT_RESULT: "support:result",
   METEOR_BUZZ: "meteor:buzz",
   METEOR_ANSWER: "meteor:answer",
   GAME_OVER_SHOW_LEADERBOARD: "gameOver:showLeaderboard",
