@@ -43,6 +43,7 @@ const createInitialGameState = () => ({
     started: false
   },
   gameOver: null,
+  usedQuestionIds: {},
   round: {
     roundNumber: 1,
     phase: "movement",

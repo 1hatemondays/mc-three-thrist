@@ -405,8 +405,7 @@ dd {
 }
 
 .gameplay-left > .game-card,
-.gameplay-right > .game-card,
-.gameplay-right > .notice-stack {
+.gameplay-right > .game-card {
   margin-top: 0;
 }
 
@@ -458,7 +457,16 @@ dd {
 }
 
 .movement-viewport {
+  display: grid;
+  gap: 10px;
   margin-top: 16px;
+}
+
+.movement-map-toggle {
+  justify-self: end;
+  min-height: 38px;
+  padding: 8px 14px;
+  background: var(--mint);
 }
 
 .movement-scene {
@@ -540,6 +548,65 @@ dd {
   mix-blend-mode: normal;
   transform-origin: center;
   animation: fogDriftB 30s linear infinite;
+}
+
+.movement-overview-map {
+  position: absolute;
+  inset: 18px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  border: 4px solid var(--line);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 3px rgba(240, 185, 75, 0.16);
+}
+
+.movement-overview-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  border-top: 3px solid var(--top-wall);
+  border-right: 3px solid var(--right-wall);
+  border-bottom: 3px solid var(--bottom-wall);
+  border-left: 3px solid var(--left-wall);
+  background: rgba(255, 249, 233, 0.94);
+}
+
+.movement-overview-cell.hidden {
+  background: #d8ccb2;
+}
+
+.movement-overview-cell.current {
+  background: #fff4d8;
+  box-shadow: inset 0 0 0 4px rgba(240, 185, 75, 0.38);
+}
+
+.overview-fog {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: var(--fog-texture) center / 90% 90% no-repeat;
+  filter: blur(2px) brightness(1.42) contrast(0.54);
+  opacity: 0.55;
+  animation: fogDriftA 26s linear infinite;
+}
+
+.overview-path-dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: clamp(22px, 42%, 42px);
+  aspect-ratio: 1;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  color: var(--paper);
+  background: var(--jade);
+  font-size: clamp(11px, 2.2vw, 16px);
+  font-weight: 1000;
+  line-height: 1;
 }
 
 .movement-player-wrap {
@@ -1092,18 +1159,24 @@ dd {
   font-size: 12px;
 }
 
-.notice-stack {
-  display: grid;
-  gap: 10px;
-  margin-top: 20px;
+.notice-popup {
+  position: fixed;
+  left: 50%;
+  top: 28px;
+  z-index: 80;
+  width: min(440px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  animation: noticePop 3.2s ease both;
+  pointer-events: none;
 }
 
 .notice-box {
   display: grid;
   gap: 4px;
-  padding: 12px 14px;
-  border: 1px solid rgba(29, 51, 41, 0.18);
+  padding: 14px 18px;
+  border: 2px solid rgba(240, 185, 75, 0.8);
   background: #fff4d8;
+  box-shadow: 0 18px 44px rgba(29, 51, 41, 0.22);
   font-weight: 900;
 }
 
@@ -1690,6 +1763,75 @@ dd {
   font-weight: 900;
 }
 
+.trap-placement-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(11, 26, 20, 0.64);
+  backdrop-filter: blur(4px);
+}
+
+.trap-placement-card {
+  display: grid;
+  gap: 14px;
+  width: min(560px, calc(100vw - 28px));
+  padding: 18px;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  box-shadow: 7px 7px 0 rgba(29, 51, 41, 0.22);
+}
+
+.trap-placement-note {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.trap-placement-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  border: 3px solid var(--line);
+  background: rgba(29, 51, 41, 0.2);
+}
+
+.trap-placement-grid button {
+  display: grid;
+  place-items: center;
+  min-height: clamp(44px, 11vw, 76px);
+  border: 1px solid rgba(29, 51, 41, 0.22);
+  border-radius: 0;
+  color: var(--muted);
+  background: rgba(255, 249, 233, 0.98);
+  box-shadow: none;
+  font-size: clamp(10px, 2vw, 13px);
+}
+
+.trap-placement-grid button span {
+  width: 18px;
+  aspect-ratio: 1;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--coral);
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+
+.trap-placement-grid button:hover,
+.trap-placement-grid button:focus-visible {
+  z-index: 1;
+  color: var(--paper);
+  background: var(--coral);
+  transform: none;
+}
+
+.trap-placement-grid button:hover span,
+.trap-placement-grid button:focus-visible span {
+  opacity: 1;
+}
+
 @media (max-width: 560px) {
   .bid-box,
   .item-use-row,
@@ -1876,4 +2018,73 @@ dd {
 .event-start:hover:not(:disabled) {
   transform: translate(-1px, -1px);
   box-shadow: 5px 5px 0 var(--line);
+}
+
+@keyframes noticePop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-16px) scale(0.94);
+  }
+  12%,
+  82% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-12px) scale(0.98);
+  }
+}
+
+.auction-result-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(29, 51, 41, 0.18);
+  pointer-events: none;
+  animation: auctionResultFade 3.6s ease both;
+}
+
+.auction-result-card {
+  width: min(540px, 100%);
+  padding: 22px;
+  border: 3px solid rgba(240, 185, 75, 0.85);
+  background: #fff9e9;
+  box-shadow: 0 22px 58px rgba(29, 51, 41, 0.28);
+}
+
+.auction-result-card p {
+  margin: 0 0 6px;
+  color: var(--jade);
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.auction-result-card h2 {
+  margin: 0 0 14px;
+  font-size: clamp(28px, 6vw, 42px);
+}
+
+.auction-result-list {
+  display: grid;
+  gap: 10px;
+}
+
+@keyframes auctionResultFade {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  10%,
+  84% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
 }

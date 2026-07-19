@@ -4,7 +4,7 @@ import { EVENTS } from "../../shared/constants.js";
 import { GameOverOverlay } from "../../shared/GameOverOverlay.jsx";
 import { BombOverlay } from "../../shared/BombOverlay.jsx";
 import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
-import { FinalKahootLeaderboard, FinalStatsCard } from "../../shared/FinalStats.jsx";
+import { FinalStatsScreen } from "../../shared/FinalStats.jsx";
 import { EVENT_TILE_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { hasWall } from "../../shared/maze.js";
 
@@ -217,13 +217,21 @@ const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
   );
 };
 
-const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
+const GuideScreen = ({ state, activeTeam, banner, confettiSeed, flashSeed, onOpenQuestion, onRevealQuestion, onShowLeaderboard }) => {
   const teams = state?.teams || [];
   const round = state?.round;
   const gameOver = state?.gameOver || null;
   const rankingRows = gameOver?.rankings || teams;
   const setupStarted = Boolean(state?.setup?.started);
   const eventTiles = setupStarted ? round?.eventTiles || [] : [];
+
+  if (gameOver) {
+    return (
+      <FinalStatsScreen gameOver={gameOver} mode="host" onShowLeaderboard={onShowLeaderboard}>
+        <p className="final-screen-label">Màn dẫn trò chơi</p>
+      </FinalStatsScreen>
+    );
+  }
 
   return (
     <main className="guide-screen">
@@ -318,6 +326,14 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
         </div>
 
         <aside className="guide-panel">
+          <HostRoundBoxes
+            activeTeam={activeTeam}
+            gameOver={gameOver}
+            onOpenQuestion={onOpenQuestion}
+            onRevealQuestion={onRevealQuestion}
+            onShowLeaderboard={onShowLeaderboard}
+            round={round}
+          />
           <h2>{gameOver ? "Xếp hạng chung cuộc" : "Vị trí đội"}</h2>
           {rankingRows.map((team, index) => (
             <div className="guide-team" key={team.teamId || team.id}>
@@ -407,7 +423,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
         </section>
       )}
 
-      {auction && (round.phase === "auction" || auction.result) && (
+      {auction && round.phase === "auction" && (
         <section className="host-box auction-box">
           <p>{"Đấu giá"}</p>
           <strong>{auction.submittedCount + "/" + auction.totalTeams + " đội đã gửi"}</strong>
@@ -451,6 +467,12 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
   );
 };
 
+const HostEndGameScreen = ({ gameOver, onShowLeaderboard }) => (
+  <FinalStatsScreen gameOver={gameOver} mode="host" onShowLeaderboard={onShowLeaderboard}>
+    <p className="final-screen-label">Màn hình người dẫn</p>
+  </FinalStatsScreen>
+);
+
 export default function App() {
   const [state, setState] = useState(null);
   const [tvBanner, setTvBanner] = useState(null);
@@ -486,17 +508,65 @@ export default function App() {
     };
 
     const onRoundResult = (result) => {
-      if (!result?.event) return;
-      const team = teamsRef.current.find((item) => item.id === result.teamId);
-      const event = result.event;
-      showBanner({
-        title: (team?.name || "Một đội") + " kích hoạt " + event.name + "!",
-        text: event.message || event.name,
-        color: event.color,
-        symbol: event.symbol,
-        type: event.type,
-        global: GLOBAL_EVENT_TYPES.has(event.type)
-      }, event.type === EVENT_TILE_TYPES.BLESSING);
+      const team = teamsRef.current.find((item) => item.id === result?.teamId);
+      const teamName = team?.name || "Một đội";
+
+      if (result?.event) {
+        const event = result.event;
+        showBanner({
+          title: teamName + " kích hoạt " + event.name + "!",
+          text: event.message || event.name,
+          color: event.color,
+          symbol: event.symbol,
+          type: event.type,
+          global: GLOBAL_EVENT_TYPES.has(event.type)
+        }, event.type === EVENT_TILE_TYPES.BLESSING);
+        return;
+      }
+
+      if (result?.blockedReason === "wall" || result?.blockedReason === "border") {
+        showBanner({
+          title: teamName + " chạm tường!",
+          text: "Lượt này bị chặn lại.",
+          color: "#bd473f",
+          symbol: "TƯỜNG"
+        });
+        return;
+      }
+
+      if (result?.success) {
+        showBanner({
+          title: teamName + " di chuyển tiếp!",
+          text: "Đã mở thêm đường đi.",
+          color: "#65c8a2",
+          symbol: "ĐI"
+        });
+        return;
+      }
+
+      if (result) {
+        showBanner({
+          title: teamName + " không được di chuyển!",
+          text: "Cần chờ lượt kế tiếp.",
+          color: "#f0b94b",
+          symbol: "DỪNG"
+        });
+      }
+    };
+
+    const onAuctionResult = (result) => {
+      const winners = result?.winners || [];
+      showBanner(
+        {
+          title: "Kết quả đấu giá",
+          text: winners.length
+            ? winners.map((winner) => winner.teamName + " thắng " + winner.itemName).join(" · ")
+            : "Không có đội nào thắng vật phẩm.",
+          color: "#f0b94b",
+          symbol: "ĐẤU GIÁ"
+        },
+        Boolean(winners.length)
+      );
     };
 
     const onCombatResult = (combat) => {
@@ -539,6 +609,7 @@ export default function App() {
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
     socket.on(EVENTS.GAME_RESTART, onGameRestart);
+    socket.on(EVENTS.AUCTION_RESULT, onAuctionResult);
     socket.on(EVENTS.COMBAT_RESULT, onCombatResult);
     socket.on("connect_error", onConnectError);
 
@@ -547,6 +618,7 @@ export default function App() {
       socket.off(EVENTS.GAME_STATE, onState);
       socket.off(EVENTS.ROUND_RESULT, onRoundResult);
       socket.off(EVENTS.GAME_RESTART, onGameRestart);
+      socket.off(EVENTS.AUCTION_RESULT, onAuctionResult);
       socket.off(EVENTS.COMBAT_RESULT, onCombatResult);
       socket.off("connect_error", onConnectError);
       socketRef.current = null;
@@ -651,12 +723,20 @@ export default function App() {
   if (isGuideScreen) {
     return (
       <GuideScreen
+        activeTeam={teams.find((team) => team.id === state?.round?.activeTeamId)}
         banner={tvBanner}
         confettiSeed={confettiSeed}
         flashSeed={flashSeed}
+        onOpenQuestion={openQuestion}
+        onRevealQuestion={revealQuestion}
+        onShowLeaderboard={showFinalLeaderboard}
         state={state}
       />
     );
+  }
+
+  if (gameOver) {
+    return <HostEndGameScreen gameOver={gameOver} onShowLeaderboard={showFinalLeaderboard} />;
   }
 
   return (
@@ -701,57 +781,40 @@ export default function App() {
       {state?.error && <div className="host-error">{state.error}</div>}
 
       <section className="layout">
-        <div className={gameOver ? "maps final-host-stage" : "maps"}>
-          {gameOver?.stage === "leaderboard" ? (
-            <FinalKahootLeaderboard rankings={gameOver.rankings || []} />
-          ) : gameOver ? (
-            (gameOver.summaries || []).map((summary) => (
-              <FinalStatsCard key={summary.teamId} summary={summary} titlePrefix="Tổng kết" />
-            ))
-          ) : (
-            teams.map((team) => {
-              if (!isSetupReview) {
-                return (
-                  <Board
-                    cardLabel={team.name}
-                    key={team.id}
-                    metaLabel={team.startPoint ? "\u0110\u00e3 s\u1eb5n s\u00e0ng" : "\u0110ang ch\u1edd m\u00ea cung"}
-                    eventTiles={state?.round?.eventTiles || []}
-                    submitted={submitted.has(team.id)}
-                    team={team}
-                  />
-                );
-              }
-
-              const preview = setupPreviews[team.id];
-
+        <div className="maps">
+          {teams.map((team) => {
+            if (!isSetupReview) {
               return (
                 <Board
                   cardLabel={team.name}
                   key={team.id}
-                  metaLabel={
-                    preview
-                      ? "\u0110\u00e3 n\u1ed9p - chia ng\u1eabu nhi\u00ean khi \u0111\u1ee7 \u0111\u1ed9i"
-                      : "\u0110ang ch\u1edd n\u1ed9p"
-                  }
+                  metaLabel={team.startPoint ? "\u0110\u00e3 s\u1eb5n s\u00e0ng" : "\u0110ang ch\u1edd m\u00ea cung"}
+                  eventTiles={state?.round?.eventTiles || []}
                   submitted={submitted.has(team.id)}
-                  team={preview || { ...team, walls: [], startPoint: null, endPoint: null }}
+                  team={team}
                 />
               );
-            })
-          )}
+            }
+
+            const preview = setupPreviews[team.id];
+
+            return (
+              <Board
+                cardLabel={team.name}
+                key={team.id}
+                metaLabel={
+                  preview
+                    ? "\u0110\u00e3 n\u1ed9p - chia ng\u1eabu nhi\u00ean khi \u0111\u1ee7 \u0111\u1ed9i"
+                    : "\u0110ang ch\u1edd n\u1ed9p"
+                }
+                submitted={submitted.has(team.id)}
+                team={preview || { ...team, walls: [], startPoint: null, endPoint: null }}
+              />
+            );
+          })}
         </div>
 
         <aside className="leaderboard">
-          <HostRoundBoxes
-            activeTeam={teams.find((team) => team.id === state?.round?.activeTeamId)}
-            gameOver={gameOver}
-            onOpenQuestion={openQuestion}
-            onRevealQuestion={revealQuestion}
-            onShowLeaderboard={showFinalLeaderboard}
-            round={state?.round}
-          />
-
           <h2>{gameOver ? "Xếp hạng chung cuộc" : "Trạng thái đội"}</h2>
           {rankingRows.map((team, index) => (
             <div className={"rank" + (gameOver && index === 0 ? " winner" : state?.round?.activeTeamId === (team.teamId || team.id) ? " is-active" : "")} key={team.teamId || team.id}>
