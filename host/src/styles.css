@@ -92,6 +92,24 @@ main {
   gap: 18px;
 }
 
+.maps.final-host-stage {
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+
+.maps.final-host-stage .final-kahoot-board {
+  grid-column: 1 / -1;
+}
+
+.host-box-action {
+  background: #f0b94b;
+  border: 0;
+  color: #15281f;
+  cursor: pointer;
+  font-weight: 900;
+  margin-top: 10px;
+  padding: 10px 12px;
+}
+
 .team-card,
 .leaderboard {
   border: 1px solid rgba(29, 51, 41, 0.22);

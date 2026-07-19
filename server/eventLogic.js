@@ -33,6 +33,12 @@ const discover = (team, point) => {
   }
 };
 
+const recordAnswer = (team, correct) => {
+  team.answerStats = team.answerStats || { correct: 0, wrong: 0 };
+  if (correct) team.answerStats.correct += 1;
+  else team.answerStats.wrong += 1;
+};
+
 const publicMeta = (meta) => ({
   type: meta.type,
   name: meta.name,
@@ -294,9 +300,13 @@ export const resolveBombAnswer = (state, teamId, payload = {}, random = Math.ran
     return { ok: false, error: "\u0110\u00e1p \u00e1n kh\u00f4ng h\u1ee3p l\u1ec7." };
   }
   if (answerIndex !== bomb.question.correctIndex) {
+    const team = state.teams.find((item) => item.id === teamId);
+    if (team) recordAnswer(team, false);
     return { ok: true, exploded: true, result: explodeBomb(state, teamId, "wrong") };
   }
 
+  const team = state.teams.find((item) => item.id === teamId);
+  if (team) recordAnswer(team, true);
   const nextTeamId = nextBombHolder(state, teamId);
   const nextTeam = state.teams.find((team) => team.id === nextTeamId);
   bomb.holderTeamId = nextTeamId;
@@ -333,6 +343,7 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
     const team = state.teams.find((item) => item.id === teamId);
     const correct = Number(payload.answerIndex) === pending.question.correctIndex;
     let scoreDelta = 0;
+    if (team) recordAnswer(team, correct);
     if (correct) {
       team.score += MOVE_SCORE;
       scoreDelta = MOVE_SCORE;

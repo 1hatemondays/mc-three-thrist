@@ -199,6 +199,18 @@ test("wrong answers end only that team's turn", () => {
   assert.equal(state.round.phase, ROUND_PHASES.MOVEMENT);
 });
 
+test("movement questions update correct and wrong answer statistics", () => {
+  const correctState = makeState();
+  chooseMoveQuestion(correctState, "team1", { direction: "right" }, questions, () => 0);
+  answerQuestion(correctState, "team1", { answerIndex: 1 });
+  assert.deepEqual(correctState.teams[0].answerStats, { correct: 1, wrong: 0 });
+
+  const wrongState = makeState();
+  chooseMoveQuestion(wrongState, "team1", { direction: "right" }, questions, () => 0);
+  answerQuestion(wrongState, "team1", { answerIndex: 0 });
+  assert.deepEqual(wrongState.teams[0].answerStats, { correct: 0, wrong: 1 });
+});
+
 test("hitting an implicit border ends the team's turn", () => {
   const state = makeState();
 

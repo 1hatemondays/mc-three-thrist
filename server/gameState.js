@@ -3,6 +3,7 @@ import { getHostAuctionState, getPlayerAuctionState } from "./auctionLogic.js";
 import { getHostCombatState, getPlayerCombatState } from "./combatLogic.js";
 import { getBombState } from "./eventLogic.js";
 import { getMeteorShowerState } from "./meteorLogic.js";
+import { getPlayerGameOverState } from "./gameOver.js";
 import { getHostSetupPreviewMap, getSetupSummary } from "./setupLogic.js";
 
 const cleanTeamName = (teamName) => String(teamName || "").trim().replace(/\s+/g, " ").slice(0, 40);
@@ -26,7 +27,8 @@ const makeTeam = (teamId, index, teamName) => ({
   discoveredCells: [{ x: 0, y: 0 }],
   revealedWalls: [],
   supportItems: [],
-  effects: {}
+  effects: {},
+  answerStats: { correct: 0, wrong: 0 }
 });
 
 export const gameState = {
@@ -95,7 +97,7 @@ export const getPlayerState = (teamId) => {
   if (!team) return null;
   return {
     config: gameState.config,
-    gameOver: gameState.gameOver,
+    gameOver: getPlayerGameOverState(gameState.gameOver, teamId),
     team: {
       id: team.id,
       name: team.name,

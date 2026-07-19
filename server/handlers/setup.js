@@ -1,5 +1,6 @@
 import { EVENTS } from "../../shared/constants.js";
 import { gameState } from "../gameState.js";
+import { showGameOverLeaderboard } from "../gameOver.js";
 import { applyMazeSubmission, configureTeamCount, setTurnOrder, startGame } from "../setupLogic.js";
 import { emitAllStates, emitHostError, emitPlayerError } from "../socketState.js";
 
@@ -34,6 +35,19 @@ export const registerSetupHandlers = (io, socket) => {
     if (socket.data.role !== "host") return;
 
     const result = startGame(gameState);
+
+    if (!result.ok) {
+      emitHostError(socket, result.error);
+      return;
+    }
+
+    emitAllStates(io);
+  });
+
+  socket.on(EVENTS.GAME_OVER_SHOW_LEADERBOARD, () => {
+    if (socket.data.role !== "host") return;
+
+    const result = showGameOverLeaderboard(gameState);
 
     if (!result.ok) {
       emitHostError(socket, result.error);

@@ -4,6 +4,7 @@ import { DIRECTIONS, EVENTS, ROUND_PHASES } from "../../shared/constants.js";
 import { GameOverOverlay } from "../../shared/GameOverOverlay.jsx";
 import { BombOverlay } from "../../shared/BombOverlay.jsx";
 import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
+import { FinalKahootLeaderboard, FinalStatsCard } from "../../shared/FinalStats.jsx";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
 import smokeTexture from "./assets/smoke-2.png";
@@ -951,26 +952,20 @@ const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
   );
 };
 
-const GameOverPanel = ({ gameOver, teamId }) => {
+const GameOverPanel = ({ gameOver }) => {
   if (!gameOver) return null;
 
-  const myPlacement = gameOver.rankings.find((entry) => entry.teamId === teamId)?.placement;
+  if (gameOver.stage === "leaderboard") {
+    return <FinalKahootLeaderboard rankings={gameOver.rankings || []} />;
+  }
 
   return (
-    <section className="game-card game-over-card">
+    <section className="game-card game-over-card final-player-summary">
       <div className="section-head">
         <p>Kết thúc trò chơi</p>
         <h2>{gameOver.winnerName} về đích đầu tiên</h2>
       </div>
-      <p className="game-over-summary">
-        {myPlacement === 1 ? "Đội của bạn giành hạng 1." : "Đội của bạn xếp hạng " + (myPlacement || "—") + "."}
-      </p>
-      {gameOver.rankings.map((entry) => (
-        <div className={"leader-row" + (entry.placement === 1 ? " winner" : "")} key={entry.teamId}>
-          <span>#{entry.placement} · {entry.teamName}</span>
-          <strong>{entry.score} điểm / {entry.hp} máu</strong>
-        </div>
-      ))}
+      <FinalStatsCard summary={gameOver.summary} titlePrefix="Tổng kết đội bạn" />
     </section>
   );
 };
@@ -980,11 +975,25 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
     return (
       <section className="gameplay two-col">
         <div className="gameplay-left">
-          <GameOverPanel gameOver={state.gameOver} teamId={state.team.id} />
+          <GameOverPanel gameOver={state.gameOver} />
         </div>
         <div className="gameplay-right">
           <NoticePanel messages={state.round?.messages || []} />
-          <Leaderboard teams={state.leaderboard || []} />
+          <section className="game-card game-over-card">
+            <div className="section-head">
+              <p>Chờ host</p>
+              <h2>
+                {state.gameOver.stage === "leaderboard"
+                  ? "Bảng xếp hạng cuối đã mở."
+                  : "Host đang xem thống kê từng đội."}
+              </h2>
+            </div>
+            <p className="game-over-summary">
+              {state.gameOver.stage === "leaderboard"
+                ? "Kết quả chung cuộc đang hiển thị theo phong cách Kahoot."
+                : "Bản đồ của đội bạn đã được mở: tường, đường đã khám phá và số câu đúng/sai."}
+            </p>
+          </section>
         </div>
       </section>
     );

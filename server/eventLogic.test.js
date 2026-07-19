@@ -183,3 +183,15 @@ test("knowledge event does not change the base move score", () => {
   assert.equal(result.scoreDelta, undefined);
   assert.equal(state.teams[0].score, 10);
 });
+
+test("knowledge and bomb questions update answer statistics", () => {
+  const knowledge = makeState();
+  applyEventTileEffect(knowledge, "team1", { type: EVENT_TILE_TYPES.KNOWLEDGE, x: 1, y: 0 });
+  resolvePendingEvent(knowledge, "team1", { answerIndex: knowledge.round.pendingEvents.team1.question.correctIndex });
+  assert.deepEqual(knowledge.teams[0].answerStats, { correct: 1, wrong: 0 });
+
+  const bomb = makeState();
+  applyEventTileEffect(bomb, "team1", { type: EVENT_TILE_TYPES.BOMB, x: 1, y: 0 }, () => 0);
+  resolveBombAnswer(bomb, "team1", { answerIndex: 0 }, () => 0, bomb.round.bomb.deadline - 1);
+  assert.deepEqual(bomb.teams[0].answerStats, { correct: 0, wrong: 1 });
+});

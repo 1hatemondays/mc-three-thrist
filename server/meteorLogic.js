@@ -14,6 +14,12 @@ const publicQuestion = (question) => {
   return safeQuestion;
 };
 
+const recordAnswer = (team, correct) => {
+  team.answerStats = team.answerStats || { correct: 0, wrong: 0 };
+  if (correct) team.answerStats.correct += 1;
+  else team.answerStats.wrong += 1;
+};
+
 const pickQuestions = (questions, random) => {
   const pool = [...questions];
   for (let index = 0; index < QUESTION_COUNT; index += 1) {
@@ -154,6 +160,7 @@ export const submitMeteorAnswer = (state, teamId, payload = {}, now = Date.now()
   const correct = answerIndex === question.correctIndex;
   if (correct) meteor.scores[teamId] += 1;
   const team = findTeam(state, teamId);
+  recordAnswer(team, correct);
   meteor.lastAnswer = { teamId, teamName: team.name, correct };
 
   if (meteor.questionIndex + 1 === meteor.totalQuestions) {

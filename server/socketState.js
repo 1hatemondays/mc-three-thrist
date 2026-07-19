@@ -1,5 +1,6 @@
 import { EVENTS, ROOMS } from "../shared/constants.js";
 import { gameState, getHostState, getPlayerState } from "./gameState.js";
+import { getPlayerGameOverState } from "./gameOver.js";
 
 export const emitAllStates = (io) => {
   io.to(ROOMS.HOSTS).emit(EVENTS.GAME_STATE, getHostState());
@@ -36,6 +37,6 @@ export const emitGameOver = (io, gameOver) => {
   io.to(ROOMS.HOSTS).emit(EVENTS.GAME_OVER, gameOver);
 
   for (const team of gameState.teams) {
-    io.to(ROOMS.team(team.id)).emit(EVENTS.GAME_OVER, gameOver);
+    io.to(ROOMS.team(team.id)).emit(EVENTS.GAME_OVER, getPlayerGameOverState(gameOver, team.id));
   }
 };

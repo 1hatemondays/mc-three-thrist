@@ -28,7 +28,8 @@ const makeTeam = (index) => ({
   discoveredCells: [{ x: 0, y: 0 }],
   revealedWalls: [],
   supportItems: [],
-  effects: {}
+  effects: {},
+  answerStats: { correct: 0, wrong: 0 }
 });
 
 const cloneMaze = (maze) => ({
@@ -44,6 +45,7 @@ const assignMazeToTeam = (team, maze) => {
   team.position = cleanPoint(maze.startPoint);
   team.discoveredCells = [cleanPoint(maze.startPoint)];
   team.revealedWalls = [];
+  team.answerStats = { correct: 0, wrong: 0 };
 };
 
 const shuffle = (items, random = Math.random) => {
