@@ -1000,9 +1000,15 @@ main {
   aspect-ratio: 1;
   border: 2px solid var(--line);
   color: var(--ink);
+  background: var(--event-color, var(--gold));
   font-size: 15px;
   font-weight: 1000;
   animation: evPop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) 0.15s both;
+}
+
+.tv-banner-icon img {
+  width: 72%;
+  height: 72%;
 }
 
 .tv-banner strong {

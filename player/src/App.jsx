@@ -352,10 +352,10 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
   const [activeDirection, setActiveDirection] = useState(null);
   const [moveFeedback, setMoveFeedback] = useState(null);
   const [mapOpen, setMapOpen] = useState(false);
+  const animatedResultKeyRef = useRef("");
   const feedbackTimerRef = useRef(null);
   const currentDirection = pendingDirection || activeDirection;
   const directions = Object.values(DIRECTIONS);
-  const currentPositionKey = boardPointKey(team.position.x, team.position.y);
   const fogTextureStyle = useMemo(() => ({ "--fog-texture": `url(${smokeTexture})` }), []);
   const resultKey = lastResult
     ? [
@@ -365,7 +365,8 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
         lastResult.blockedReason || "open",
         lastResult.newPosition?.x,
         lastResult.newPosition?.y,
-        lastResult.scoreDelta
+        lastResult.scoreDelta,
+        lastResult.clientNonce || ""
       ].join(":")
     : "";
   const viewportCells = Array.from({ length: MOVEMENT_VIEW_SIZE * MOVEMENT_VIEW_SIZE }, (_, index) => {
@@ -429,7 +430,8 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
   }, [team.id]);
 
   useEffect(() => {
-    if (!lastResult?.direction) return;
+    if (!lastResult?.direction || lastResult.teamId !== team.id || !resultKey) return;
+    if (animatedResultKeyRef.current === resultKey) return;
 
     const vector = directionVectors[lastResult.direction];
     if (!vector) return;
@@ -445,9 +447,10 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
     };
 
     clearTimeout(feedbackTimerRef.current);
+    animatedResultKeyRef.current = resultKey;
     setMoveFeedback(feedback);
     feedbackTimerRef.current = setTimeout(() => setMoveFeedback(null), 900);
-  }, [currentPositionKey, lastResult, resultKey]);
+  }, [lastResult, resultKey, team.id]);
 
   const clearDirection = (direction) => {
     if (pendingDirection) return;
@@ -620,7 +623,50 @@ const ResultCard = ({ result }) => {
   );
 };
 
+const CellPickerPopup = ({
+  boardSize = BOARD_SIZE,
+  cancelLabel = "Hủy",
+  note = "Bấm vào một ô để chọn vị trí.",
+  onClose,
+  onPick,
+  title = "Chọn ô",
+  titlePrefix = "Bản đồ"
+}) => (
+  <div className="trap-placement-overlay" role="presentation">
+    <section aria-labelledby="cellPickerTitle" aria-modal="true" className="trap-placement-card" role="dialog">
+      <div className="section-head">
+        <p>{titlePrefix}</p>
+        <h2 id="cellPickerTitle">{title}</h2>
+      </div>
+      <p className="trap-placement-note">{note}</p>
+      <div className="trap-placement-grid" aria-label={title}>
+        {Array.from({ length: boardSize * boardSize }, (_, index) => {
+          const x = index % boardSize;
+          const y = Math.floor(index / boardSize);
+          return (
+            <button
+              aria-label={`Chọn cột ${x + 1}, hàng ${y + 1}`}
+              key={`${x}:${y}`}
+              onClick={() => onPick({ x, y })}
+              type="button"
+            >
+              <span aria-hidden="true" />
+            </button>
+          );
+        })}
+      </div>
+      <button className="secondary-button" onClick={onClose} type="button">{cancelLabel}</button>
+    </section>
+  </div>
+);
+
 const PendingEventCard = ({ boardSize, currentPosition, event, onResolve }) => {
+  const [cellPickerOpen, setCellPickerOpen] = useState(false);
+
+  useEffect(() => {
+    setCellPickerOpen(false);
+  }, [event?.type]);
+
   if (!event) return null;
 
   if (event.question) {
@@ -649,36 +695,31 @@ const PendingEventCard = ({ boardSize, currentPosition, event, onResolve }) => {
   if (event.type === EVENT_TILE_TYPES.TELEPORT) {
     return (
       <section className="game-card pending-event-card">
+        {cellPickerOpen && (
+          <CellPickerPopup
+            boardSize={boardSize}
+            note="Bản đồ trống 6x6; bấm vào ô muốn dịch chuyển đến."
+            onClose={() => setCellPickerOpen(false)}
+            onPick={(position) => {
+              onResolve({ action: "teleport", position });
+              setCellPickerOpen(false);
+            }}
+            title="Chọn ô dịch chuyển"
+            titlePrefix="Dịch chuyển"
+          />
+        )}
         <div className="section-head">
           <p>{"S\u1ef1 ki\u1ec7n"}</p>
           <h2>{event.name}</h2>
         </div>
         <div className="pending-event-body">
           <GameIcon className="game-event" color={event.color} label={event.name} symbol={event.symbol} type={event.type} />
-          <p>{"Ch\u1ecdn t\u1ecda \u0111\u1ed9 mu\u1ed1n \u0111\u1ebfn, ho\u1eb7c \u1edf l\u1ea1i v\u1ecb tr\u00ed hi\u1ec7n t\u1ea1i."}</p>
+          <p>{"Mở bản đồ để chọn ô muốn đến, hoặc ở lại vị trí hiện tại."}</p>
         </div>
-        <form
-          className="item-use-row trap-row"
-          onSubmit={(submitEvent) => {
-            submitEvent.preventDefault();
-            const data = new FormData(submitEvent.currentTarget);
-            onResolve({
-              action: "teleport",
-              position: { x: Number(data.get("x")) - 1, y: Number(data.get("y")) - 1 }
-            });
-          }}
-        >
-          <label className="coordinate-field">
-            <span>{"X \u00b7 Ngang (c\u1ed9t)"}</span>
-            <input defaultValue={(currentPosition?.x || 0) + 1} max={boardSize} min="1" name="x" required type="number" />
-          </label>
-          <label className="coordinate-field">
-            <span>{"Y \u00b7 D\u1ecdc (h\u00e0ng)"}</span>
-            <input defaultValue={(currentPosition?.y || 0) + 1} max={boardSize} min="1" name="y" required type="number" />
-          </label>
-          <button type="submit">{"D\u1ecbch chuy\u1ec3n"}</button>
-        </form>
         <div className="event-actions">
+          <button onClick={() => setCellPickerOpen(true)} type="button">
+            {"Mở bản đồ chọn ô"}
+          </button>
           <button className="secondary-button" onClick={() => onResolve({ action: "skip" })} type="button">
             {"\u1ede l\u1ea1i"}
           </button>
@@ -990,32 +1031,13 @@ const TrapPlacementPopup = ({ item, onClose, onPlace }) => {
   if (!item) return null;
 
   return (
-    <div className="trap-placement-overlay" role="presentation">
-      <section aria-labelledby="trapPlacementTitle" aria-modal="true" className="trap-placement-card" role="dialog">
-        <div className="section-head">
-          <p>Cạm bẫy</p>
-          <h2 id="trapPlacementTitle">Chọn ô để đặt bẫy</h2>
-        </div>
-        <p className="trap-placement-note">Bản đồ trống 6x6; bấm vào một ô để khóa vị trí bẫy.</p>
-        <div className="trap-placement-grid" aria-label="Chọn ô đặt cạm bẫy">
-          {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
-            const x = index % BOARD_SIZE;
-            const y = Math.floor(index / BOARD_SIZE);
-            return (
-              <button
-                aria-label={`Đặt bẫy tại cột ${x + 1}, hàng ${y + 1}`}
-                key={`${x}:${y}`}
-                onClick={() => onPlace({ itemInstanceId: item.instanceId, x, y })}
-                type="button"
-              >
-                <span aria-hidden="true" />
-              </button>
-            );
-          })}
-        </div>
-        <button className="secondary-button" onClick={onClose} type="button">Hủy</button>
-      </section>
-    </div>
+    <CellPickerPopup
+      note="Bản đồ trống 6x6; bấm vào một ô để khóa vị trí bẫy."
+      onClose={onClose}
+      onPick={(point) => onPlace({ itemInstanceId: item.instanceId, ...point })}
+      title="Chọn ô để đặt bẫy"
+      titlePrefix="Cạm bẫy"
+    />
   );
 };
 
@@ -1112,7 +1134,7 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
           <EnergyPips energy={round?.turnEnergy} />
           <MovementViewport
             disabled={!canChooseDirection}
-            lastResult={result}
+            lastResult={lastResult?.teamId === state.team.id ? lastResult : null}
             onChooseDirection={onChooseDirection}
             pendingDirection={pending?.direction}
             team={state.team}
@@ -1261,7 +1283,7 @@ export default function App() {
     };
     const onRoundResult = (result) => {
       if (result?.teamId === teamIdRef.current) {
-        setLastResult(result);
+        setLastResult({ ...result, clientNonce: Date.now() });
         if (result.event) {
           setReveal({ event: result.event, nonce: Date.now() });
         }

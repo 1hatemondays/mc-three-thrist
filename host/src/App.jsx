@@ -8,6 +8,7 @@ import { FinalStatsScreen } from "../../shared/FinalStats.jsx";
 import { AnimatedScore } from "../../shared/AnimatedScore.jsx";
 import { AuctionRevealOverlay } from "../../shared/AuctionRevealOverlay.jsx";
 import { shouldRevealAuctionResult } from "../../shared/auctionReveal.js";
+import { CUSTOM_ICON_TYPES, GameIcon } from "../../shared/GameIcon.jsx";
 import { EVENT_TILE_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { hasWall } from "../../shared/maze.js";
 import "../../shared/scoreEffects.css";
@@ -105,9 +106,7 @@ const EventAnnouncement = ({ banner }) => {
       role="status"
     >
       <div className="tv-banner" key={banner.key}>
-        <span className="tv-banner-icon" style={{ background: banner.color || "#f0b94b" }}>
-          {banner.symbol}
-        </span>
+        <GameIcon className="tv-banner-icon" color={banner.color || "#f0b94b"} symbol={banner.symbol} type={banner.type} />
         <div>
           <strong>{banner.title}</strong>
           <span>{banner.text}</span>
@@ -542,7 +541,8 @@ export default function App() {
           title: teamName + " chạm tường!",
           text: "Lượt này bị chặn lại.",
           color: "#bd473f",
-          symbol: "TƯỜNG"
+          symbol: "TƯỜNG",
+          type: CUSTOM_ICON_TYPES.WALL
         });
         return;
       }
