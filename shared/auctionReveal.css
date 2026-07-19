@@ -1,0 +1,378 @@
+.auction-reveal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #101713;
+  background: rgba(8, 20, 14, 0.9);
+  backdrop-filter: blur(5px);
+  animation: auctionOverlayIn 0.24s ease both;
+}
+
+.auction-reveal-shell {
+  width: min(1120px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  border: 3px solid #1d3329;
+  background: #f8f0e1;
+  box-shadow: 10px 10px 0 rgba(240, 185, 75, 0.5);
+}
+
+.auction-reveal-overlay.mode-player .auction-reveal-shell {
+  width: min(760px, 100%);
+}
+
+.auction-reveal-header {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 3px solid #1d3329;
+  background: #f0b94b;
+}
+
+.auction-reveal-header p,
+.auction-reveal-header h2 {
+  margin: 0;
+}
+
+.auction-reveal-header p {
+  color: rgba(16, 23, 19, 0.68);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.auction-reveal-header h2 {
+  margin-top: 3px;
+  font-family: "Times New Roman", Georgia, serif;
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 900;
+  line-height: 0.96;
+}
+
+.auction-reveal-close {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  place-items: center;
+  border: 2px solid #1d3329;
+  border-radius: 0;
+  color: #fff9e9;
+  background: #1d3329;
+  box-shadow: 3px 3px 0 rgba(16, 23, 19, 0.35);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.auction-reveal-progress {
+  position: sticky;
+  z-index: 4;
+  top: 78px;
+  height: 6px;
+  background: rgba(29, 51, 41, 0.18);
+}
+
+.auction-reveal-progress span {
+  display: block;
+  height: 100%;
+  background: #2f8a68;
+  transition: width 0.35s ease;
+}
+
+.auction-reveal-items {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  min-height: 240px;
+  padding: 18px;
+}
+
+.mode-player .auction-reveal-items {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.auction-reveal-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 190px;
+  padding: 14px;
+  overflow: hidden;
+  border: 2px solid #1d3329;
+  background: #fff9e9;
+  box-shadow: 5px 5px 0 rgba(29, 51, 41, 0.24);
+  transform-origin: top;
+  animation: auctionCardFlip 0.48s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+
+.auction-reveal-item::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 7px;
+  background: var(--auction-item-color, #f0b94b);
+  content: "";
+}
+
+.auction-reveal-item-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auction-reveal-symbol {
+  display: grid;
+  flex: 0 0 46px;
+  width: 46px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 2px solid #1d3329;
+  background: var(--auction-item-color, #f0b94b);
+  font-size: 12px;
+  font-weight: 1000;
+}
+
+.auction-reveal-item h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: "Times New Roman", Georgia, serif;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.auction-reveal-item small {
+  display: block;
+  margin-top: 4px;
+  color: #68746d;
+  font-weight: 800;
+}
+
+.auction-reveal-opening {
+  display: grid;
+  flex: 1;
+  gap: 10px;
+  place-content: center;
+  color: #68746d;
+  font-weight: 1000;
+  text-align: center;
+}
+
+.auction-reveal-opening i {
+  width: 58px;
+  height: 6px;
+  margin: auto;
+  overflow: hidden;
+  background: rgba(29, 51, 41, 0.16);
+}
+
+.auction-reveal-opening i::after {
+  display: block;
+  width: 44%;
+  height: 100%;
+  background: #f0b94b;
+  content: "";
+  animation: auctionScanning 0.7s ease-in-out infinite alternate;
+}
+
+.auction-reveal-stamp {
+  align-self: flex-start;
+  padding: 6px 10px;
+  border: 3px solid currentColor;
+  color: #1f7a4d;
+  font-size: 12px;
+  font-weight: 1000;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+  animation: auctionStamp 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.auction-reveal-stamp.is-empty {
+  color: #bd473f;
+}
+
+.auction-reveal-bids {
+  display: grid;
+  gap: 5px;
+}
+
+.auction-reveal-bid {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(29, 51, 41, 0.16);
+  font-size: 12px;
+}
+
+.auction-reveal-bid span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auction-reveal-bid.is-winner {
+  color: #1f7a4d;
+  font-weight: 900;
+}
+
+.auction-reveal-bid.is-loser {
+  color: #8c7067;
+  text-decoration: line-through;
+}
+
+.auction-reveal-empty {
+  color: #8c7067;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.auction-reveal-summary {
+  display: grid;
+  gap: 12px;
+  margin: 0 18px 18px;
+  padding: 16px;
+  border: 2px solid #1d3329;
+  background: #fff9e9;
+  box-shadow: 5px 5px 0 rgba(29, 51, 41, 0.22);
+  animation: auctionSummaryRise 0.42s ease-out both;
+}
+
+.auction-reveal-summary-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auction-reveal-summary-title span,
+.auction-personal-result > span {
+  color: #68746d;
+  font-size: 11px;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.auction-reveal-summary-title strong {
+  font-family: "Times New Roman", Georgia, serif;
+  font-size: 22px;
+}
+
+.auction-personal-result {
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+  border-left: 7px solid #2f8a68;
+  background: #e1f1e5;
+}
+
+.auction-personal-result.is-no_win,
+.auction-personal-result.is-skipped {
+  border-left-color: #ef8f6b;
+  background: #ffe5dc;
+}
+
+.auction-personal-result strong {
+  font-size: 20px;
+}
+
+.auction-personal-result small {
+  color: #68746d;
+  font-weight: 800;
+}
+
+.auction-team-results {
+  display: grid;
+  gap: 6px;
+}
+
+.auction-team-result {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.55fr) minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 10px;
+  border-top: 1px solid rgba(29, 51, 41, 0.16);
+}
+
+.auction-team-result span {
+  overflow: hidden;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auction-team-result strong {
+  color: #1f7a4d;
+  text-align: right;
+}
+
+.auction-team-result.is-no_win strong,
+.auction-team-result.is-skipped strong {
+  color: #8c7067;
+}
+
+@keyframes auctionOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes auctionCardFlip {
+  from { opacity: 0; transform: perspective(600px) rotateX(-72deg) translateY(-16px); }
+  to { opacity: 1; transform: perspective(600px) rotateX(0) translateY(0); }
+}
+
+@keyframes auctionScanning {
+  from { transform: translateX(-5%); }
+  to { transform: translateX(135%); }
+}
+
+@keyframes auctionStamp {
+  from { opacity: 0; transform: scale(1.7) rotate(-8deg); }
+  to { opacity: 1; transform: scale(1) rotate(-2deg); }
+}
+
+@keyframes auctionSummaryRise {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 720px) {
+  .auction-reveal-overlay { padding: 10px; }
+  .auction-reveal-shell { max-height: calc(100vh - 20px); }
+  .auction-reveal-header { padding: 12px; }
+  .auction-reveal-progress { top: 69px; }
+  .auction-reveal-items,
+  .mode-player .auction-reveal-items { grid-template-columns: 1fr; padding: 12px; }
+  .auction-reveal-item { min-height: 170px; }
+  .auction-reveal-summary { margin: 0 12px 12px; padding: 12px; }
+  .auction-reveal-summary-title,
+  .auction-team-result { align-items: start; grid-template-columns: 1fr; }
+  .auction-reveal-summary-title { flex-direction: column; }
+  .auction-team-result strong { text-align: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auction-reveal-overlay,
+  .auction-reveal-item,
+  .auction-reveal-opening i::after,
+  .auction-reveal-stamp,
+  .auction-reveal-summary {
+    animation: none !important;
+  }
+
+  .auction-reveal-progress span {
+    transition: none;
+  }
+}
