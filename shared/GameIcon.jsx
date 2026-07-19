@@ -3,16 +3,30 @@ import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES } from "./gameContent.js";
 import beartrapIcon from "./assets/beartrap.svg";
 import bombIcon from "./assets/bomb.svg";
 import jailIcon from "./assets/jail.svg";
+import healIcon from "./assets/heal.svg";
 import lightbulbIcon from "./assets/lightbulb.svg";
 import meteorIcon from "./assets/meteor.svg";
 import shieldIcon from "./assets/shield.svg";
 import snowflakeIcon from "./assets/snowflake.svg";
+import switchIcon from "./assets/switch.svg";
+import teleportIcon from "./assets/teleport.svg";
+import wallIcon from "./assets/wall.svg";
+import wiseIcon from "./assets/wise.svg";
 import "./gameIcon.css";
+
+export const CUSTOM_ICON_TYPES = {
+  WALL: "wall"
+};
 
 const IMAGE_ICONS = {
   [EVENT_TILE_TYPES.BOMB]: bombIcon,
+  [EVENT_TILE_TYPES.BLESSING]: healIcon,
+  [EVENT_TILE_TYPES.KNOWLEDGE]: wiseIcon,
   [EVENT_TILE_TYPES.METEOR_STRIKE]: meteorIcon,
+  [EVENT_TILE_TYPES.POSITION_SWAP]: switchIcon,
   [EVENT_TILE_TYPES.PRISON]: jailIcon,
+  [EVENT_TILE_TYPES.TELEPORT]: teleportIcon,
+  [CUSTOM_ICON_TYPES.WALL]: wallIcon,
   [SUPPORT_ITEM_TYPES.DIRECTION_HINT]: lightbulbIcon,
   [SUPPORT_ITEM_TYPES.FREEZE_OPPONENT]: snowflakeIcon,
   [SUPPORT_ITEM_TYPES.METEOR_SHOWER]: meteorIcon,

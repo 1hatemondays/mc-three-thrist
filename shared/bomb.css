@@ -108,6 +108,13 @@
   animation: bombTick 0.7s steps(1) infinite;
 }
 
+.bomb-svg {
+  grid-column: 1 / -1;
+  width: clamp(58px, 11vw, 104px);
+  margin-bottom: 18px;
+  filter: invert(73%) sepia(78%) saturate(601%) hue-rotate(343deg) brightness(101%) contrast(90%);
+}
+
 .bomb-timer small {
   grid-column: 1 / -1;
   margin-top: 12px;
@@ -228,6 +235,11 @@
   font-family: Impact, sans-serif;
   font-size: clamp(72px, 18vw, 190px);
   line-height: 0.75;
+}
+
+.bomb-result > span img {
+  width: clamp(72px, 14vw, 128px);
+  filter: invert(65%) sepia(80%) saturate(970%) hue-rotate(318deg) brightness(99%) contrast(90%);
 }
 
 .bomb-result h3 {

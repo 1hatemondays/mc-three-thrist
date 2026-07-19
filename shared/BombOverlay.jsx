@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import bombIcon from "./assets/bomb.svg";
 import "./bomb.css";
 
 export const BombOverlay = ({ bomb, currentTeamId, onAnswer }) => {
@@ -50,7 +51,7 @@ export const BombOverlay = ({ bomb, currentTeamId, onAnswer }) => {
 
         {result && !bomb.active ? (
           <div className="bomb-result">
-            <span aria-hidden="true">BÙM</span>
+            <span aria-hidden="true"><img alt="" src={bombIcon} /></span>
             <h3>{result.loserTeamName}</h3>
             <p>
               {result.reason === "timeout" ? "H\u1ebft 10 gi\u00e2y" : "Tr\u1ea3 l\u1eddi sai"}
@@ -61,6 +62,7 @@ export const BombOverlay = ({ bomb, currentTeamId, onAnswer }) => {
           <>
             <div className="bomb-timer" aria-live="assertive">
               <div className="bomb-fuse" style={{ "--bomb-progress": progress + "%" }} />
+              <img alt="" aria-hidden="true" className="bomb-svg" src={bombIcon} />
               <strong>{String(seconds).padStart(2, "0")}</strong>
               <small>GIÂY</small>
             </div>
