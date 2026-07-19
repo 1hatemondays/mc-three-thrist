@@ -6,8 +6,12 @@ import { BombOverlay } from "../../shared/BombOverlay.jsx";
 import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
 import { FinalStatsScreen } from "../../shared/FinalStats.jsx";
 import { GameIcon } from "../../shared/GameIcon.jsx";
+import { AnimatedScore } from "../../shared/AnimatedScore.jsx";
+import { AuctionRevealOverlay } from "../../shared/AuctionRevealOverlay.jsx";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, hasWall, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
+import "../../shared/scoreEffects.css";
+import "../../shared/auctionReveal.css";
 import smokeTexture from "./assets/smoke-2.png";
 
 const SERVER_URL =
@@ -809,40 +813,6 @@ const AuctionPanel = ({ auction, active, onBid }) => {
   );
 };
 
-const AuctionResultPopup = ({ result, onClose }) => {
-  useEffect(() => {
-    if (!result) return undefined;
-
-    const timer = setTimeout(onClose, 3600);
-    return () => clearTimeout(timer);
-  }, [result?.nonce]);
-
-  if (!result) return null;
-
-  const winners = result.winners || [];
-
-  return (
-    <div className="auction-result-popup" role="status" aria-live="polite">
-      <section className="auction-result-card">
-        <p>{"Kết quả đấu giá"}</p>
-        <h2>{winners.length ? "Đã chốt vật phẩm" : "Không có đội thắng vật phẩm"}</h2>
-        {winners.length ? (
-          <div className="auction-result-list">
-            {winners.map((winner) => (
-              <div className="leader-row" key={winner.teamId + winner.itemId}>
-                <span>{winner.teamName}</span>
-                <strong>{winner.itemName} / {winner.amount} điểm</strong>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <span className="empty-note">{"Tất cả đội đã bỏ qua hoặc không đủ điểm."}</span>
-        )}
-      </section>
-    </div>
-  );
-};
-
 const CombatTeamCard = ({ mark, role, team, result }) => {
   const winner = result?.winnerId === team?.id;
   const loser = result?.loserId === team?.id;
@@ -1414,7 +1384,12 @@ export default function App() {
     <main>
       <GameOverOverlay gameOver={state?.gameOver} currentTeamId={state?.team?.id} />
       <EventReveal reveal={reveal} onClose={() => setReveal(null)} />
-      <AuctionResultPopup result={auctionReveal} onClose={() => setAuctionReveal(null)} />
+      <AuctionRevealOverlay
+        currentTeamId={state?.team?.id}
+        mode="player"
+        onClose={() => setAuctionReveal(null)}
+        result={auctionReveal}
+      />
       <BombOverlay
         bomb={state?.round?.bomb}
         currentTeamId={state?.team?.id}
@@ -1462,7 +1437,7 @@ export default function App() {
               <dl>
                 <div>
                   <dt>Điểm</dt>
-                  <dd>{state.team.score}</dd>
+                  <dd><AnimatedScore className="player-score-effect" value={state.team.score} /></dd>
                 </div>
                 <div>
                   <dt>Máu</dt>

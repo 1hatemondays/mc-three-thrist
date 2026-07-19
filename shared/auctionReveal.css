@@ -278,6 +278,11 @@
   background: #e1f1e5;
 }
 
+.auction-reveal-shell > .auction-personal-result {
+  margin: 16px 18px 0;
+  animation: auctionSummaryRise 0.42s ease-out both;
+}
+
 .auction-personal-result.is-no_win,
 .auction-personal-result.is-skipped {
   border-left-color: #ef8f6b;
@@ -357,6 +362,7 @@
   .mode-player .auction-reveal-items { grid-template-columns: 1fr; padding: 12px; }
   .auction-reveal-item { min-height: 170px; }
   .auction-reveal-summary { margin: 0 12px 12px; padding: 12px; }
+  .auction-reveal-shell > .auction-personal-result { margin: 12px 12px 0; }
   .auction-reveal-summary-title,
   .auction-team-result { align-items: start; grid-template-columns: 1fr; }
   .auction-reveal-summary-title { flex-direction: column; }

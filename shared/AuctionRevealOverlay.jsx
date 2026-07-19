@@ -94,10 +94,10 @@ export const AuctionRevealOverlay = ({ currentTeamId = null, mode = "player", on
     };
   }, [result, mode, outcomes.length, totalSteps]);
 
-  if (!result) return null;
-
   const summaryVisible = stage >= totalSteps;
   const personal = mode === "player" ? getPersonalAuctionSummary(result, currentTeamId) : null;
+
+  if (!result) return null;
 
   return (
     <div aria-labelledby="auctionRevealTitle" aria-modal="true" className={`auction-reveal-overlay mode-${mode}`} role="dialog">
@@ -113,6 +113,14 @@ export const AuctionRevealOverlay = ({ currentTeamId = null, mode = "player", on
         <div className="auction-reveal-progress" aria-hidden="true">
           <span style={{ width: `${Math.min(100, (stage / totalSteps) * 100)}%` }} />
         </div>
+
+        {summaryVisible && personal && (
+          <div className={"auction-personal-result is-" + personal.status}>
+            <span>Kết quả của bạn</span>
+            <strong>{personal.heading}</strong>
+            <small>{personal.message}</small>
+          </div>
+        )}
 
         <div className="auction-reveal-items">
           {outcomes.map((outcome, index) => {
@@ -135,13 +143,6 @@ export const AuctionRevealOverlay = ({ currentTeamId = null, mode = "player", on
               <span>Tổng kết</span>
               <strong>{result.winners?.length ? `${result.winners.length} vật phẩm đã có chủ` : "Không có vật phẩm được trao"}</strong>
             </div>
-            {personal && (
-              <div className={"auction-personal-result is-" + personal.status}>
-                <span>Kết quả của bạn</span>
-                <strong>{personal.heading}</strong>
-                <small>{personal.message}</small>
-              </div>
-            )}
             <TeamSummary result={result} />
           </section>
         )}

@@ -14,7 +14,7 @@
     "dev:player": "npm run dev --workspace player",
     "build": "npm run build --workspace host && npm run build --workspace player",
     "start": "npm run start --workspace server",
-    "test": "node --test server/*.test.js"
+    "test": "node --test server/*.test.js shared/*.test.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

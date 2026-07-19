@@ -5,8 +5,12 @@ import { GameOverOverlay } from "../../shared/GameOverOverlay.jsx";
 import { BombOverlay } from "../../shared/BombOverlay.jsx";
 import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
 import { FinalStatsScreen } from "../../shared/FinalStats.jsx";
+import { AnimatedScore } from "../../shared/AnimatedScore.jsx";
+import { AuctionRevealOverlay } from "../../shared/AuctionRevealOverlay.jsx";
 import { EVENT_TILE_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { hasWall } from "../../shared/maze.js";
+import "../../shared/scoreEffects.css";
+import "../../shared/auctionReveal.css";
 
 const SERVER_URL =
   import.meta.env.VITE_SERVER_URL ||
@@ -217,7 +221,7 @@ const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
   );
 };
 
-const GuideScreen = ({ state, activeTeam, banner, confettiSeed, flashSeed, onOpenQuestion, onRevealQuestion, onShowLeaderboard }) => {
+const GuideScreen = ({ state, activeTeam, auctionReveal, banner, confettiSeed, flashSeed, onCloseAuctionReveal, onOpenQuestion, onRevealQuestion, onShowLeaderboard }) => {
   const teams = state?.teams || [];
   const round = state?.round;
   const gameOver = state?.gameOver || null;
@@ -235,6 +239,7 @@ const GuideScreen = ({ state, activeTeam, banner, confettiSeed, flashSeed, onOpe
 
   return (
     <main className="guide-screen">
+      <AuctionRevealOverlay mode="host" onClose={onCloseAuctionReveal} result={auctionReveal} />
       <GameOverOverlay gameOver={state?.gameOver} />
       <BombOverlay bomb={state?.round?.bomb} />
       <MeteorShowerOverlay meteor={state?.round?.meteorShower} />
@@ -345,7 +350,7 @@ const GuideScreen = ({ state, activeTeam, banner, confettiSeed, flashSeed, onOpe
                 <small>
                   {gameOver
                     ? team.score + " điểm / " + team.hp + " máu"
-                    : "(" + ((team.position?.x ?? 0) + 1) + ", " + ((team.position?.y ?? 0) + 1) + ")"}
+                    : <><AnimatedScore value={team.score} /> điểm · ({(team.position?.x ?? 0) + 1}, {(team.position?.y ?? 0) + 1})</>}
                 </small>
               </div>
             </div>
@@ -476,6 +481,7 @@ const HostEndGameScreen = ({ gameOver, onShowLeaderboard }) => (
 export default function App() {
   const [state, setState] = useState(null);
   const [tvBanner, setTvBanner] = useState(null);
+  const [auctionReveal, setAuctionReveal] = useState(null);
   const [confettiSeed, setConfettiSeed] = useState(0);
   const [flashSeed, setFlashSeed] = useState(0);
   const [hostAccessKey, setHostAccessKey] = useState(loadHostAccessKey);
@@ -555,18 +561,8 @@ export default function App() {
     };
 
     const onAuctionResult = (result) => {
-      const winners = result?.winners || [];
-      showBanner(
-        {
-          title: "Kết quả đấu giá",
-          text: winners.length
-            ? winners.map((winner) => winner.teamName + " thắng " + winner.itemName).join(" · ")
-            : "Không có đội nào thắng vật phẩm.",
-          color: "#f0b94b",
-          symbol: "ĐẤU GIÁ"
-        },
-        Boolean(winners.length)
-      );
+      setAuctionReveal({ ...(result || {}), nonce: Date.now() });
+      if (result?.winners?.length) setConfettiSeed((n) => n + 1);
     };
 
     const onCombatResult = (combat) => {
@@ -644,6 +640,7 @@ export default function App() {
   const lockHost = () => {
     clearHostAccessKey();
     setState(null);
+    setAuctionReveal(null);
     setHostAuthError("");
     setHostAccessKey("");
   };
@@ -724,9 +721,11 @@ export default function App() {
     return (
       <GuideScreen
         activeTeam={teams.find((team) => team.id === state?.round?.activeTeamId)}
+        auctionReveal={auctionReveal}
         banner={tvBanner}
         confettiSeed={confettiSeed}
         flashSeed={flashSeed}
+        onCloseAuctionReveal={() => setAuctionReveal(null)}
         onOpenQuestion={openQuestion}
         onRevealQuestion={revealQuestion}
         onShowLeaderboard={showFinalLeaderboard}
@@ -741,6 +740,7 @@ export default function App() {
 
   return (
     <main>
+      <AuctionRevealOverlay mode="host" onClose={() => setAuctionReveal(null)} result={auctionReveal} />
       <GameOverOverlay gameOver={state?.gameOver} />
       <BombOverlay bomb={state?.round?.bomb} />
       <MeteorShowerOverlay meteor={state?.round?.meteorShower} />
@@ -822,9 +822,7 @@ export default function App() {
               <strong>
                 {gameOver
                   ? team.score + " \u0111i\u1ec3m / " + team.hp + " m\u00e1u"
-                  : state?.round?.activeTeamId === (team.teamId || team.id)
-                    ? "\u0110ang l\u00ean s\u00f3ng"
-                    : "Chờ lượt"}
+                  : <><AnimatedScore value={team.score} /> điểm · {state?.round?.activeTeamId === (team.teamId || team.id) ? "Đang lên sóng" : "Chờ lượt"}</>}
               </strong>
             </div>
           ))}
