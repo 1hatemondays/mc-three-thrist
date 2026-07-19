@@ -33,6 +33,12 @@ const discover = (team, point) => {
   }
 };
 
+const recordAnswer = (team, correct) => {
+  team.answerStats = team.answerStats || { correct: 0, wrong: 0 };
+  if (correct) team.answerStats.correct += 1;
+  else team.answerStats.wrong += 1;
+};
+
 const publicMeta = (meta) => ({
   type: meta.type,
   name: meta.name,
@@ -121,15 +127,11 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
   }
 
   if (tile.type === EVENT_TILE_TYPES.TELEPORT) {
-    const point = choose(allCells(state.config.boardSize), random);
-    team.position = point;
-    discover(team, point);
-    const gameOver = finishGameIfNeeded(state, teamId);
+    state.round.pendingEvents = state.round.pendingEvents || {};
+    state.round.pendingEvents[teamId] = { type: EVENT_TILE_TYPES.TELEPORT };
 
     return makeEventResult(tile, {
-      newPosition: point,
-      gameOver,
-      message: "D\u1ecbch chuy\u1ec3n \u0111\u1ebfn (" + (point.x + 1) + ", " + (point.y + 1) + ")"
+      message: "Ch\u1ecdn \u00f4 mu\u1ed1n d\u1ecbch chuy\u1ec3n \u0111\u1ebfn ho\u1eb7c \u1edf l\u1ea1i"
     });
   }
 
@@ -170,25 +172,25 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
         return { scoreLoss: 10, hpLoss: 0, message: "M\u1ea5t 10 \u0111i\u1ec3m." };
       }
       target.hp = Math.max(0, target.hp - 10);
-      return { scoreLoss: 0, hpLoss: 10, message: "Kh\u00f4ng \u0111\u1ee7 \u0111i\u1ec3m, m\u1ea5t 10 HP." };
+      return { scoreLoss: 0, hpLoss: 10, message: "Kh\u00f4ng \u0111\u1ee7 \u0111i\u1ec3m, m\u1ea5t 10 máu." };
     });
-    return makeEventResult(tile, { outcomes, message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i ph\u1ea3i n\u1ed9p 10 \u0111i\u1ec3m ho\u1eb7c m\u1ea5t 10 HP" });
+    return makeEventResult(tile, { outcomes, message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i ph\u1ea3i n\u1ed9p 10 \u0111i\u1ec3m ho\u1eb7c m\u1ea5t 10 máu" });
   }
 
   if (tile.type === EVENT_TILE_TYPES.METEOR_STRIKE) {
     const outcomes = applyShieldedGlobalEffect(state, "M\u01b0a sao b\u0103ng", (target) => {
       target.hp = Math.max(0, target.hp - 10);
-      return { hpLoss: 10, message: "M\u1ea5t 10 HP." };
+      return { hpLoss: 10, message: "M\u1ea5t 10 máu." };
     });
-    return makeEventResult(tile, { outcomes, message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i m\u1ea5t 10 HP" });
+    return makeEventResult(tile, { outcomes, message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i m\u1ea5t 10 máu" });
   }
 
   if (tile.type === EVENT_TILE_TYPES.BLESSING) {
     for (const target of state.teams) {
       target.hp += 10;
-      addRoundMessage(state, target.id, { title: "Ban ph\u01b0\u1edbc", text: "H\u1ed3i 10 HP." });
+      addRoundMessage(state, target.id, { title: "Ban ph\u01b0\u1edbc", text: "H\u1ed3i 10 máu." });
     }
-    return makeEventResult(tile, { message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i h\u1ed3i 10 HP" });
+    return makeEventResult(tile, { message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i h\u1ed3i 10 máu" });
   }
 
   if (tile.type === EVENT_TILE_TYPES.PRISON) {
@@ -210,11 +212,17 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
   }
 
   if (tile.type === EVENT_TILE_TYPES.DUEL) {
-    const combat = startCombat(state, teamId, random);
+    const options = state.teams
+      .filter((item) => item.id !== teamId)
+      .map(({ id, name }) => ({ id, name }));
+    state.round.pendingEvents = state.round.pendingEvents || {};
+    state.round.pendingEvents[teamId] = {
+      type: EVENT_TILE_TYPES.DUEL,
+      options
+    };
     return makeEventResult(tile, {
-      opponentId: combat?.opponentId || null,
-      opponentName: combat?.opponentName || null,
-      message: combat ? "Đối kháng với " + combat.opponentName : "Không có đối thủ"
+      options,
+      message: "Chọn một đội để đối kháng."
     });
   }
 
@@ -248,7 +256,7 @@ const explodeBomb = (state, teamId, reason) => {
   state.round.phase = ROUND_PHASES.MOVEMENT;
   addRoundMessage(state, team.id, {
     title: "Bom ph\u00e1t n\u1ed5",
-    text: "M\u1ea5t 30 HP v\u00ec " + (reason === "timeout" ? "h\u1ebft th\u1eddi gian." : "tr\u1ea3 l\u1eddi sai.")
+    text: "M\u1ea5t 30 máu v\u00ec " + (reason === "timeout" ? "h\u1ebft th\u1eddi gian." : "tr\u1ea3 l\u1eddi sai.")
   });
   return bomb.result;
 };
@@ -294,9 +302,13 @@ export const resolveBombAnswer = (state, teamId, payload = {}, random = Math.ran
     return { ok: false, error: "\u0110\u00e1p \u00e1n kh\u00f4ng h\u1ee3p l\u1ec7." };
   }
   if (answerIndex !== bomb.question.correctIndex) {
+    const team = state.teams.find((item) => item.id === teamId);
+    if (team) recordAnswer(team, false);
     return { ok: true, exploded: true, result: explodeBomb(state, teamId, "wrong") };
   }
 
+  const team = state.teams.find((item) => item.id === teamId);
+  if (team) recordAnswer(team, true);
   const nextTeamId = nextBombHolder(state, teamId);
   const nextTeam = state.teams.find((team) => team.id === nextTeamId);
   bomb.holderTeamId = nextTeamId;
@@ -333,6 +345,7 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
     const team = state.teams.find((item) => item.id === teamId);
     const correct = Number(payload.answerIndex) === pending.question.correctIndex;
     let scoreDelta = 0;
+    if (team) recordAnswer(team, correct);
     if (correct) {
       team.score += MOVE_SCORE;
       scoreDelta = MOVE_SCORE;
@@ -343,6 +356,59 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
       text: correct ? "Trả lời đúng câu hỏi khó, nhận thêm 10 điểm." : "Trả lời sai câu hỏi khó."
     });
     return { ok: true, result: { type: pending.type, correct, scoreDelta } };
+  }
+
+  if (pending.type === EVENT_TILE_TYPES.DUEL) {
+    const target = state.teams.find((item) => item.id === payload.targetTeamId && item.id !== teamId);
+    if (!target) return { ok: false, error: "Hãy chọn đội đối kháng hợp lệ." };
+    const combat = startCombat(state, teamId, target.id);
+    if (!combat) return { ok: false, error: "Không thể bắt đầu đối kháng." };
+    delete state.round.pendingEvents[teamId];
+    return {
+      ok: true,
+      result: {
+        type: pending.type,
+        targetTeamId: target.id,
+        targetName: target.name,
+        message: "Đã chọn đối kháng với " + target.name
+      }
+    };
+  }
+
+  if (pending.type === EVENT_TILE_TYPES.TELEPORT) {
+    if (payload.action === "skip") {
+      delete state.round.pendingEvents[teamId];
+      return { ok: true, result: { type: pending.type, skipped: true } };
+    }
+
+    const team = state.teams.find((item) => item.id === teamId);
+    const point = { x: payload.position?.x, y: payload.position?.y };
+    const validPoint =
+      Number.isInteger(point.x) &&
+      Number.isInteger(point.y) &&
+      point.x >= 0 &&
+      point.y >= 0 &&
+      point.x < state.config.boardSize &&
+      point.y < state.config.boardSize;
+
+    if (!team || !validPoint) {
+      return { ok: false, error: "H\u00e3y ch\u1ecdn t\u1ecda \u0111\u1ed9 h\u1ee3p l\u1ec7 \u0111\u1ec3 d\u1ecbch chuy\u1ec3n." };
+    }
+
+    team.position = point;
+    discover(team, point);
+    const gameOver = finishGameIfNeeded(state, teamId);
+    delete state.round.pendingEvents[teamId];
+
+    return {
+      ok: true,
+      result: {
+        type: pending.type,
+        newPosition: point,
+        gameOver,
+        message: "D\u1ecbch chuy\u1ec3n \u0111\u1ebfn (" + (point.x + 1) + ", " + (point.y + 1) + ")"
+      }
+    };
   }
 
   if (pending.type !== EVENT_TILE_TYPES.POSITION_SWAP) {

@@ -131,30 +131,33 @@ test("triggering an event consumes that event tile", () => {
   assert.deepEqual(state.round.eventTiles, []);
 });
 
-test("teleport event moves the team to a random cell and discovers it", () => {
+test("teleport event waits for a valid destination or lets the team stay", () => {
   const state = makeState();
-  const result = applyEventTileEffect(
-    state,
-    "team1",
-    { type: EVENT_TILE_TYPES.TELEPORT, x: 1, y: 0 },
-    sequenceRandom([0.99])
-  );
+  const result = applyEventTileEffect(state, "team1", { type: EVENT_TILE_TYPES.TELEPORT, x: 1, y: 0 });
 
   assert.equal(result.type, EVENT_TILE_TYPES.TELEPORT);
-  assert.deepEqual(state.teams[0].position, { x: 5, y: 5 });
-  assert.deepEqual(state.teams[0].discoveredCells.at(-1), { x: 5, y: 5 });
+  assert.equal(state.round.pendingEvents.team1.type, EVENT_TILE_TYPES.TELEPORT);
+  assert.deepEqual(state.teams[0].position, { x: 0, y: 0 });
+
+  assert.equal(resolvePendingEvent(state, "team1", { position: { x: 6, y: 0 } }).ok, false);
+  assert.equal(state.round.pendingEvents.team1.type, EVENT_TILE_TYPES.TELEPORT);
+
+  const moved = resolvePendingEvent(state, "team1", { position: { x: 4, y: 3 } });
+  assert.equal(moved.ok, true);
+  assert.deepEqual(state.teams[0].position, { x: 4, y: 3 });
+  assert.deepEqual(state.teams[0].discoveredCells.at(-1), { x: 4, y: 3 });
+
+  const stayState = makeState();
+  applyEventTileEffect(stayState, "team1", { type: EVENT_TILE_TYPES.TELEPORT, x: 1, y: 0 });
+  assert.equal(resolvePendingEvent(stayState, "team1", { action: "skip" }).result.skipped, true);
+  assert.deepEqual(stayState.teams[0].position, { x: 0, y: 0 });
 });
 
 
 test("teleporting onto the end point finishes the game", () => {
   const state = makeState();
-
-  const result = applyEventTileEffect(
-    state,
-    "team1",
-    { type: EVENT_TILE_TYPES.TELEPORT, x: 1, y: 0 },
-    sequenceRandom([0.99])
-  );
+  applyEventTileEffect(state, "team1", { type: EVENT_TILE_TYPES.TELEPORT, x: 1, y: 0 });
+  const result = resolvePendingEvent(state, "team1", { position: { x: 5, y: 5 } }).result;
 
   assert.equal(result.gameOver.winnerId, "team1");
   assert.equal(state.round.phase, "gameOver");
@@ -182,4 +185,16 @@ test("knowledge event does not change the base move score", () => {
 
   assert.equal(result.scoreDelta, undefined);
   assert.equal(state.teams[0].score, 10);
+});
+
+test("knowledge and bomb questions update answer statistics", () => {
+  const knowledge = makeState();
+  applyEventTileEffect(knowledge, "team1", { type: EVENT_TILE_TYPES.KNOWLEDGE, x: 1, y: 0 });
+  resolvePendingEvent(knowledge, "team1", { answerIndex: knowledge.round.pendingEvents.team1.question.correctIndex });
+  assert.deepEqual(knowledge.teams[0].answerStats, { correct: 1, wrong: 0 });
+
+  const bomb = makeState();
+  applyEventTileEffect(bomb, "team1", { type: EVENT_TILE_TYPES.BOMB, x: 1, y: 0 }, () => 0);
+  resolveBombAnswer(bomb, "team1", { answerIndex: 0 }, () => 0, bomb.round.bomb.deadline - 1);
+  assert.deepEqual(bomb.teams[0].answerStats, { correct: 0, wrong: 1 });
 });

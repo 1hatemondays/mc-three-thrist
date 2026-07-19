@@ -5,13 +5,17 @@ export const EVENTS = {
   SETUP_START_GAME: "setup:startGame",
   SETUP_SET_TURN_ORDER: "setup:setTurnOrder",
   MOVE_CHOOSE: "move:choose",
+  QUESTION_OPEN: "question:open",
   QUESTION_ANSWER: "question:answer",
+  QUESTION_REVEAL: "question:reveal",
   AUCTION_BID: "auction:bid",
   COMBAT_BET: "combat:bet",
   EVENT_RESOLVE: "event:resolve",
   SUPPORT_USE: "support:use",
   METEOR_BUZZ: "meteor:buzz",
   METEOR_ANSWER: "meteor:answer",
+  GAME_OVER_SHOW_LEADERBOARD: "gameOver:showLeaderboard",
+  GAME_RESTART: "game:restart",
   GAME_STATE: "game:state",
   ROUND_QUESTION: "round:question",
   ROUND_RESULT: "round:result",
@@ -42,3 +46,4 @@ export const DIRECTIONS = {
 };
 
 export const MOVE_SCORE = 10;
+export const TURN_ENERGY_MAX = 3;

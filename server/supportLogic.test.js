@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
 import { SUPPORT_ITEM_TYPES } from "../shared/gameContent.js";
-import { answerQuestion, chooseMoveQuestion } from "./movementLogic.js";
+import { answerQuestion, chooseMoveQuestion, openQuestionForAnswer } from "./movementLogic.js";
 import { useSupportItem } from "./supportLogic.js";
 
 const questions = [{ id: "q1", text: "Q", choices: ["A", "B"], correctIndex: 0 }];
@@ -29,6 +29,8 @@ const makeState = () => ({
     phase: ROUND_PHASES.MOVEMENT,
     pendingAnswers: {},
     currentQuestion: null,
+    activeTeamId: "team1",
+    turnEnergy: { teamId: "team1", remaining: 3, max: 3 },
     eventTiles: [],
     pendingEvents: {},
     traps: [],
@@ -42,6 +44,7 @@ test("double score item doubles the next successful move only", () => {
 
   assert.equal(useSupportItem(state, "team1", { itemInstanceId: SUPPORT_ITEM_TYPES.DOUBLE_SCORE + ":1" }).ok, true);
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
   const result = answerQuestion(state, "team1", { answerIndex: 0 });
 
   assert.equal(result.result.scoreDelta, MOVE_SCORE * 2);
@@ -58,7 +61,9 @@ test("trap subtracts one point unless a shield absorbs it", () => {
   assert.equal(useSupportItem(state, "team1", { itemInstanceId: SUPPORT_ITEM_TYPES.TRAP + ":1", x: 1, y: 0 }).ok, true);
   state.round.turnOrder = ["team2", "team1"];
   state.round.activeTeamId = "team2";
+  state.round.turnEnergy = { teamId: "team2", remaining: 3, max: 3 };
   chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team2");
   const result = answerQuestion(state, "team2", { answerIndex: 0 });
 
   assert.equal(result.result.trap.blockedByShield, true);
@@ -142,4 +147,27 @@ test("direction hint randomizes between equally useful open routes", () => {
   assert.equal(result.ok, true);
   assert.equal(result.result.hint.direction, "left");
   assert.equal(result.result.hint.unexplored, true);
+});
+
+test("using an active item costs one energy and no energy rejects active items", () => {
+  const state = makeState();
+  state.teams[0].supportItems.push(
+    item(SUPPORT_ITEM_TYPES.DIRECTION_HINT),
+    { ...item(SUPPORT_ITEM_TYPES.TRAP), instanceId: SUPPORT_ITEM_TYPES.TRAP + ":2" }
+  );
+
+  const used = useSupportItem(state, "team1", { itemInstanceId: SUPPORT_ITEM_TYPES.DIRECTION_HINT + ":1" });
+
+  assert.equal(used.ok, true);
+  assert.equal(state.round.turnEnergy.remaining, 2);
+
+  state.round.turnEnergy.remaining = 0;
+  const rejected = useSupportItem(state, "team1", {
+    itemInstanceId: SUPPORT_ITEM_TYPES.TRAP + ":2",
+    x: 1,
+    y: 0
+  });
+
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.error, /năng lượng/i);
 });

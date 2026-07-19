@@ -1,5 +1,6 @@
 import { WALL_COUNT, WALL_SIDES, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls } from "../shared/maze.js";
 import { refreshRoundEventTiles } from "./eventLogic.js";
+import { setActiveTurn } from "./roundFlow.js";
 
 const SIDES = new Set(WALL_SIDES);
 
@@ -28,7 +29,8 @@ const makeTeam = (index) => ({
   discoveredCells: [{ x: 0, y: 0 }],
   revealedWalls: [],
   supportItems: [],
-  effects: {}
+  effects: {},
+  answerStats: { correct: 0, wrong: 0 }
 });
 
 const cloneMaze = (maze) => ({
@@ -44,6 +46,7 @@ const assignMazeToTeam = (team, maze) => {
   team.position = cleanPoint(maze.startPoint);
   team.discoveredCells = [cleanPoint(maze.startPoint)];
   team.revealedWalls = [];
+  team.answerStats = { correct: 0, wrong: 0 };
 };
 
 const shuffle = (items, random = Math.random) => {
@@ -85,6 +88,8 @@ const makeRound = (turnOrder = []) => ({
   currentQuestion: null,
   eventTiles: [],
   pendingEvents: {},
+  questionControl: null,
+  turnEnergy: null,
   auction: { bids: {}, result: null },
   combat: null,
   meteorShower: null,
@@ -128,7 +133,7 @@ export const startGame = (state) => {
     savedOrder.every((teamId) => teamIds.includes(teamId))
       ? savedOrder
       : teamIds;
-  state.round.activeTeamId = state.round.turnOrder[0] || null;
+  setActiveTurn(state, state.round.turnOrder[0] || null);
   state.round.pendingEvents = state.round.pendingEvents || {};
   state.round.eventTiles = state.round.eventTiles || [];
   state.round.auction = state.round.auction || { bids: {}, result: null };

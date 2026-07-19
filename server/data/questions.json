@@ -1,87 +1,1652 @@
 [
   {
     "id": "mln122-001",
-    "text": "Theo kinh tế chính trị Mác - Lênin, hàng hóa có hai thuộc tính cơ bản nào?",
-    "choices": ["Giá cả và lợi nhuận", "Giá trị sử dụng và giá trị", "Tiền lương và địa tô", "Cung và cầu"],
+    "text": "Thuật ngữ kinh tế chính trị (Political Economy) lần đầu tiên được A. Montchretien đưa ra vào năm nào?",
+    "choices": [
+      "1516",
+      "1615",
+      "1776",
+      "1848"
+    ],
     "correctIndex": 1
   },
   {
     "id": "mln122-002",
-    "text": "Lượng giá trị của hàng hóa được đo bằng yếu tố nào?",
+    "text": "Theo giáo trình, Adam Smith đã đưa kinh tế chính trị trở thành môn khoa học có tính hệ thống vào giai đoạn nào?",
     "choices": [
-      "Thời gian lao động xã hội cần thiết",
-      "Số tiền người mua sẵn sàng trả",
-      "Khối lượng vật chất của hàng hóa",
-      "Mức độ khan hiếm tuyệt đối"
-    ],
-    "correctIndex": 0
-  },
-  {
-    "id": "mln122-003",
-    "text": "Giá trị thặng dư trong chủ nghĩa tư bản chủ yếu có nguồn gốc từ đâu?",
-    "choices": [
-      "Trao đổi ngang giá giữa các nhà tư bản",
-      "Máy móc tự tạo ra giá trị mới",
-      "Lao động không được trả công của công nhân làm thuê",
-      "Thuế của nhà nước"
+      "Thế kỷ XV",
+      "Thế kỷ XVI",
+      "Thế kỷ XVIII",
+      "Thế kỷ XX"
     ],
     "correctIndex": 2
   },
   {
+    "id": "mln122-003",
+    "text": "Theo giáo trình, kinh tế chính trị là môn khoa học kinh tế nghiên cứu các quan hệ kinh tế để tìm ra:",
+    "choices": [
+      "Các quy luật chi phối sự vận động của các hiện tượng và quá trình hoạt động kinh tế của con người",
+      "Các quy định hành chính trong một doanh nghiệp",
+      "Các hiện tượng tự nhiên tách khỏi sản xuất",
+      "Các vấn đề văn học và nghệ thuật"
+    ],
+    "correctIndex": 0
+  },
+  {
     "id": "mln122-004",
-    "text": "Công thức chung của tư bản là gì?",
-    "choices": ["H - T - H", "T - H - T'", "H - H - T", "T - T - H"],
-    "correctIndex": 1
+    "text": "Kinh tế chính trị Mác - Lênin ra đời vào thời gian nào?",
+    "choices": [
+      "Những năm 40 của thế kỷ XIX",
+      "Đầu thế kỷ XV",
+      "Cuối thế kỷ XVIII",
+      "Những năm 70 của thế kỷ XX"
+    ],
+    "correctIndex": 0
   },
   {
     "id": "mln122-005",
-    "text": "Tư bản bất biến là bộ phận tư bản dùng để mua yếu tố nào?",
-    "choices": ["Sức lao động", "Tư liệu sản xuất", "Hàng hóa tiêu dùng", "Dịch vụ tài chính"],
-    "correctIndex": 1
+    "text": "Đối tượng nghiên cứu của kinh tế chính trị Mác - Lênin là:",
+    "choices": [
+      "Các quan hệ sản xuất và trao đổi trong phương thức sản xuất mà các quan hệ đó hình thành và phát triển",
+      "Các hành vi tâm lý cá nhân thuần túy",
+      "Các hiện tượng khí hậu",
+      "Các kỹ thuật máy móc riêng lẻ"
+    ],
+    "correctIndex": 0
   },
   {
     "id": "mln122-006",
-    "text": "Tư bản khả biến là bộ phận tư bản dùng để mua yếu tố nào?",
-    "choices": ["Sức lao động", "Máy móc", "Nguyên vật liệu", "Nhà xưởng"],
+    "text": "Trong quá trình tái sản xuất xã hội, kinh tế chính trị Mác - Lênin nghiên cứu các quan hệ sản xuất trong các khâu:",
+    "choices": [
+      "Sản xuất, phân phối, trao đổi, tiêu dùng",
+      "Chỉ sản xuất",
+      "Chỉ tiêu dùng",
+      "Chỉ phân phối"
+    ],
     "correctIndex": 0
   },
   {
     "id": "mln122-007",
-    "text": "Cạnh tranh trong nền kinh tế thị trường có vai trò tích cực nào?",
+    "text": "Mục đích nghiên cứu của kinh tế chính trị Mác - Lênin là:",
     "choices": [
-      "Xóa bỏ hoàn toàn phân hóa giàu nghèo",
-      "Thúc đẩy đổi mới kỹ thuật và nâng cao hiệu quả",
-      "Làm cho mọi doanh nghiệp có lợi nhuận bằng nhau",
-      "Loại bỏ hoàn toàn khủng hoảng kinh tế"
+      "Tìm ra những quy luật kinh tế chi phối sự vận động và phát triển của phương thức sản xuất",
+      "Thay thế hoàn toàn thực tiễn bằng suy đoán",
+      "Chỉ thống kê giá cả",
+      "Chỉ phục vụ quảng cáo thương mại"
     ],
-    "correctIndex": 1
+    "correctIndex": 0
   },
   {
     "id": "mln122-008",
-    "text": "Quy luật giá trị yêu cầu sản xuất và trao đổi hàng hóa dựa trên cơ sở nào?",
+    "text": "Phương pháp nghiên cứu chính được giáo trình nêu trong kinh tế chính trị Mác - Lênin là:",
     "choices": [
-      "Mệnh lệnh hành chính",
-      "Thời gian lao động xã hội cần thiết",
-      "Sở thích cá nhân của người bán",
-      "Mức thuế suất hiện hành"
+      "Phương pháp trừu tượng hóa khoa học",
+      "Phương pháp bói toán",
+      "Phương pháp thử may rủi",
+      "Phương pháp thuần túy cảm tính"
     ],
-    "correctIndex": 1
+    "correctIndex": 0
   },
   {
     "id": "mln122-009",
-    "text": "Tiền tệ thực hiện chức năng thước đo giá trị khi nào?",
+    "text": "Bốn chức năng chính của kinh tế chính trị Mác - Lênin gồm:",
     "choices": [
-      "Khi biểu hiện giá trị hàng hóa thành giá cả",
-      "Khi được cất giữ trong két",
-      "Khi dùng để thanh toán nợ sau mua bán",
-      "Khi chuyển từ nước này sang nước khác"
+      "Nhận thức, thực tiễn, phương pháp luận, tư tưởng",
+      "Kế toán, kiểm toán, tiếp thị, bán hàng",
+      "Sản xuất, vận tải, lưu kho, tiêu thụ",
+      "Tự nhiên, kỹ thuật, văn học, nghệ thuật"
     ],
     "correctIndex": 0
   },
   {
     "id": "mln122-010",
-    "text": "Trong sản xuất hàng hóa, lao động cụ thể tạo ra yếu tố nào của hàng hóa?",
-    "choices": ["Giá trị sử dụng", "Giá trị", "Giá trị thặng dư", "Lợi tức"],
+    "text": "Hai điều kiện ra đời của sản xuất hàng hóa theo giáo trình là:",
+    "choices": [
+      "Phân công lao động xã hội và sự tách biệt tương đối về kinh tế",
+      "Chỉ có tiền giấy và ngân hàng",
+      "Chỉ có nhà nước và thuế",
+      "Chỉ có thị trường thế giới"
+    ],
     "correctIndex": 0
+  },
+  {
+    "id": "mln122-011",
+    "text": "Hàng hóa được giáo trình định nghĩa là:",
+    "choices": [
+      "Sản phẩm của lao động có thể thỏa mãn nhu cầu nào đó của con người thông qua trao đổi, mua bán",
+      "Mọi vật có trong tự nhiên dù không qua lao động",
+      "Chỉ là tiền tệ",
+      "Chỉ là dịch vụ công cộng miễn phí"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-012",
+    "text": "Theo giáo trình, hai thuộc tính của hàng hóa là:",
+    "choices": [
+      "Giá trị sử dụng và giá trị",
+      "Giá cả và thuế",
+      "Lãi suất và lợi nhuận",
+      "Cung và cầu"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-013",
+    "text": "Giá trị sử dụng của hàng hóa là:",
+    "choices": [
+      "Công dụng của hàng hóa có thể thỏa mãn nhu cầu nhất định của con người",
+      "Số tiền thuế đánh vào hàng hóa",
+      "Tên gọi thương mại của hàng hóa",
+      "Chi phí quảng cáo hàng hóa"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-014",
+    "text": "Giá trị của hàng hóa là:",
+    "choices": [
+      "Lao động xã hội của người sản xuất kết tinh trong hàng hóa",
+      "Công dụng vật chất của hàng hóa",
+      "Mức thuế nhập khẩu",
+      "Số lượng hàng tồn kho"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-015",
+    "text": "Lao động cụ thể tạo ra:",
+    "choices": [
+      "Giá trị sử dụng nhất định của hàng hóa",
+      "Giá trị thặng dư trực tiếp",
+      "Lãi suất ngân hàng",
+      "Địa tô"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-016",
+    "text": "Lao động trừu tượng tạo nên:",
+    "choices": [
+      "Giá trị của hàng hóa",
+      "Giá trị sử dụng của hàng hóa",
+      "Hình dáng của hàng hóa",
+      "Nhãn mác của hàng hóa"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-017",
+    "text": "Lượng giá trị của hàng hóa được quyết định bởi:",
+    "choices": [
+      "Lượng lao động hao phí để sản xuất ra hàng hóa, đo bằng thời gian lao động xã hội cần thiết",
+      "Sở thích chủ quan của một người mua",
+      "Màu sắc của sản phẩm",
+      "Vị trí trưng bày sản phẩm"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-018",
+    "text": "Theo giáo trình, lượng giá trị hàng hóa có quan hệ thế nào với năng suất lao động?",
+    "choices": [
+      "Tỷ lệ nghịch",
+      "Tỷ lệ thuận tuyệt đối",
+      "Không liên quan",
+      "Luôn bằng không"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-019",
+    "text": "Theo giáo trình, lượng giá trị hàng hóa có quan hệ thế nào với cường độ lao động?",
+    "choices": [
+      "Tỷ lệ thuận",
+      "Tỷ lệ nghịch",
+      "Không thay đổi trong mọi trường hợp",
+      "Chỉ phụ thuộc vào tiền tệ"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-020",
+    "text": "Hình thái tiền tệ xuất hiện khi sản xuất và trao đổi hàng hóa phát triển, mở rộng giữa các vùng và cần:",
+    "choices": [
+      "Một vật ngang giá chung",
+      "Một loại thuế mới",
+      "Một cơ quan quảng cáo",
+      "Một loại chứng khoán"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-021",
+    "text": "Chức năng thước đo giá trị của tiền dùng để:",
+    "choices": [
+      "Đo lường và biểu hiện giá trị của hàng hóa khác",
+      "Cất giấu hàng hóa trong kho",
+      "Tăng sản lượng vật chất trực tiếp",
+      "Thay thế mọi quan hệ sản xuất"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-022",
+    "text": "Khi tiền làm phương tiện lưu thông, quá trình trao đổi hàng hóa đơn giản được biểu hiện bằng công thức:",
+    "choices": [
+      "H - T - H",
+      "T - H - T'",
+      "T - T'",
+      "C + V + M"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-023",
+    "text": "Theo giáo trình, tiền tín dụng phát hành từ chức năng nào của tiền?",
+    "choices": [
+      "Phương tiện thanh toán",
+      "Thước đo giá trị",
+      "Phương tiện cất trữ",
+      "Tiền tệ thế giới"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-024",
+    "text": "Khi trao đổi hàng hóa mở rộng ra bên ngoài biên giới quốc gia, chức năng nào của tiền ra đời?",
+    "choices": [
+      "Tiền tệ thế giới",
+      "Tiền dấu hiệu nội địa",
+      "Tiền lương danh nghĩa",
+      "Tiền công khoán"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-025",
+    "text": "Theo giáo trình, dịch vụ là:",
+    "choices": [
+      "Một loại hàng hóa vô hình",
+      "Một loại hàng hóa chỉ tồn tại dưới dạng sắt thép",
+      "Một loại hàng hóa không cần hao phí lao động",
+      "Một loại tiền tệ quốc tế"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-026",
+    "text": "Một số hàng hóa đặc biệt được giáo trình nêu gồm:",
+    "choices": [
+      "Quyền sử dụng đất đai, thương hiệu, chứng khoán và một số giấy tờ có giá",
+      "Chỉ lúa gạo và quần áo",
+      "Chỉ vàng bạc",
+      "Chỉ máy móc công nghiệp"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-027",
+    "text": "Thị trường là tổng hòa những quan hệ kinh tế trong đó nhu cầu của các chủ thể được đáp ứng thông qua:",
+    "choices": [
+      "Trao đổi, mua bán với sự xác định giá cả và số lượng hàng hóa, dịch vụ",
+      "Mệnh lệnh không cần trao đổi",
+      "Hoạt động thuần túy tự cấp tự túc",
+      "Các nghi lễ văn hóa"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-028",
+    "text": "Căn cứ theo đối tượng trao đổi, thị trường được phân thành:",
+    "choices": [
+      "Thị trường hàng hóa, dịch vụ",
+      "Thị trường trong nước và thế giới",
+      "Thị trường yếu tố sản xuất và tiêu dùng",
+      "Thị trường chính thức và phi chính thức"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-029",
+    "text": "Một vai trò của thị trường được giáo trình nêu là:",
+    "choices": [
+      "Kích thích sự sáng tạo và phân bổ nguồn lực hiệu quả trong nền kinh tế",
+      "Loại bỏ mọi quan hệ trao đổi",
+      "Làm mất hoàn toàn nhu cầu xã hội",
+      "Chỉ phục vụ tích trữ tiền mặt"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-030",
+    "text": "Nền kinh tế thị trường là nền kinh tế:",
+    "choices": [
+      "Được vận hành theo cơ chế thị trường",
+      "Chỉ vận hành bằng tự cấp tự túc",
+      "Không có quan hệ trao đổi",
+      "Không có giá cả"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-031",
+    "text": "Một đặc trưng của nền kinh tế thị trường là:",
+    "choices": [
+      "Có sự đa dạng của chủ thể kinh tế và nhiều hình thức sở hữu",
+      "Chỉ có một chủ thể kinh tế duy nhất",
+      "Không tồn tại sở hữu",
+      "Không có cạnh tranh"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-032",
+    "text": "Trong nền kinh tế thị trường, giá cả được hình thành theo:",
+    "choices": [
+      "Nguyên tắc thị trường",
+      "Ý muốn tùy tiện không có cơ sở",
+      "Mệnh lệnh của từng người bán riêng lẻ",
+      "Kết quả bốc thăm"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-033",
+    "text": "Một ưu thế của nền kinh tế thị trường là:",
+    "choices": [
+      "Tạo ra động lực cho sự sáng tạo của các chủ thể kinh tế",
+      "Tự động xóa bỏ mọi rủi ro khủng hoảng",
+      "Không cần phân bổ nguồn lực",
+      "Làm cho sản xuất ngừng phát triển"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-034",
+    "text": "Một khuyết tật của nền kinh tế thị trường là:",
+    "choices": [
+      "Luôn tiềm ẩn những rủi ro khủng hoảng",
+      "Không bao giờ có cạnh tranh",
+      "Không bao giờ có khủng hoảng",
+      "Tự khắc phục hoàn toàn mọi suy thoái môi trường"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-035",
+    "text": "Nội dung của quy luật giá trị yêu cầu sản xuất và trao đổi hàng hóa phải dựa trên cơ sở:",
+    "choices": [
+      "Hao phí lao động xã hội cần thiết",
+      "Sở thích của một cá nhân",
+      "Màu sắc sản phẩm",
+      "Chi phí quảng cáo"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-036",
+    "text": "Một tác động của quy luật giá trị là:",
+    "choices": [
+      "Điều tiết sản xuất và lưu thông hàng hóa",
+      "Loại bỏ mọi trao đổi hàng hóa",
+      "Ngăn cản cải tiến kỹ thuật",
+      "Xóa bỏ hoàn toàn giá cả"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-037",
+    "text": "Quy luật cung cầu điều tiết quan hệ giữa:",
+    "choices": [
+      "Cung (bên bán) và cầu (bên mua) hàng hóa trên thị trường",
+      "Nhà kho và phương tiện vận tải",
+      "Người gửi tiết kiệm và ngân hàng",
+      "Người học và trường học"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-038",
+    "text": "Theo quy luật lưu thông tiền tệ, số tiền cần thiết cho lưu thông khi chỉ xét P, Q, V được tính bằng:",
+    "choices": [
+      "M = P.Q / V",
+      "M = V / P.Q",
+      "M = P + Q + V",
+      "M = P - Q - V"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-039",
+    "text": "Nếu P = 100.000 USD, Q = 1.000 hàng hóa và V = 200 vòng, số tiền cần thiết cho lưu thông M là bao nhiêu?",
+    "choices": [
+      "500.000 USD",
+      "50.000 USD",
+      "20.000.000 USD",
+      "200.000 USD"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-040",
+    "text": "Quy luật cạnh tranh điều tiết một cách khách quan mối quan hệ nào?",
+    "choices": [
+      "Ganh đua kinh tế giữa các chủ thể trong sản xuất và trao đổi hàng hóa",
+      "Quan hệ văn học giữa tác giả và độc giả",
+      "Quan hệ thời tiết giữa các vùng",
+      "Quan hệ sinh học giữa các loài"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-041",
+    "text": "Người sản xuất trong thị trường là những người:",
+    "choices": [
+      "Sản xuất và cung cấp hàng hóa, dịch vụ nhằm đáp ứng nhu cầu tiêu dùng của xã hội",
+      "Chỉ mua hàng hóa để tiêu dùng",
+      "Chỉ làm cầu nối giao dịch",
+      "Chỉ thực hiện quản lý nhà nước"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-042",
+    "text": "Sức mua của người tiêu dùng là yếu tố quyết định:",
+    "choices": [
+      "Sự phát triển bền vững của người sản xuất",
+      "Sự biến mất của thị trường",
+      "Sự xóa bỏ mọi dịch vụ",
+      "Sự ngừng lưu thông hàng hóa"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-043",
+    "text": "Chủ thể trung gian trong thị trường đảm nhiệm vai trò:",
+    "choices": [
+      "Cầu nối giữa các chủ thể sản xuất, tiêu dùng hàng hóa, dịch vụ",
+      "Thay thế hoàn toàn nhà nước",
+      "Loại bỏ nhu cầu mua bán",
+      "Chỉ sản xuất tư liệu lao động"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-044",
+    "text": "Trong nền kinh tế thị trường, xét về vai trò kinh tế, Nhà nước thực hiện chức năng:",
+    "choices": [
+      "Quản lý nhà nước về kinh tế và khắc phục những khuyết tật của thị trường",
+      "Không có bất kỳ vai trò nào",
+      "Chỉ mua hàng để tiêu dùng cá nhân",
+      "Chỉ làm trung gian bán lẻ"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-045",
+    "text": "Trong lưu thông của tư bản, tiền vận động theo công thức:",
+    "choices": [
+      "T - H - T'",
+      "H - T - H",
+      "H - H - T",
+      "C + V + M"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-046",
+    "text": "Công thức chung của tư bản được giáo trình nêu là:",
+    "choices": [
+      "T - H - T'",
+      "H - T - H",
+      "M = P.Q / V",
+      "N = V / v"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-047",
+    "text": "Trong công thức T - H - T', T' được hiểu là:",
+    "choices": [
+      "T' = T + Delta T",
+      "T' = T - Delta T",
+      "T' = 0",
+      "T' = C / V"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-048",
+    "text": "Sức lao động là:",
+    "choices": [
+      "Toàn bộ năng lực thể chất và tinh thần tồn tại trong cơ thể con người sống và được vận dụng trong lao động",
+      "Một loại máy móc cố định",
+      "Một khoản thuế doanh nghiệp",
+      "Một hình thức tiền tệ thế giới"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-049",
+    "text": "Điều kiện để sức lao động trở thành hàng hóa là người lao động:",
+    "choices": [
+      "Tự do về thân thể có quyền bán sức lao động và vô sản",
+      "Có nhiều ruộng đất và tư liệu sản xuất",
+      "Không được quyền bán sức lao động",
+      "Không tham gia thị trường"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-050",
+    "text": "Giá trị hàng hóa sức lao động do yếu tố nào quyết định?",
+    "choices": [
+      "Thời gian lao động xã hội cần thiết để sản xuất và tái sản xuất sức lao động",
+      "Tên gọi của nghề nghiệp",
+      "Vị trí địa lý của cửa hàng",
+      "Màu sắc đồng phục"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-051",
+    "text": "Giá trị hàng hóa sức lao động bao gồm:",
+    "choices": [
+      "Tư liệu sinh hoạt cần thiết, phí tổn đào tạo lao động và tư liệu sinh hoạt nuôi con của người lao động",
+      "Chỉ giá trị máy móc",
+      "Chỉ giá trị nguyên liệu",
+      "Chỉ lợi nhuận thương nghiệp"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-052",
+    "text": "Giá trị sử dụng của hàng hóa sức lao động có tính chất đặc biệt vì:",
+    "choices": [
+      "Là nguồn gốc sinh ra giá trị mới lớn hơn giá trị của bản thân nó",
+      "Không tạo ra giá trị mới",
+      "Chỉ chuyển nguyên vẹn giá trị máy móc",
+      "Chỉ làm tăng giá trị đất đai"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-053",
+    "text": "Giá trị thặng dư là:",
+    "choices": [
+      "Bộ phận của giá trị mới dôi ra ngoài giá trị sức lao động do công nhân tạo ra và bị nhà tư bản chiếm đoạt",
+      "Toàn bộ giá trị tư liệu sản xuất",
+      "Tiền thuế nhà nước",
+      "Giá cả hàng hóa trên thị trường"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-054",
+    "text": "Tư bản bất biến (C) gồm giá trị:",
+    "choices": [
+      "Nhà xưởng, máy móc, thiết bị, nguyên liệu, nhiên liệu, vật liệu phụ",
+      "Sức lao động thuần túy",
+      "Lợi nhuận bình quân",
+      "Địa tô tư bản chủ nghĩa"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-055",
+    "text": "Tư bản khả biến (V) là phần tư bản dùng để mua:",
+    "choices": [
+      "Sức lao động",
+      "Máy móc",
+      "Nguyên liệu",
+      "Nhà xưởng"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-056",
+    "text": "Tiền công trong chủ nghĩa tư bản là:",
+    "choices": [
+      "Giá cả của hàng hóa sức lao động",
+      "Giá cả của máy móc",
+      "Giá trị của địa tô",
+      "Lợi tức ngân hàng"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-057",
+    "text": "Chu chuyển tư bản là:",
+    "choices": [
+      "Tuần hoàn tư bản được xét là quá trình định kỳ, thường xuyên lặp đi lặp lại và đổi mới theo thời gian",
+      "Một lần mua bán hàng hóa riêng lẻ",
+      "Sự cất trữ tiền vàng",
+      "Việc đóng thuế nhập khẩu"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-058",
+    "text": "Thời gian chu chuyển của tư bản gồm:",
+    "choices": [
+      "Thời gian sản xuất và thời gian lưu thông",
+      "Chỉ thời gian sản xuất",
+      "Chỉ thời gian cất trữ tiền",
+      "Chỉ thời gian tiêu dùng"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-059",
+    "text": "Tư bản cố định là bộ phận tư bản sản xuất tồn tại dưới hình thái:",
+    "choices": [
+      "Tư liệu lao động tham gia toàn bộ quá trình sản xuất nhưng giá trị chuyển dần từng phần vào sản phẩm",
+      "Tiền lương chuyển hết một lần",
+      "Nguyên liệu chuyển ngay toàn bộ",
+      "Lợi nhuận thương nghiệp"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-060",
+    "text": "Tư bản lưu động tồn tại dưới hình thái:",
+    "choices": [
+      "Nguyên liệu, nhiên liệu, vật liệu phụ, tiền lương",
+      "Chỉ nhà xưởng",
+      "Chỉ máy móc cố định",
+      "Chỉ đất đai"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-061",
+    "text": "Tỷ suất giá trị thặng dư m' được tính bằng công thức:",
+    "choices": [
+      "m' = M / V x 100%",
+      "m' = C / V x 100%",
+      "m' = P / Q x 100%",
+      "m' = V / M x 100%"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-062",
+    "text": "Nếu M = 15.000 USD và V = 10.000 USD thì tỷ suất giá trị thặng dư m' bằng:",
+    "choices": [
+      "150%",
+      "100%",
+      "50%",
+      "15%"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-063",
+    "text": "Nếu ngày lao động T = 10 giờ và thời gian lao động tất yếu t = 5 giờ, thời gian lao động thặng dư t' là:",
+    "choices": [
+      "5 giờ",
+      "10 giờ",
+      "15 giờ",
+      "2 giờ"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-064",
+    "text": "Nếu t' = 5 giờ và t = 5 giờ thì tỷ suất giá trị thặng dư m' theo thời gian là:",
+    "choices": [
+      "100%",
+      "50%",
+      "150%",
+      "200%"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-065",
+    "text": "Khối lượng giá trị thặng dư được giáo trình ký hiệu và tính bằng:",
+    "choices": [
+      "M = m'.V",
+      "M = C + V",
+      "M = P.Q / V",
+      "M = V / v"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-066",
+    "text": "Sản xuất giá trị thặng dư tuyệt đối được thực hiện chủ yếu bằng cách:",
+    "choices": [
+      "Kéo dài ngày lao động hoặc tăng cường độ lao động khi thời gian lao động tất yếu không đổi",
+      "Rút ngắn ngày lao động về bằng không",
+      "Xóa bỏ lao động thặng dư",
+      "Chỉ tăng giá bán không liên quan lao động"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-067",
+    "text": "Sản xuất giá trị thặng dư tương đối dựa trên:",
+    "choices": [
+      "Rút ngắn thời gian lao động tất yếu trong khi độ dài ngày lao động không đổi",
+      "Kéo dài vô hạn ngày lao động",
+      "Không thay đổi năng suất lao động",
+      "Loại bỏ toàn bộ lao động sống"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-068",
+    "text": "Giá trị thặng dư siêu ngạch xuất hiện khi:",
+    "choices": [
+      "Giá trị cá biệt của hàng hóa thấp hơn giá trị xã hội của hàng hóa",
+      "Giá trị cá biệt luôn cao hơn giá trị xã hội",
+      "Không có cạnh tranh",
+      "Không có năng suất lao động"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-069",
+    "text": "Tái sản xuất giản đơn là:",
+    "choices": [
+      "Quá trình tái sản xuất được lặp lại với quy mô như cũ",
+      "Quá trình sản xuất mở rộng quy mô lớn hơn trước",
+      "Quá trình ngừng sản xuất",
+      "Quá trình chỉ lưu thông tiền tệ"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-070",
+    "text": "Tái sản xuất mở rộng là:",
+    "choices": [
+      "Quá trình sản xuất được lặp lại với quy mô lớn hơn trước",
+      "Quá trình sản xuất lặp lại như cũ",
+      "Quá trình chỉ tiêu dùng",
+      "Quá trình cất trữ tiền vàng"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-071",
+    "text": "Quy mô tích lũy tư bản phụ thuộc trước hết vào:",
+    "choices": [
+      "Tỷ lệ phân chia giữa quỹ tích lũy và quỹ tiêu dùng",
+      "Màu sắc hàng hóa",
+      "Tên thương mại",
+      "Vị trí địa lý của cửa hàng"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-072",
+    "text": "Nếu quỹ tích lũy và quỹ tiêu dùng đã xác định, quy mô tích lũy tư bản phụ thuộc vào:",
+    "choices": [
+      "Trình độ khai thác sức lao động, năng suất lao động xã hội, hiệu quả sử dụng máy móc, quy mô tư bản ứng trước",
+      "Chỉ sở thích người mua",
+      "Chỉ mẫu mã sản phẩm",
+      "Chỉ tên nhà tư bản"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-073",
+    "text": "Một hệ quả của tích lũy tư bản là:",
+    "choices": [
+      "Làm tăng cấu tạo hữu cơ của tư bản",
+      "Làm mất hoàn toàn tích tụ tư bản",
+      "Xóa bỏ mọi chênh lệch thu nhập",
+      "Làm thị trường biến mất"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-074",
+    "text": "Chi phí sản xuất tư bản chủ nghĩa là phần giá trị hàng hóa bù lại:",
+    "choices": [
+      "Giá cả tư liệu sản xuất đã tiêu dùng và giá cả sức lao động đã sử dụng",
+      "Chỉ lợi nhuận bình quân",
+      "Chỉ địa tô",
+      "Chỉ lãi vay"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-075",
+    "text": "Nếu V = 10.000 USD và tiền lương mỗi công nhân v = 50 USD, số công nhân N là:",
+    "choices": [
+      "200 người",
+      "50 người",
+      "500 người",
+      "2.000 người"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-076",
+    "text": "Nếu C = 20.000 USD và V = 10.000 USD, chi phí tư bản ứng trước K là:",
+    "choices": [
+      "30.000 USD",
+      "20.000 USD",
+      "10.000 USD",
+      "200.000 USD"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-077",
+    "text": "Nếu V = 10.000 USD và M = 20.000 USD, giá trị mới Wm là:",
+    "choices": [
+      "30.000 USD",
+      "10.000 USD",
+      "20.000 USD",
+      "200.000 USD"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-078",
+    "text": "Nếu C = 10.000 USD, V = 10.000 USD và M = 20.000 USD, tổng giá trị hàng hóa W là:",
+    "choices": [
+      "40.000 USD",
+      "20.000 USD",
+      "30.000 USD",
+      "10.000 USD"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-079",
+    "text": "Bản chất lợi nhuận theo giáo trình là:",
+    "choices": [
+      "Giá trị thặng dư khi được quan niệm là kết quả của toàn bộ tư bản ứng trước",
+      "Toàn bộ tiền lương của công nhân",
+      "Giá trị tư liệu sản xuất",
+      "Thuế nhà nước"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-080",
+    "text": "Tỷ suất lợi nhuận P' là:",
+    "choices": [
+      "Tỷ lệ phần trăm giữa lợi nhuận và toàn bộ giá trị tư bản ứng trước",
+      "Tỷ lệ giữa tiền lương và số công nhân",
+      "Tổng giá trị hàng hóa",
+      "Tổng giá cả hàng hóa bán chịu"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-081",
+    "text": "Nếu P = 20.000 USD và K = 20.000 USD thì tỷ suất lợi nhuận P' là:",
+    "choices": [
+      "100%",
+      "50%",
+      "20%",
+      "200%"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-082",
+    "text": "Cơ chế hình thành lợi nhuận bình quân là:",
+    "choices": [
+      "Cạnh tranh giữa các ngành",
+      "Cạnh tranh trong nội bộ gia đình",
+      "Sự cất trữ tiền vàng",
+      "Sự ngừng lưu thông hàng hóa"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-083",
+    "text": "Lợi tức là:",
+    "choices": [
+      "Một phần lợi nhuận bình quân mà nhà tư bản đi vay phải trả cho người cho vay về quyền tạm sử dụng tư bản tiền tệ",
+      "Toàn bộ tiền lương công nhân",
+      "Giá trị máy móc chuyển vào sản phẩm",
+      "Giá trị sử dụng của hàng hóa"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-084",
+    "text": "Địa tô tư bản chủ nghĩa là:",
+    "choices": [
+      "Lợi nhuận siêu ngạch dôi ra ngoài lợi nhuận bình quân mà nhà tư bản kinh doanh nông nghiệp phải trả cho địa chủ",
+      "Tiền công của người lao động",
+      "Giá cả của hàng hóa sức lao động",
+      "Chi phí sản xuất tư bản chủ nghĩa"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-085",
+    "text": "Độc quyền là:",
+    "choices": [
+      "Sự liên minh giữa các doanh nghiệp lớn có khả năng thâu tóm sản xuất, tiêu thụ một số hàng hóa và định ra giá cả độc quyền",
+      "Sự cạnh tranh của từng hộ cá thể nhỏ lẻ",
+      "Hoạt động mua hàng của người tiêu dùng",
+      "Một chức năng của tiền tệ"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-086",
+    "text": "Một nguyên nhân hình thành độc quyền là:",
+    "choices": [
+      "Sự phát triển của lực lượng sản xuất thúc đẩy hình thành xí nghiệp lớn",
+      "Sự biến mất của khoa học kỹ thuật",
+      "Không có cạnh tranh",
+      "Không có tích tụ sản xuất"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-087",
+    "text": "Theo giáo trình, cạnh tranh có thể dẫn tới:",
+    "choices": [
+      "Doanh nghiệp nhỏ hợp lại hoặc bị loại bỏ",
+      "Mọi doanh nghiệp luôn tồn tại riêng rẽ",
+      "Không có tập trung sản xuất",
+      "Không có độc quyền"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-088",
+    "text": "Độc quyền nhà nước là kiểu độc quyền trong đó:",
+    "choices": [
+      "Nhà nước nắm giữ vị thế độc quyền trên cơ sở duy trì sức mạnh của các tổ chức độc quyền",
+      "Người tiêu dùng nắm toàn bộ quyền lực sản xuất",
+      "Không có nhà nước tham gia",
+      "Chỉ có hộ gia đình nhỏ lẻ"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-089",
+    "text": "Bản chất của chủ nghĩa tư bản độc quyền nhà nước là:",
+    "choices": [
+      "Nấc thang phát triển mới của chủ nghĩa tư bản độc quyền, kết hợp tổ chức độc quyền tư nhân và nhà nước tư bản",
+      "Sự xóa bỏ hoàn toàn tư bản độc quyền",
+      "Một chính sách xã hội thuần túy không có quan hệ kinh tế",
+      "Sự trở lại kinh tế tự nhiên"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-090",
+    "text": "Một tác động tích cực của độc quyền trong nền kinh tế thị trường là:",
+    "choices": [
+      "Tạo khả năng cho nghiên cứu và phát triển khoa học kỹ thuật",
+      "Luôn gây thiệt hại cho mọi chủ thể",
+      "Luôn kìm hãm mọi tiến bộ kỹ thuật",
+      "Xóa bỏ năng suất lao động"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-091",
+    "text": "Một tác động tiêu cực của độc quyền là:",
+    "choices": [
+      "Có thể gây thiệt hại cho người tiêu dùng và xã hội",
+      "Luôn xóa bỏ phân hóa giàu nghèo",
+      "Luôn làm giá cả giảm về bằng không",
+      "Không bao giờ kìm hãm tiến bộ kỹ thuật"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-092",
+    "text": "Cartel là hình thức liên minh độc quyền về:",
+    "choices": [
+      "Giá cả, phân chia thị trường, số lượng hàng hóa sản xuất",
+      "Chỉ thống nhất sản xuất và lưu thông dưới một hội đồng quản trị",
+      "Chỉ mua bán do một ban quản trị đảm nhiệm",
+      "Chỉ hiệp nghị giữa ngân hàng và công nghiệp"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-093",
+    "text": "Syndicate là tổ chức độc quyền về:",
+    "choices": [
+      "Lưu thông; mọi việc mua bán do một ban quản trị đảm nhiệm",
+      "Chỉ phân chia giá cả nhưng độc lập hoàn toàn lưu thông",
+      "Thống nhất cả sản xuất và lưu thông",
+      "Liên minh quân sự giữa các quốc gia"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-094",
+    "text": "Trust là hình thức độc quyền:",
+    "choices": [
+      "Thống nhất cả sản xuất và lưu thông dưới sự quản lý của hội đồng quản trị",
+      "Chỉ thỏa thuận giá cả nhưng độc lập sản xuất",
+      "Chỉ là tổ chức mua bán riêng lẻ",
+      "Chỉ là tiền tệ thế giới"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-095",
+    "text": "Consortium thường là hình thức độc quyền:",
+    "choices": [
+      "Đa ngành, tồn tại dưới dạng hiệp nghị giữa ngân hàng và công nghiệp để tiến hành nghiệp vụ tài chính lớn",
+      "Chỉ gồm người tiêu dùng",
+      "Chỉ trao đổi hàng hóa giản đơn",
+      "Chỉ là thị trường trong nước"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-096",
+    "text": "Theo Lênin, tư bản tài chính là kết quả của sự hợp nhất giữa:",
+    "choices": [
+      "Tư bản ngân hàng của một số ít ngân hàng độc quyền lớn nhất với tư bản của các liên minh độc quyền công nghiệp",
+      "Tiền công và địa tô",
+      "Người tiêu dùng và người trung gian",
+      "Tư bản cố định và tiền tệ thế giới"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-097",
+    "text": "Theo Lênin, đặc điểm của giai đoạn chủ nghĩa tư bản độc quyền là:",
+    "choices": [
+      "Xuất khẩu tư bản",
+      "Chỉ xuất khẩu hàng hóa",
+      "Không có xuất khẩu",
+      "Chỉ sản xuất tự cấp tự túc"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-098",
+    "text": "Thực chất của sự phân chia thế giới về kinh tế giữa các tập đoàn độc quyền là phân chia:",
+    "choices": [
+      "Thị trường tiêu thụ hàng hóa, nguồn nguyên liệu và đầu tư",
+      "Khí hậu và địa hình",
+      "Ngôn ngữ và văn học",
+      "Tập quán gia đình"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-099",
+    "text": "Một vai trò tích cực lịch sử của chủ nghĩa tư bản theo giáo trình là:",
+    "choices": [
+      "Thúc đẩy lực lượng sản xuất phát triển nhanh chóng",
+      "Chỉ gây ra ngừng trệ sản xuất",
+      "Không làm thay đổi nền sản xuất nhỏ",
+      "Không thực hiện xã hội hóa sản xuất"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-100",
+    "text": "Một giới hạn phát triển của chủ nghĩa tư bản theo giáo trình là:",
+    "choices": [
+      "Mục đích sản xuất tập trung chủ yếu vì lợi ích của thiểu số giai cấp tư sản",
+      "Luôn bảo đảm lợi ích tuyệt đối cho toàn xã hội",
+      "Không có phân hóa giàu nghèo",
+      "Không tham gia gây ra chiến tranh và xung đột"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-101",
+    "text": "Theo giáo trình, kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam là nền kinh tế vận hành như thế nào?",
+    "choices": [
+      "Chỉ vận hành theo mệnh lệnh hành chính của Nhà nước",
+      "Vận hành theo các quy luật của thị trường, đồng thời hướng tới xác lập xã hội dân giàu, nước mạnh, dân chủ, công bằng, văn minh",
+      "Chỉ vận hành theo cạnh tranh tự do, không có điều tiết",
+      "Vận hành theo cơ chế bao cấp toàn diện"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-102",
+    "text": "Yếu tố nào sau đây thuộc khái niệm kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam?",
+    "choices": [
+      "Không cần sự điều tiết của Nhà nước",
+      "Có sự điều tiết của Nhà nước do Đảng Cộng sản Việt Nam lãnh đạo",
+      "Tách rời hoàn toàn mục tiêu xã hội",
+      "Chỉ thừa nhận một hình thức sở hữu duy nhất"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-103",
+    "text": "Nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam vừa phải bao hàm điều gì?",
+    "choices": [
+      "Chỉ đặc trưng riêng của Việt Nam",
+      "Chỉ đặc trưng của kinh tế kế hoạch hóa tập trung",
+      "Đầy đủ đặc trưng vốn có của kinh tế thị trường nói chung và những đặc trưng riêng của Việt Nam",
+      "Chỉ đặc trưng của kinh tế tự nhiên"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "mln122-104",
+    "text": "Theo giáo trình, một lý do phát triển kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam là:",
+    "choices": [
+      "Phù hợp với quy luật phát triển khách quan",
+      "Loại bỏ mọi quan hệ thị trường",
+      "Không cần hội nhập quốc tế",
+      "Không cần phát triển lực lượng sản xuất"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-105",
+    "text": "Mô hình kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam phù hợp với nguyện vọng nào của nhân dân?",
+    "choices": [
+      "Dân giàu, nước mạnh, dân chủ, công bằng, văn minh",
+      "Dân giàu nhưng không cần công bằng",
+      "Nước mạnh nhưng không cần dân chủ",
+      "Công bằng nhưng không cần phát triển"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-106",
+    "text": "Về mục tiêu, kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam hướng tới:",
+    "choices": [
+      "Chỉ tăng lợi nhuận cho doanh nghiệp tư nhân",
+      "Phát triển lực lượng sản xuất, xây dựng cơ sở vật chất kỹ thuật của chủ nghĩa xã hội và nâng cao đời sống nhân dân",
+      "Giữ nguyên trình độ sản xuất hiện có",
+      "Giảm vai trò của đời sống nhân dân trong phát triển"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-107",
+    "text": "Trong đặc trưng về quan hệ sở hữu và thành phần kinh tế, giáo trình nêu nền kinh tế Việt Nam có:",
+    "choices": [
+      "Một hình thức sở hữu và một thành phần kinh tế",
+      "Nhiều hình thức sở hữu, nhiều thành phần kinh tế",
+      "Chỉ sở hữu tư nhân",
+      "Chỉ sở hữu tập thể"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-108",
+    "text": "Theo giáo trình, trong nền kinh tế nhiều thành phần, kinh tế nhà nước giữ vai trò:",
+    "choices": [
+      "Bổ trợ",
+      "Chủ đạo",
+      "Thứ yếu",
+      "Không tham gia"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-109",
+    "text": "Theo giáo trình, kinh tế tư nhân trong kinh tế thị trường định hướng xã hội chủ nghĩa là:",
+    "choices": [
+      "Một động lực quan trọng",
+      "Thành phần bị loại bỏ",
+      "Không có vai trò trong phát triển",
+      "Chỉ tồn tại ngoài pháp luật"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-110",
+    "text": "Về quan hệ quản lý nền kinh tế, Nhà nước quản lý theo cơ chế nào?",
+    "choices": [
+      "Nhà nước pháp quyền xã hội chủ nghĩa của dân, do dân, vì dân dưới sự lãnh đạo của Đảng Cộng sản",
+      "Nhà nước đứng ngoài mọi hoạt động kinh tế",
+      "Nhà nước chỉ quản lý bằng mệnh lệnh thị trường tự phát",
+      "Nhà nước tư sản nghị viện"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-111",
+    "text": "Đặc trưng về quan hệ phân phối trong giáo trình nhấn mạnh:",
+    "choices": [
+      "Chỉ phân phối bình quân",
+      "Thực hiện nhiều hình thức phân phối, trong đó có phân phối theo lao động, hiệu quả kinh tế và phúc lợi",
+      "Chỉ phân phối theo tài sản",
+      "Không có phân phối theo phúc lợi"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-112",
+    "text": "Đặc trưng gắn tăng trưởng kinh tế với công bằng xã hội được giáo trình diễn đạt là:",
+    "choices": [
+      "Phát triển kinh tế đi đôi với tiến bộ, công bằng xã hội",
+      "Tăng trưởng kinh tế trước, công bằng xã hội tính sau",
+      "Công bằng xã hội thay thế hoàn toàn tăng trưởng kinh tế",
+      "Tăng trưởng kinh tế không liên quan xã hội"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-113",
+    "text": "Theo giáo trình, 'thể chế' là:",
+    "choices": [
+      "Chỉ là bộ máy hành chính",
+      "Những quy tắc, pháp luật, bộ máy và cơ chế vận hành nhằm điều chỉnh hoạt động của con người trong một chế độ xã hội",
+      "Chỉ là hệ thống giá cả",
+      "Chỉ là quan hệ mua bán trên thị trường"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-114",
+    "text": "Theo giáo trình, 'thể chế kinh tế' là hệ thống nhằm điều chỉnh:",
+    "choices": [
+      "Chỉ hành vi tiêu dùng cá nhân",
+      "Hành vi của các chủ thể kinh tế, hoạt động sản xuất kinh doanh và các quan hệ quốc tế",
+      "Chỉ hoạt động văn hóa",
+      "Chỉ hoạt động chính trị thuần túy"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-115",
+    "text": "Thể chế kinh tế thị trường định hướng xã hội chủ nghĩa bao gồm hệ thống đường lối, chủ trương chiến lược, luật pháp, chính sách để:",
+    "choices": [
+      "Xác lập cơ chế vận hành và điều chỉnh hoạt động, mục tiêu, phương thức hoạt động, các quan hệ lợi ích của các tổ chức và chủ thể kinh tế",
+      "Thay thế hoàn toàn các yếu tố thị trường",
+      "Chỉ điều chỉnh giá một mặt hàng",
+      "Loại bỏ mọi chủ thể kinh tế ngoài Nhà nước"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-116",
+    "text": "Một lý do phải hoàn thiện thể chế kinh tế thị trường định hướng xã hội chủ nghĩa là:",
+    "choices": [
+      "Thể chế đã hoàn toàn đồng bộ",
+      "Thể chế kinh tế thị trường định hướng xã hội chủ nghĩa còn chưa đồng bộ",
+      "Không còn thiếu yếu tố thị trường",
+      "Không cần hệ thống thể chế"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-117",
+    "text": "Theo giáo trình, hệ thống thể chế cần hoàn thiện vì:",
+    "choices": [
+      "Đã đầy đủ và hiệu lực tuyệt đối",
+      "Còn chưa đầy đủ",
+      "Không liên quan đến thị trường",
+      "Chỉ cần thay đổi tên gọi"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-118",
+    "text": "Nội dung hoàn thiện thể chế kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam KHÔNG bao gồm nội dung nào sau đây?",
+    "choices": [
+      "Sở hữu và các thành phần kinh tế",
+      "Phát triển đồng bộ các yếu tố và các loại thị trường",
+      "Tách tăng trưởng kinh tế khỏi tiến bộ, công bằng xã hội",
+      "Hội nhập kinh tế quốc tế"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "mln122-119",
+    "text": "Theo giáo trình, một nội dung hoàn thiện thể chế là phát triển đồng bộ:",
+    "choices": [
+      "Các yếu tố và các loại thị trường",
+      "Chỉ một loại thị trường duy nhất",
+      "Chỉ thị trường hàng hóa tiêu dùng",
+      "Chỉ cơ chế bao cấp"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-120",
+    "text": "Nội dung 'nâng cao năng lực chính trị' được giáo trình đặt trong nhóm vấn đề nào?",
+    "choices": [
+      "Nội dung hoàn thiện thể chế kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam",
+      "Khái niệm tư bản bất biến",
+      "Công thức tính tổng giá trị hàng hóa",
+      "Lịch sử cách mạng công nghiệp"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-121",
+    "text": "Theo giáo trình, lợi ích là sự thỏa mãn nhu cầu của con người, nhưng sự thỏa mãn này phải:",
+    "choices": [
+      "Không cần được nhận thức",
+      "Được nhận thức và đặt trong mối quan hệ xã hội ứng với trình độ phát triển nhất định của nền sản xuất xã hội",
+      "Chỉ tồn tại trong trao đổi hàng hóa",
+      "Chỉ gắn với lợi nhuận doanh nghiệp"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-122",
+    "text": "Lợi ích kinh tế được giáo trình định nghĩa là:",
+    "choices": [
+      "Lợi ích tinh thần thuần túy",
+      "Lợi ích vật chất thu được khi thực hiện các hoạt động kinh tế của con người",
+      "Lợi ích chính trị không liên quan kinh tế",
+      "Lợi ích ngoài sản xuất xã hội"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-123",
+    "text": "Xét về bản chất, lợi ích kinh tế phản ánh:",
+    "choices": [
+      "Mục đích và động cơ của các quan hệ giữa các chủ thể trong nền sản xuất xã hội",
+      "Chỉ giá cả hàng hóa",
+      "Chỉ tiền lương danh nghĩa",
+      "Chỉ mệnh lệnh hành chính"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-124",
+    "text": "Xét về biểu hiện, lợi ích của chủ doanh nghiệp trước hết là:",
+    "choices": [
+      "Thu nhập",
+      "Lợi nhuận",
+      "Phúc lợi xã hội",
+      "Tiền lương"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-125",
+    "text": "Xét về biểu hiện, lợi ích của người lao động theo giáo trình là:",
+    "choices": [
+      "Lợi nhuận",
+      "Địa tô",
+      "Thu nhập",
+      "Lãi suất"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "mln122-126",
+    "text": "Vai trò trực tiếp của lợi ích kinh tế đối với các chủ thể và hoạt động kinh tế - xã hội là:",
+    "choices": [
+      "Động lực trực tiếp",
+      "Yếu tố làm triệt tiêu hoạt động kinh tế",
+      "Yếu tố chỉ mang tính hình thức",
+      "Yếu tố không liên quan đến hành vi kinh tế"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-127",
+    "text": "Theo giáo trình, lợi ích kinh tế còn là cơ sở thúc đẩy:",
+    "choices": [
+      "Sự phát triển các lợi ích khác",
+      "Sự xóa bỏ mọi quan hệ kinh tế",
+      "Sự ngừng phát triển lực lượng sản xuất",
+      "Sự phủ nhận nhu cầu cá nhân"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-128",
+    "text": "Quan hệ lợi ích kinh tế là sự thiết lập những tương tác nhằm mục tiêu:",
+    "choices": [
+      "Xác lập các lợi ích kinh tế trong mối liên hệ với trình độ phát triển của lực lượng sản xuất và kiến trúc thượng tầng tương ứng",
+      "Loại bỏ quan hệ giữa các chủ thể kinh tế",
+      "Tách rời lợi ích khỏi sản xuất xã hội",
+      "Chỉ xác lập lợi ích cá nhân ngoài xã hội"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-129",
+    "text": "Sự thống nhất của các quan hệ lợi ích kinh tế có thể xuất hiện vì:",
+    "choices": [
+      "Một chủ thể có thể trở thành bộ phận cấu thành của chủ thể khác",
+      "Các chủ thể luôn có mục tiêu đối lập tuyệt đối",
+      "Không có chủ thể kinh tế nào liên hệ với nhau",
+      "Lợi ích kinh tế không phụ thuộc chủ thể"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-130",
+    "text": "Khi các chủ thể kinh tế hành động vì mục tiêu chung hoặc mục tiêu thống nhất với nhau thì:",
+    "choices": [
+      "Lợi ích kinh tế của các chủ thể đó thống nhất với nhau",
+      "Lợi ích kinh tế tất yếu triệt tiêu nhau",
+      "Không còn quan hệ lợi ích kinh tế",
+      "Nhà nước không cần quản lý"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-131",
+    "text": "Các quan hệ lợi ích kinh tế có thể mâu thuẫn với nhau vì:",
+    "choices": [
+      "Các chủ thể kinh tế có thể hành động theo những phương thức khác nhau để thực hiện lợi ích của mình",
+      "Mọi chủ thể luôn có cùng phương thức hành động",
+      "Lợi ích cá nhân không tồn tại",
+      "Không có nhu cầu kinh tế trong xã hội"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-132",
+    "text": "Một nguyên nhân chủ yếu của mâu thuẫn trong quan hệ lợi ích kinh tế là:",
+    "choices": [
+      "Nhu cầu cơ bản, sống còn trước hết thuộc về cá nhân và quyết định hoạt động của cá nhân",
+      "Nhu cầu cá nhân không liên quan hoạt động kinh tế",
+      "Mọi cá nhân đều có lợi ích giống nhau tuyệt đối",
+      "Lợi ích cá nhân không phải cơ sở của lợi ích khác"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-133",
+    "text": "Theo giáo trình, các nhân tố ảnh hưởng tới lợi ích kinh tế bao gồm:",
+    "choices": [
+      "Trình độ phát triển lực lượng sản xuất, địa vị của chủ thể trong quan hệ sản xuất xã hội, hội nhập kinh tế quốc tế, chính sách phân phối thu nhập của Nhà nước",
+      "Chỉ trình độ phát triển lực lượng sản xuất",
+      "Chỉ hội nhập kinh tế quốc tế",
+      "Chỉ chính sách phân phối thu nhập của Nhà nước"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-134",
+    "text": "Trong điều kiện kinh tế thị trường định hướng xã hội chủ nghĩa, phương thức cơ bản để thực hiện lợi ích kinh tế là:",
+    "choices": [
+      "Theo nguyên tắc thị trường và theo chính sách của Nhà nước cùng vai trò của các tổ chức xã hội",
+      "Chỉ theo nguyên tắc thị trường, không có chính sách Nhà nước",
+      "Chỉ theo chính sách Nhà nước, không có thị trường",
+      "Chỉ theo tập quán truyền thống"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-135",
+    "text": "Vai trò của Nhà nước trong bảo đảm hài hòa các quan hệ lợi ích trước hết bao gồm:",
+    "choices": [
+      "Bảo vệ lợi ích hợp pháp và tạo môi trường thuận lợi cho hoạt động tìm kiếm lợi ích của các chủ thể kinh tế",
+      "Không can thiệp vào bất kỳ mâu thuẫn lợi ích nào",
+      "Chỉ bảo vệ lợi ích của một chủ thể duy nhất",
+      "Xóa bỏ hoàn toàn động lực lợi ích kinh tế"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-136",
+    "text": "Để tạo lập môi trường thuận lợi cho hoạt động kinh tế, giáo trình nhấn mạnh trước hết phải:",
+    "choices": [
+      "Giữ vững ổn định về chính trị",
+      "Giảm toàn bộ kết cấu hạ tầng",
+      "Loại bỏ môi trường pháp luật",
+      "Không bảo vệ lợi ích chính đáng"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-137",
+    "text": "Một yêu cầu để bảo vệ lợi ích chính đáng của các chủ thể kinh tế là:",
+    "choices": [
+      "Xây dựng môi trường pháp luật thông thoáng",
+      "Giảm vai trò của pháp luật",
+      "Chỉ dựa vào thỏa thuận miệng",
+      "Không cần cơ chế quản lý"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-138",
+    "text": "Theo giáo trình, Nhà nước cần điều hòa lợi ích giữa:",
+    "choices": [
+      "Cá nhân - doanh nghiệp - xã hội",
+      "Chỉ cá nhân - cá nhân",
+      "Chỉ doanh nghiệp - doanh nghiệp",
+      "Chỉ xã hội - xã hội"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-139",
+    "text": "Chính sách nào được giáo trình nêu trước hết để đảm bảo hài hòa các lợi ích kinh tế?",
+    "choices": [
+      "Chính sách phân phối thu nhập",
+      "Chính sách loại bỏ thị trường",
+      "Chính sách ngừng đầu tư hạ tầng",
+      "Chính sách không quản lý"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-140",
+    "text": "Để kiểm soát, ngăn ngừa các quan hệ lợi ích có ảnh hưởng tiêu cực, Nhà nước phải:",
+    "choices": [
+      "Chăm lo đời sống vật chất cho mọi người dân, khuyến khích làm giàu hợp pháp, tạo điều kiện và giúp đỡ bằng mọi biện pháp",
+      "Cấm mọi hoạt động làm giàu hợp pháp",
+      "Không cần nâng cao nhận thức về phân phối thu nhập",
+      "Không quan tâm đời sống vật chất"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-141",
+    "text": "Khi mâu thuẫn trong quan hệ lợi ích kinh tế phát sinh, theo giáo trình cần:",
+    "choices": [
+      "Giải quyết kịp thời; các cơ quan chức năng thường xuyên quan tâm, phát hiện mâu thuẫn và chuẩn bị giải pháp đối phó",
+      "Để mâu thuẫn tự kéo dài",
+      "Không cần cơ quan chức năng phát hiện",
+      "Chỉ giải quyết khi đã gây hậu quả lớn"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "mln122-142",
+    "text": "Nếu C = 80, V = 20, M = 20 thì tổng giá trị hàng hóa W bằng bao nhiêu?",
+    "choices": [
+      "100",
+      "120",
+      "80",
+      "40"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-143",
+    "text": "Nếu M = 30 và V = 20, tỷ suất giá trị thặng dư m' bằng bao nhiêu?",
+    "choices": [
+      "50%",
+      "100%",
+      "150%",
+      "200%"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "mln122-144",
+    "text": "Nếu m' = 150% và V = 40, giá trị thặng dư M bằng bao nhiêu?",
+    "choices": [
+      "40",
+      "50",
+      "60",
+      "80"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "mln122-145",
+    "text": "Nếu thời gian lao động thặng dư t' = 3 giờ và thời gian lao động tất yếu t = 5 giờ, tỷ suất giá trị thặng dư m' bằng bao nhiêu?",
+    "choices": [
+      "40%",
+      "60%",
+      "80%",
+      "166,7%"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-146",
+    "text": "Nếu C = 70 và V = 30, chi phí tư bản ứng trước K bằng bao nhiêu?",
+    "choices": [
+      "40",
+      "70",
+      "100",
+      "210"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "mln122-147",
+    "text": "Nếu tổng quỹ lương V = 120 và giá trị sức lao động của một công nhân v = 6, số công nhân N bằng bao nhiêu?",
+    "choices": [
+      "12",
+      "20",
+      "24",
+      "720"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-148",
+    "text": "Nếu M = 25 và Mc = 5, lợi nhuận P theo công thức P = M + Mc bằng bao nhiêu?",
+    "choices": [
+      "20",
+      "25",
+      "30",
+      "125"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "mln122-149",
+    "text": "Nếu P = 30 và K = 120, tỷ suất lợi nhuận P' bằng bao nhiêu?",
+    "choices": [
+      "20%",
+      "25%",
+      "30%",
+      "40%"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "mln122-150",
+    "text": "Ba ngành có lợi nhuận lần lượt 20, 30, 50 và tổng tư bản ứng trước lần lượt 100, 150, 250. Tỷ suất lợi nhuận bình quân P'(bq) bằng bao nhiêu?",
+    "choices": [
+      "10%",
+      "20%",
+      "25%",
+      "30%"
+    ],
+    "correctIndex": 1
   }
 ]

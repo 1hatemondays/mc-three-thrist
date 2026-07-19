@@ -14,6 +14,12 @@ const publicQuestion = (question) => {
   return safeQuestion;
 };
 
+const recordAnswer = (team, correct) => {
+  team.answerStats = team.answerStats || { correct: 0, wrong: 0 };
+  if (correct) team.answerStats.correct += 1;
+  else team.answerStats.wrong += 1;
+};
+
 const pickQuestions = (questions, random) => {
   const pool = [...questions];
   for (let index = 0; index < QUESTION_COUNT; index += 1) {
@@ -56,7 +62,7 @@ export const startMeteorShower = (
   for (const team of state.teams) {
     addRoundMessage(state, team.id, {
       title: "\u0110\u1ea5u tr\u00ed",
-      text: "10 c\u00e2u h\u1ecfi tranh quy\u1ec1n. Ch\u1edd 3-2-1 r\u1ed3i nh\u1ea5n Space."
+      text: "10 c\u00e2u h\u1ecfi tranh quy\u1ec1n. Ch\u1edd 3-2-1 r\u1ed3i nh\u1ea5n ph\u00edm c\u00e1ch."
     });
   }
   return { ok: true };
@@ -154,6 +160,7 @@ export const submitMeteorAnswer = (state, teamId, payload = {}, now = Date.now()
   const correct = answerIndex === question.correctIndex;
   if (correct) meteor.scores[teamId] += 1;
   const team = findTeam(state, teamId);
+  recordAnswer(team, correct);
   meteor.lastAnswer = { teamId, teamName: team.name, correct };
 
   if (meteor.questionIndex + 1 === meteor.totalQuestions) {

@@ -3,6 +3,7 @@ import { getHostAuctionState, getPlayerAuctionState } from "./auctionLogic.js";
 import { getHostCombatState, getPlayerCombatState } from "./combatLogic.js";
 import { getBombState } from "./eventLogic.js";
 import { getMeteorShowerState } from "./meteorLogic.js";
+import { getPlayerGameOverState } from "./gameOver.js";
 import { getHostSetupPreviewMap, getSetupSummary } from "./setupLogic.js";
 
 const cleanTeamName = (teamName) => String(teamName || "").trim().replace(/\s+/g, " ").slice(0, 40);
@@ -26,10 +27,11 @@ const makeTeam = (teamId, index, teamName) => ({
   discoveredCells: [{ x: 0, y: 0 }],
   revealedWalls: [],
   supportItems: [],
-  effects: {}
+  effects: {},
+  answerStats: { correct: 0, wrong: 0 }
 });
 
-export const gameState = {
+const createInitialGameState = () => ({
   config: {
     teamCount: 0,
     boardSize: 6
@@ -53,7 +55,10 @@ export const gameState = {
     meteorShower: null,
     bomb: null
   }
-};
+});
+
+export const gameState = createInitialGameState();
+export const resetGameState = () => Object.assign(gameState, createInitialGameState());
 
 export const findTeam = (teamId) => gameState.teams.find((team) => team.id === teamId);
 
@@ -95,7 +100,7 @@ export const getPlayerState = (teamId) => {
   if (!team) return null;
   return {
     config: gameState.config,
-    gameOver: gameState.gameOver,
+    gameOver: getPlayerGameOverState(gameState.gameOver, teamId),
     team: {
       id: team.id,
       name: team.name,
@@ -107,7 +112,7 @@ export const getPlayerState = (teamId) => {
       revealedWalls: team.revealedWalls,
       supportItems: team.supportItems
     },
-    leaderboard: gameState.teams.map(({ id, name, hp, score }) => ({ id, name, hp, score })),
+    teams: gameState.teams.map(({ id, name }) => ({ id, name })),
     round: {
       ...getPlayerRoundState(gameState.round, teamId),
       auction: getPlayerAuctionState(gameState, teamId),

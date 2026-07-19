@@ -4,8 +4,22 @@ test("prison event ends the triggering team's turn", () => {
   state.round.eventTiles = [{ type: EVENT_TILE_TYPES.PRISON, x: 1, y: 0 }];
 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
   const result = answerQuestion(state, "team1", { answerIndex: 1 });
 
+  assert.equal(result.result.event.endsTurn, true);
+  assert.equal(state.round.pendingAnswers.team1.answered, true);
+  assert.equal(state.round.activeTeamId, "team2");
+});
+
+test("prison also ends a free move into an already explored cell", () => {
+  const state = makeState();
+  state.teams[0].discoveredCells.push({ x: 1, y: 0 });
+  state.round.eventTiles = [{ type: EVENT_TILE_TYPES.PRISON, x: 1, y: 0 }];
+
+  const result = chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+
+  assert.equal(result.instant, true);
   assert.equal(result.result.event.endsTurn, true);
   assert.equal(state.round.pendingAnswers.team1.answered, true);
   assert.equal(state.round.activeTeamId, "team2");
@@ -18,6 +32,8 @@ import {
   answerQuestion,
   chooseMoveQuestion,
   getPlayerRoundState,
+  openQuestionForAnswer,
+  revealQuestionExplanation,
   stripQuestionAnswer
 } from "./movementLogic.js";
 
@@ -79,7 +95,7 @@ test("chooses a movement question without exposing hidden answer or event tiles"
   assert.equal(state.round.pendingAnswers.team1.direction, "right");
   assert.equal(state.round.pendingAnswers.team1.question.correctIndex, 1);
   assert.equal(stripQuestionAnswer(result.question).correctIndex, undefined);
-  assert.equal(publicRound.currentQuestion.correctIndex, undefined);
+  assert.equal(publicRound.currentQuestion, null);
   assert.equal(publicRound.eventTiles, undefined);
 });
 
@@ -102,7 +118,9 @@ test("moving back to a previously visited square after a normal move is instant 
   const state = makeState();
 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
   answerQuestion(state, "team1", { answerIndex: 1 });
+  revealQuestionExplanation(state);
 
   const backtrack = chooseMoveQuestion(state, "team1", { direction: "left" }, questions, () => 0);
 
@@ -129,13 +147,15 @@ test("reveals a wall immediately and keeps the target square hidden", () => {
   assert.deepEqual(state.teams[0].position, { x: 0, y: 0 });
   assert.deepEqual(state.teams[0].discoveredCells, [{ x: 0, y: 0 }]);
   assert.deepEqual(state.teams[0].revealedWalls, [{ x: 1, y: 0, side: "left" }]);
-  assert.equal(state.round.pendingAnswers.team1.answered, true);
+  assert.equal(state.round.pendingAnswers.team1, undefined);
+  assert.equal(state.round.turnEnergy.remaining, 2);
 });
 
 test("correct open moves score 10 and keep the turn alive", () => {
   const state = makeState();
 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
   const result = answerQuestion(state, "team1", { answerIndex: 1 });
 
   assert.equal(result.ok, true);
@@ -144,6 +164,7 @@ test("correct open moves score 10 and keep the turn alive", () => {
   assert.deepEqual(state.teams[0].position, { x: 1, y: 0 });
   assert.equal(state.teams[0].score, MOVE_SCORE);
   assert.equal(state.round.pendingAnswers.team1, undefined);
+  revealQuestionExplanation(state);
   assert.equal(chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0).ok, true);
 });
 
@@ -154,6 +175,7 @@ test("reaching a team's end point immediately ends the game and ranks that team 
   state.teams[0].score = 10;
 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
   const result = answerQuestion(state, "team1", { answerIndex: 1 });
 
   assert.equal(state.round.phase, ROUND_PHASES.GAME_OVER);
@@ -176,6 +198,7 @@ test("event tiles trigger after a successful move without changing the base move
   state.round.eventTiles = [{ id: "knowledge:1:0", type: EVENT_TILE_TYPES.KNOWLEDGE, x: 1, y: 0 }];
 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
   const result = answerQuestion(state, "team1", { answerIndex: 1 });
 
   assert.equal(result.result.success, true);
@@ -185,18 +208,35 @@ test("event tiles trigger after a successful move without changing the base move
   assert.deepEqual(state.round.eventTiles, []);
 });
 
-test("wrong answers end only that team's turn", () => {
+test("wrong answers consume one energy without moving", () => {
   const state = makeState();
 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
   const result = answerQuestion(state, "team1", { answerIndex: 0 });
 
   assert.equal(result.result.correct, false);
   assert.equal(result.result.success, false);
   assert.deepEqual(state.teams[0].position, { x: 0, y: 0 });
   assert.equal(state.teams[0].score, 0);
-  assert.equal(state.round.pendingAnswers.team1.answered, true);
+  assert.equal(state.round.pendingAnswers.team1, undefined);
   assert.equal(state.round.phase, ROUND_PHASES.MOVEMENT);
+  assert.equal(state.round.activeTeamId, "team1");
+  assert.equal(state.round.turnEnergy.remaining, 2);
+});
+
+test("movement questions update correct and wrong answer statistics", () => {
+  const correctState = makeState();
+  chooseMoveQuestion(correctState, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(correctState, "team1");
+  answerQuestion(correctState, "team1", { answerIndex: 1 });
+  assert.deepEqual(correctState.teams[0].answerStats, { correct: 1, wrong: 0 });
+
+  const wrongState = makeState();
+  chooseMoveQuestion(wrongState, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(wrongState, "team1");
+  answerQuestion(wrongState, "team1", { answerIndex: 0 });
+  assert.deepEqual(wrongState.teams[0].answerStats, { correct: 0, wrong: 1 });
 });
 
 test("hitting an implicit border ends the team's turn", () => {
@@ -210,7 +250,8 @@ test("hitting an implicit border ends the team's turn", () => {
   assert.equal(result.result.blockedReason, "border");
   assert.equal(result.result.success, false);
   assert.deepEqual(state.teams[0].position, { x: 0, y: 0 });
-  assert.equal(state.round.pendingAnswers.team1.answered, true);
+  assert.equal(state.round.pendingAnswers.team1, undefined);
+  assert.equal(state.round.turnEnergy.remaining, 2);
 });
 
 test("hitting a maze wall ends the team's turn", () => {
@@ -225,7 +266,8 @@ test("hitting a maze wall ends the team's turn", () => {
   assert.equal(result.result.blockedReason, "wall");
   assert.equal(result.result.success, false);
   assert.deepEqual(state.teams[0].position, { x: 0, y: 0 });
-  assert.equal(state.round.pendingAnswers.team1.answered, true);
+  assert.equal(state.round.pendingAnswers.team1, undefined);
+  assert.equal(state.round.turnEnergy.remaining, 2);
 });
 
 test("starts a sealed auction after every two completed movement rounds", () => {
@@ -233,23 +275,35 @@ test("starts a sealed auction after every two completed movement rounds", () => 
   const eventTiles = [{ type: EVENT_TILE_TYPES.DUEL, x: 3, y: 3 }];
   state.round.eventTiles = eventTiles;
 
+  state.round.turnEnergy = { teamId: "team1", remaining: 1, max: 3 };
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
   answerQuestion(state, "team1", { answerIndex: 0 });
+  revealQuestionExplanation(state);
   assert.equal(state.round.roundNumber, 1);
 
+  state.round.turnEnergy = { teamId: "team2", remaining: 1, max: 3 };
   chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team2");
   const result = answerQuestion(state, "team2", { answerIndex: 0 });
+  revealQuestionExplanation(state);
 
   assert.equal(result.roundComplete, true);
   assert.equal(state.round.roundNumber, 2);
   assert.equal(state.round.phase, ROUND_PHASES.MOVEMENT);
 
+  state.round.turnEnergy = { teamId: "team1", remaining: 1, max: 3 };
   chooseMoveQuestion(state, "team1", { direction: "down" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
   answerQuestion(state, "team1", { answerIndex: 0 });
+  revealQuestionExplanation(state);
   assert.equal(state.round.roundNumber, 2);
 
+  state.round.turnEnergy = { teamId: "team2", remaining: 1, max: 3 };
   chooseMoveQuestion(state, "team2", { direction: "down" }, questions, () => 0);
+  openQuestionForAnswer(state, "team2");
   const secondResult = answerQuestion(state, "team2", { answerIndex: 0 });
+  revealQuestionExplanation(state);
 
   assert.equal(secondResult.roundComplete, true);
   assert.equal(state.round.roundNumber, 2);
@@ -259,7 +313,7 @@ test("starts a sealed auction after every two completed movement rounds", () => 
   assert.deepEqual(state.round.auction.bids, {});
 });
 
-test("prevents a team from choosing while answering or after its turn ended", () => {
+test("prevents a team from choosing while answering", () => {
   const state = makeState();
 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
@@ -268,14 +322,13 @@ test("prevents a team from choosing while answering or after its turn ended", ()
     /câu hỏi hiện tại/i
   );
 
-  answerQuestion(state, "team1", { answerIndex: 0 });
-  assert.match(
-    chooseMoveQuestion(state, "team1", { direction: "down" }, questions, () => 0).error,
-    /hoàn thành lượt/i
-  );
+  openQuestionForAnswer(state, "team1");
+  assert.equal(answerQuestion(state, "team1", { answerIndex: 0 }).ok, true);
+  revealQuestionExplanation(state);
+  assert.equal(chooseMoveQuestion(state, "team1", { direction: "down" }, questions, () => 0).ok, true);
 });
 
-test("only the active team can move and a failed turn advances to the next team", () => {
+test("only the active team can move and a failed action keeps the turn until energy is empty", () => {
   const state = makeState();
 
   assert.match(
@@ -284,8 +337,61 @@ test("only the active team can move and a failed turn advances to the next team"
   );
 
   chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
   answerQuestion(state, "team1", { answerIndex: 0 });
 
+  assert.equal(state.round.activeTeamId, "team1");
+  assert.equal(state.round.turnEnergy.remaining, 2);
+  assert.equal(chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0).ok, false);
+});
+
+test("host must open a movement question before the active team can answer", () => {
+  const state = makeState();
+
+  chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+
+  assert.equal(getPlayerRoundState(state.round, "team1").currentQuestion, null);
+  assert.match(answerQuestion(state, "team1", { answerIndex: 1 }).error, /Người dẫn/i);
+  assert.equal(openQuestionForAnswer(state, "team1").ok, true);
+  assert.equal(getPlayerRoundState(state.round, "team1").currentQuestion.id, "q1");
+  assert.equal(answerQuestion(state, "team1", { answerIndex: 1 }).ok, true);
+});
+
+test("a team gets three energy-costing actions before turn advances", () => {
+  const state = makeState();
+
+  for (const direction of ["right", "right"]) {
+    chooseMoveQuestion(state, "team1", { direction }, questions, () => 0);
+    openQuestionForAnswer(state, "team1");
+    const result = answerQuestion(state, "team1", { answerIndex: 1 });
+    assert.equal(result.ok, true);
+    revealQuestionExplanation(state);
+    assert.equal(state.round.activeTeamId, "team1");
+  }
+
+  assert.equal(state.round.turnEnergy.remaining, 1);
+  chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
+  answerQuestion(state, "team1", { answerIndex: 1 });
+  revealQuestionExplanation(state);
+
   assert.equal(state.round.activeTeamId, "team2");
-  assert.equal(chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0).ok, true);
+  assert.equal(state.round.turnEnergy.teamId, "team2");
+  assert.equal(state.round.turnEnergy.remaining, 3);
+});
+
+test("backtracking to a discovered cell is free and does not spend turn energy", () => {
+  const state = makeState();
+
+  chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state, "team1");
+  answerQuestion(state, "team1", { answerIndex: 1 });
+  revealQuestionExplanation(state);
+  const afterExplore = state.round.turnEnergy.remaining;
+
+  const backtrack = chooseMoveQuestion(state, "team1", { direction: "left" }, questions, () => 0);
+
+  assert.equal(backtrack.instant, true);
+  assert.equal(state.round.activeTeamId, "team1");
+  assert.equal(state.round.turnEnergy.remaining, afterExplore);
 });

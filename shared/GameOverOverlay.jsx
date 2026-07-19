@@ -1,10 +1,22 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./gameOver.css";
 
 const PARTICLE_COUNT = 28;
 
 export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
+  const [dismissedKey, setDismissedKey] = useState("");
+
+  useEffect(() => {
+    if (!gameOver || gameOver.stage === "leaderboard") return undefined;
+    const key = `${gameOver.winnerId}:${gameOver.stage || "stats"}`;
+    setDismissedKey("");
+    const timer = setTimeout(() => setDismissedKey(key), 2600);
+    return () => clearTimeout(timer);
+  }, [gameOver?.winnerId, gameOver?.stage]);
+
   if (!gameOver) return null;
+  const overlayKey = `${gameOver.winnerId}:${gameOver.stage || "stats"}`;
+  if (gameOver.stage === "leaderboard" || dismissedKey === overlayKey) return null;
 
   const isWinner = currentTeamId === gameOver.winnerId;
   const label = isWinner
@@ -29,7 +41,7 @@ export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
       <section className="game-over-card">
         <header className="game-over-heading">
           <p>{label}</p>
-          <h2 id="gameOverTitle"><span>GAME</span> <strong>OVER</strong></h2>
+          <h2 id="gameOverTitle"><span>KẾT</span> <strong>THÚC</strong></h2>
         </header>
 
         <div className="game-over-champion">

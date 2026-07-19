@@ -24,7 +24,7 @@ export const EVENT_TILE_CATALOG = [
   {
     type: EVENT_TILE_TYPES.DUEL,
     name: "Ô đối kháng",
-    symbol: "VS",
+    symbol: "ĐẤU",
     color: "#ef8f6b",
     lucideIcon: "swords",
     description: "Kích hoạt đối kháng với một đội khác."
@@ -32,7 +32,7 @@ export const EVENT_TILE_CATALOG = [
   {
     type: EVENT_TILE_TYPES.POSITION_SWAP,
     name: "Trao đổi vị trí",
-    symbol: "SW",
+    symbol: "ĐỔI",
     color: "#7bb7ff",
     lucideIcon: "repeat-2",
     description: "Có thể đổi vị trí với một đội khác hoặc bỏ qua."
@@ -48,7 +48,7 @@ export const EVENT_TILE_CATALOG = [
   {
     type: EVENT_TILE_TYPES.TELEPORT,
     name: "Dịch chuyển",
-    symbol: "TP",
+    symbol: "DỊCH",
     color: "#65c8a2",
     lucideIcon: "sparkles",
     description: "Di chuyển đến một ô bất kì."
@@ -56,7 +56,7 @@ export const EVENT_TILE_CATALOG = [
   {
     type: EVENT_TILE_TYPES.KNOWLEDGE,
     name: "Tri thức",
-    symbol: "2X",
+    symbol: "ĐÔI",
     color: "#f0b94b",
     lucideIcon: "brain",
     description: "Trả lời câu hỏi khó; đúng thì nhận thêm 10 điểm."
@@ -64,10 +64,10 @@ export const EVENT_TILE_CATALOG = [
   {
     type: EVENT_TILE_TYPES.MONSTER_ATTACK,
     name: "Qu\u00e1i v\u1eadt t\u1ea5n c\u00f4ng",
-    symbol: "MV",
+    symbol: "QUÁI",
     color: "#bd473f",
     lucideIcon: "skull",
-    description: "M\u1ed7i \u0111\u1ed9i tr\u1eeb 10 \u0111i\u1ec3m; kh\u00f4ng \u0111\u1ee7 \u0111i\u1ec3m th\u00ec m\u1ea5t 10 HP. L\u00e1 ch\u1eafn s\u1ebd b\u1ea3o v\u1ec7."
+    description: "M\u1ed7i \u0111\u1ed9i tr\u1eeb 10 \u0111i\u1ec3m; kh\u00f4ng \u0111\u1ee7 \u0111i\u1ec3m th\u00ec m\u1ea5t 10 máu. L\u00e1 ch\u1eafn s\u1ebd b\u1ea3o v\u1ec7."
   },
   {
     type: EVENT_TILE_TYPES.METEOR_STRIKE,
@@ -75,12 +75,12 @@ export const EVENT_TILE_CATALOG = [
     symbol: "☄",
     color: "#ff784f",
     lucideIcon: "sparkles",
-    description: "T\u1ea5t c\u1ea3 \u0111\u1ed9i m\u1ea5t 10 HP; L\u00e1 ch\u1eafn s\u1ebd b\u1ea3o v\u1ec7."
+    description: "T\u1ea5t c\u1ea3 \u0111\u1ed9i m\u1ea5t 10 máu; L\u00e1 ch\u1eafn s\u1ebd b\u1ea3o v\u1ec7."
   },
   {
     type: EVENT_TILE_TYPES.PRISON,
     name: "Nh\u1ed1t t\u00f9",
-    symbol: "TU",
+    symbol: "TÙ",
     color: "#777066",
     lucideIcon: "lock-keyhole",
     description: "\u0110\u1ed9i b\u01b0\u1edbc v\u00e0o b\u1ecb m\u1ea5t l\u01b0\u1ee3t hi\u1ec7n t\u1ea1i."
@@ -88,10 +88,10 @@ export const EVENT_TILE_CATALOG = [
   {
     type: EVENT_TILE_TYPES.BOMB,
     name: "Bom",
-    symbol: "BO",
+    symbol: "BOM",
     color: "#1d3329",
     lucideIcon: "bomb",
-    description: "Tr\u1ea3 l\u1eddi trong 10 gi\u00e2y \u0111\u1ec3 chuy\u1ec3n bom; sai ho\u1eb7c h\u1ebft gi\u1edd m\u1ea5t 30 HP."
+    description: "Tr\u1ea3 l\u1eddi trong 10 gi\u00e2y \u0111\u1ec3 chuy\u1ec3n bom; sai ho\u1eb7c h\u1ebft gi\u1edd m\u1ea5t 30 máu."
   },
   {
     type: EVENT_TILE_TYPES.BLESSING,
@@ -99,7 +99,7 @@ export const EVENT_TILE_CATALOG = [
     symbol: "+",
     color: "#65c8a2",
     lucideIcon: "heart-handshake",
-    description: "T\u1ea5t c\u1ea3 \u0111\u1ed9i h\u1ed3i 10 HP, c\u00f3 th\u1ec3 v\u01b0\u1ee3t 100 HP."
+    description: "T\u1ea5t c\u1ea3 \u0111\u1ed9i h\u1ed3i 10 máu, c\u00f3 th\u1ec3 v\u01b0\u1ee3t 100 máu."
   }
 ];
 
@@ -107,7 +107,7 @@ export const SUPPORT_ITEM_CATALOG = [
   {
     type: SUPPORT_ITEM_TYPES.DIRECTION_HINT,
     name: "Gợi ý hướng",
-    symbol: "H",
+    symbol: "GỢI",
     color: "#f4e06d",
     lucideIcon: "lightbulb",
     minPrice: 10,
@@ -116,7 +116,7 @@ export const SUPPORT_ITEM_CATALOG = [
   {
     type: SUPPORT_ITEM_TYPES.SHIELD,
     name: "Lá chắn",
-    symbol: "SH",
+    symbol: "CHẮN",
     color: "#8bd6e8",
     lucideIcon: "shield-check",
     minPrice: 20,
@@ -125,7 +125,7 @@ export const SUPPORT_ITEM_CATALOG = [
   {
     type: SUPPORT_ITEM_TYPES.DOUBLE_SCORE,
     name: "Nhân đôi điểm",
-    symbol: "2X",
+    symbol: "ĐÔI",
     color: "#f0b94b",
     lucideIcon: "badge-plus",
     minPrice: 20,
@@ -134,7 +134,7 @@ export const SUPPORT_ITEM_CATALOG = [
   {
     type: SUPPORT_ITEM_TYPES.FREEZE_OPPONENT,
     name: "Đóng băng đối thủ",
-    symbol: "FR",
+    symbol: "ĐÓNG",
     color: "#7bb7ff",
     lucideIcon: "snowflake",
     minPrice: 25,
@@ -143,7 +143,7 @@ export const SUPPORT_ITEM_CATALOG = [
   {
     type: SUPPORT_ITEM_TYPES.TRAP,
     name: "Cạm bẫy",
-    symbol: "TR",
+    symbol: "BẪY",
     color: "#ef8f6b",
     lucideIcon: "triangle-alert",
     minPrice: 25,
@@ -152,11 +152,11 @@ export const SUPPORT_ITEM_CATALOG = [
   {
     type: SUPPORT_ITEM_TYPES.METEOR_SHOWER,
     name: "\u0110\u1ea5u tr\u00ed",
-    symbol: "DT",
+    symbol: "ĐẤU",
     color: "#ff784f",
     lucideIcon: "sparkles",
     minPrice: 30,
-    description: "10 c\u00e2u h\u1ecfi tranh quy\u1ec1n b\u1eb1ng ph\u00edm Space; th\u1eafng +50 \u0111i\u1ec3m."
+    description: "10 c\u00e2u h\u1ecfi tranh quy\u1ec1n b\u1eb1ng ph\u00edm c\u00e1ch; th\u1eafng +50 \u0111i\u1ec3m."
   }
 ];
 

@@ -4,7 +4,8 @@ import { EVENTS } from "../../shared/constants.js";
 import { GameOverOverlay } from "../../shared/GameOverOverlay.jsx";
 import { BombOverlay } from "../../shared/BombOverlay.jsx";
 import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
-import { getEventTileMeta } from "../../shared/gameContent.js";
+import { FinalKahootLeaderboard, FinalStatsCard } from "../../shared/FinalStats.jsx";
+import { EVENT_TILE_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { hasWall } from "../../shared/maze.js";
 
 const SERVER_URL =
@@ -45,6 +46,11 @@ const TEAM_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#f4
 const TEAM_ICONS = ["♠", "♥", "◆", "♣", "★", "✦", "●", "▲"];
 // Ô sự kiện trên màn TV hiển thị đồng nhất, không lộ loại — giữ tính bí ẩn.
 const MYSTERY_EVENT = { symbol: "?", color: "#d995ff" };
+const GLOBAL_EVENT_TYPES = new Set([
+  EVENT_TILE_TYPES.MONSTER_ATTACK,
+  EVENT_TILE_TYPES.METEOR_STRIKE,
+  EVENT_TILE_TYPES.BLESSING
+]);
 const CONFETTI_COUNT = 60;
 const CONFETTI_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#fff9e9"];
 const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
@@ -82,6 +88,30 @@ const Confetti = ({ seed, count = CONFETTI_COUNT }) => {
     </div>
   );
 };
+const EventAnnouncement = ({ banner }) => {
+  if (!banner) return null;
+  const eventClass = banner.type ? " event-" + banner.type : "";
+
+  return (
+    <div
+      aria-atomic="true"
+      aria-live="assertive"
+      className={"tv-event-layer" + (banner.global ? " global" : "") + eventClass}
+      role="status"
+    >
+      <div className="tv-banner" key={banner.key}>
+        <span className="tv-banner-icon" style={{ background: banner.color || "#f0b94b" }}>
+          {banner.symbol}
+        </span>
+        <div>
+          <strong>{banner.title}</strong>
+          <span>{banner.text}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const INTERIOR_EDGES = [
   ...Array.from({ length: BOARD_SIZE }, (_, y) =>
     Array.from({ length: BOARD_SIZE - 1 }, (_, index) => ({
@@ -138,7 +168,7 @@ const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
         <span className={submitted ? "status ready" : "status"}>{submitted ? "Đã nộp" : "Đang chờ"}</span>
       </header>
 
-      <div className="board" aria-label={`${cardLabel} maze`}>
+      <div className="board" aria-label={`${cardLabel} mê cung`}>
         {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
           const x = index % BOARD_SIZE;
           const y = Math.floor(index / BOARD_SIZE);
@@ -223,11 +253,17 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
               const x = index % BOARD_SIZE;
               const y = Math.floor(index / BOARD_SIZE);
               const cellTeams = teams.filter((team) => team.position?.x === x && team.position?.y === y);
+              const visibleTeams = cellTeams.slice(0, 4);
+              const extraTeamCount = Math.max(0, cellTeams.length - visibleTeams.length);
               const eventTile = eventTiles.find((tile) => tile.x === x && tile.y === y);
               const bobDelay = ((index % 7) * 0.25).toFixed(2) + "s";
 
               return (
-                <div className="guide-cell" key={x + ":" + y}>
+                <div
+                  className={"guide-cell" + (cellTeams.length > 1 ? " has-stack" : "")}
+                  key={x + ":" + y}
+                  style={{ gridColumn: x * 2 + 2, gridRow: y * 2 + 2 }}
+                >
                   <span className="guide-coord">{x + 1}.{y + 1}</span>
                   {eventTile && !cellTeams.length && (
                     <span className="guide-event-marker" style={{ animationDelay: bobDelay }} title="Ô sự kiện bí ẩn">
@@ -238,11 +274,11 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
                     </span>
                   )}
                   <div className="guide-markers">
-                    {cellTeams.map((team) => {
+                    {visibleTeams.map((team) => {
                       const realIndex = teams.findIndex((item) => item.id === team.id);
                       return (
                         <span
-                          className="team-marker round bob"
+                          className={"team-marker round" + (cellTeams.length === 1 ? " bob" : " mini")}
                           key={team.id}
                           style={{ "--team-color": teamColor(realIndex), animationDelay: bobDelay }}
                           title={team.name}
@@ -251,26 +287,34 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
                         </span>
                       );
                     })}
+                    {extraTeamCount > 0 && <span className="team-marker-overflow">+{extraTeamCount}</span>}
                   </div>
                 </div>
               );
             })}
+
+            {BORDER_SEGMENTS.map((edge) => (
+              <div
+                aria-hidden="true"
+                className={`guide-edge border ${edge.orientation}`}
+                key={`guide-border-${edge.side}-${edge.x}-${edge.y}`}
+                style={edgeGridPosition(edge)}
+              />
+            ))}
+
+            {INTERIOR_EDGES.map((edge) => (
+              <div
+                aria-hidden="true"
+                className={`guide-edge ${edge.orientation}`}
+                key={`guide-edge-${edge.side}-${edge.x}-${edge.y}`}
+                style={edgeGridPosition(edge)}
+              />
+            ))}
           </div>
 
           <Confetti seed={confettiSeed} />
           {flashSeed ? <div className="tv-flash" key={"flash-" + flashSeed} /> : null}
-
-          {banner && (
-            <div className="tv-banner" key={banner.key}>
-              <span className="tv-banner-icon" style={{ background: banner.color || "#f0b94b" }}>
-                {banner.symbol}
-              </span>
-              <div>
-                <strong>{banner.title}</strong>
-                <span>{banner.text}</span>
-              </div>
-            </div>
-          )}
+          <EventAnnouncement banner={banner} />
         </div>
 
         <aside className="guide-panel">
@@ -285,7 +329,7 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
                 <small>
                   {gameOver
                     ? team.score + " điểm / " + team.hp + " máu"
-                    : "(" + ((team.position?.x ?? 0) + 1) + ", " + ((team.position?.y ?? 0) + 1) + ") / " + team.score + " điểm"}
+                    : "(" + ((team.position?.x ?? 0) + 1) + ", " + ((team.position?.y ?? 0) + 1) + ")"}
                 </small>
               </div>
             </div>
@@ -296,10 +340,12 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
   );
 };
 
-const HostRoundBoxes = ({ gameOver, round }) => {
+const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion, onShowLeaderboard, round }) => {
   if (!round) return null;
   const auction = round.auction;
   const combat = round.combat;
+  const questionControl = round.questionControl;
+  const correctChoice = questionControl?.question?.choices?.[questionControl.question.correctIndex];
 
   return (
     <div className="host-boxes">
@@ -307,7 +353,16 @@ const HostRoundBoxes = ({ gameOver, round }) => {
         <section className="host-box game-over-box">
           <p>Kết thúc</p>
           <strong>{gameOver.winnerName} về đích đầu tiên</strong>
-          <small>Bảng xếp hạng cuối cùng đã được chốt.</small>
+          <small>
+            {gameOver.stage === "leaderboard"
+              ? "Đang chiếu bảng xếp hạng kiểu Kahoot."
+              : "Đang xem thống kê từng đội."}
+          </small>
+          {gameOver.stage !== "leaderboard" && (
+            <button className="host-box-action" onClick={onShowLeaderboard} type="button">
+              Hiện bảng xếp hạng cuối
+            </button>
+          )}
         </section>
       )}
 
@@ -318,6 +373,39 @@ const HostRoundBoxes = ({ gameOver, round }) => {
         </strong>
         <small>{"Vòng " + (round.roundNumber || 1)}</small>
       </section>
+
+      {!gameOver && (
+        <section className="host-box active-spotlight">
+          <p>{"Đội đang lượt"}</p>
+          <strong>{activeTeam?.name || "Chưa có đội đang lượt"}</strong>
+          <small>
+            {round.turnEnergy
+              ? "Năng lượng " + round.turnEnergy.remaining + "/" + round.turnEnergy.max
+              : "Chờ lượt mới"}
+          </small>
+        </section>
+      )}
+
+      {questionControl && !gameOver && (
+        <section className="host-box host-question-box">
+          <p>{"Câu hỏi người dẫn"}</p>
+          <strong>{questionControl.question?.text}</strong>
+          <ol>
+            {(questionControl.question?.choices || []).map((choice, index) => (
+              <li className={questionControl.reveal && index === questionControl.question.correctIndex ? "correct" : ""} key={choice}>
+                {String.fromCharCode(65 + index)}. {choice}
+              </li>
+            ))}
+          </ol>
+          {!questionControl.answerOpen && !questionControl.answered && (
+            <button className="host-box-action" onClick={onOpenQuestion} type="button">Mở trả lời</button>
+          )}
+          {questionControl.answered && !questionControl.reveal && (
+            <button className="host-box-action" onClick={onRevealQuestion} type="button">Hiện đáp án</button>
+          )}
+          {questionControl.reveal && <small>{"Đáp án đúng: " + correctChoice}</small>}
+        </section>
+      )}
 
       {auction && (round.phase === "auction" || auction.result) && (
         <section className="host-box auction-box">
@@ -341,7 +429,7 @@ const HostRoundBoxes = ({ gameOver, round }) => {
           </div>
           <div className="combat-matchup">
             <strong>{combat.attacker?.name || "Đội thách đấu"}</strong>
-            <b>VS</b>
+            <b>ĐẤU</b>
             <strong>{combat.defender?.name || "Đội phòng thủ"}</strong>
           </div>
           {!combat.result && (
@@ -354,7 +442,7 @@ const HostRoundBoxes = ({ gameOver, round }) => {
             {combat.result
               ? combat.result.shielded
                 ? combat.result.winnerName + " thắng · lá chắn đã chặn sát thương"
-                : combat.result.winnerName + " thắng · " + combat.result.loserName + " mất " + combat.result.hpLoss + " HP"
+                : combat.result.winnerName + " thắng đối kháng"
               : "Điểm cược đang được niêm phong."}
           </small>
         </section>
@@ -386,10 +474,8 @@ export default function App() {
     const showBanner = (banner, celebrate) => {
       clearTimeout(bannerTimerRef.current);
       setTvBanner({ ...banner, key: Date.now() });
-      if (celebrate) {
-        setConfettiSeed((n) => n + 1);
-        setFlashSeed((n) => n + 1);
-      }
+      setFlashSeed((n) => n + 1);
+      if (celebrate) setConfettiSeed((n) => n + 1);
       bannerTimerRef.current = setTimeout(() => setTvBanner(null), 4300);
     };
 
@@ -407,8 +493,10 @@ export default function App() {
         title: (team?.name || "Một đội") + " kích hoạt " + event.name + "!",
         text: event.message || event.name,
         color: event.color,
-        symbol: event.symbol
-      });
+        symbol: event.symbol,
+        type: event.type,
+        global: GLOBAL_EVENT_TYPES.has(event.type)
+      }, event.type === EVENT_TILE_TYPES.BLESSING);
     };
 
     const onCombatResult = (combat) => {
@@ -418,9 +506,9 @@ export default function App() {
           title: (combat.winnerName || "Một đội") + " thắng đối kháng!",
           text: combat.shielded
             ? (combat.loserName || "Đối thủ") + " được lá chắn bảo vệ."
-            : (combat.loserName || "Đối thủ") + " mất " + (combat.hpLoss ?? 0) + " máu.",
+            : "Hai đội đã phân thắng bại.",
           color: "#ef8f6b",
-          symbol: "VS"
+          symbol: "ĐẤU"
         },
         true
       );
@@ -434,13 +522,23 @@ export default function App() {
       setHostAccessKey("");
       setHostAuthError(
         error.message === "host_access_not_configured"
-          ? "M\u00e1y ch\u1ee7 ch\u01b0a c\u1ea5u h\u00ecnh m\u00e3 truy c\u1eadp Host."
+          ? "M\u00e1y ch\u1ee7 ch\u01b0a c\u1ea5u h\u00ecnh m\u00e3 truy c\u1eadp ng\u01b0\u1eddi d\u1eabn."
           : "M\u00e3 truy c\u1eadp kh\u00f4ng \u0111\u00fang."
       );
     };
 
+    const onGameRestart = () => {
+      try {
+        window.localStorage.clear();
+      } catch {
+        // Reload still returns the host to a clean game.
+      }
+      window.location.reload();
+    };
+
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
+    socket.on(EVENTS.GAME_RESTART, onGameRestart);
     socket.on(EVENTS.COMBAT_RESULT, onCombatResult);
     socket.on("connect_error", onConnectError);
 
@@ -448,6 +546,7 @@ export default function App() {
       clearTimeout(bannerTimerRef.current);
       socket.off(EVENTS.GAME_STATE, onState);
       socket.off(EVENTS.ROUND_RESULT, onRoundResult);
+      socket.off(EVENTS.GAME_RESTART, onGameRestart);
       socket.off(EVENTS.COMBAT_RESULT, onCombatResult);
       socket.off("connect_error", onConnectError);
       socketRef.current = null;
@@ -504,13 +603,32 @@ export default function App() {
     socketRef.current?.emit(EVENTS.SETUP_START_GAME);
   };
 
+  const showFinalLeaderboard = () => {
+    socketRef.current?.emit(EVENTS.GAME_OVER_SHOW_LEADERBOARD);
+  };
+
+  const openQuestion = () => {
+    socketRef.current?.emit(EVENTS.QUESTION_OPEN);
+  };
+
+  const revealQuestion = () => {
+    socketRef.current?.emit(EVENTS.QUESTION_REVEAL);
+  };
+
+  const restartGame = () => {
+    if (window.confirm("Khởi động lại sẽ xóa toàn bộ đội, mê cung và tiến trình hiện tại. Tiếp tục?")) {
+      socketRef.current?.emit(EVENTS.GAME_RESTART);
+    }
+  };
+
+
   if (!hostAccessKey) {
     return (
       <main className="host-auth-shell">
         <form className="host-auth-panel" onSubmit={unlockHost}>
           <p>{"M\u00e0n h\u00ecnh qu\u1ea3n tr\u1ecb"}</p>
           <h1>{APP_TITLE}</h1>
-          <label htmlFor="host-access-key">{"M\u00e3 truy c\u1eadp Host"}</label>
+          <label htmlFor="host-access-key">{"M\u00e3 truy c\u1eadp ng\u01b0\u1eddi d\u1eabn"}</label>
           <input
             autoComplete="current-password"
             autoFocus
@@ -546,9 +664,12 @@ export default function App() {
       <GameOverOverlay gameOver={state?.gameOver} />
       <BombOverlay bomb={state?.round?.bomb} />
       <MeteorShowerOverlay meteor={state?.round?.meteorShower} />
+      <Confetti seed={confettiSeed} />
+      {flashSeed ? <div className="tv-flash" key={"flash-" + flashSeed} /> : null}
+      <EventAnnouncement banner={tvBanner} />
       <header className="topbar">
         <div>
-          <p>{"M\u00e0n h\u00ecnh host"}</p>
+          <p>{"M\u00e0n h\u00ecnh ng\u01b0\u1eddi d\u1eabn"}</p>
           <h1>{APP_TITLE}</h1>
         </div>
 
@@ -561,7 +682,10 @@ export default function App() {
             {"M\u00e0n d\u1eabn"}
           </a>
           <button className="lock-host-button" onClick={lockHost} type="button">
-            {"Kh\u00f3a Host"}
+            {"Kh\u00f3a ng\u01b0\u1eddi d\u1eabn"}
+          </button>
+          <button className="restart-button" onClick={restartGame} type="button">
+            {"Khởi động lại"}
           </button>
         </div>
 
@@ -577,99 +701,122 @@ export default function App() {
       {state?.error && <div className="host-error">{state.error}</div>}
 
       <section className="layout">
-        <div className="maps">
-          {teams.map((team) => {
-            if (!isSetupReview) {
+        <div className={gameOver ? "maps final-host-stage" : "maps"}>
+          {gameOver?.stage === "leaderboard" ? (
+            <FinalKahootLeaderboard rankings={gameOver.rankings || []} />
+          ) : gameOver ? (
+            (gameOver.summaries || []).map((summary) => (
+              <FinalStatsCard key={summary.teamId} summary={summary} titlePrefix="Tổng kết" />
+            ))
+          ) : (
+            teams.map((team) => {
+              if (!isSetupReview) {
+                return (
+                  <Board
+                    cardLabel={team.name}
+                    key={team.id}
+                    metaLabel={team.startPoint ? "\u0110\u00e3 s\u1eb5n s\u00e0ng" : "\u0110ang ch\u1edd m\u00ea cung"}
+                    eventTiles={state?.round?.eventTiles || []}
+                    submitted={submitted.has(team.id)}
+                    team={team}
+                  />
+                );
+              }
+
+              const preview = setupPreviews[team.id];
+
               return (
                 <Board
                   cardLabel={team.name}
                   key={team.id}
-                  metaLabel={team.startPoint ? "\u0110\u00e3 s\u1eb5n s\u00e0ng" : "\u0110ang ch\u1edd m\u00ea cung"}
-                  eventTiles={state?.round?.eventTiles || []}
+                  metaLabel={
+                    preview
+                      ? "\u0110\u00e3 n\u1ed9p - chia ng\u1eabu nhi\u00ean khi \u0111\u1ee7 \u0111\u1ed9i"
+                      : "\u0110ang ch\u1edd n\u1ed9p"
+                  }
                   submitted={submitted.has(team.id)}
-                  team={team}
+                  team={preview || { ...team, walls: [], startPoint: null, endPoint: null }}
                 />
               );
-            }
-
-            const preview = setupPreviews[team.id];
-
-            return (
-              <Board
-                cardLabel={team.name}
-                key={team.id}
-                metaLabel={
-                  preview
-                    ? "\u0110\u00e3 n\u1ed9p - chia ng\u1eabu nhi\u00ean khi \u0111\u1ee7 \u0111\u1ed9i"
-                    : "\u0110ang ch\u1edd n\u1ed9p"
-                }
-                submitted={submitted.has(team.id)}
-                team={preview || { ...team, walls: [], startPoint: null, endPoint: null }}
-              />
-            );
-          })}
+            })
+          )}
         </div>
 
         <aside className="leaderboard">
-          <HostRoundBoxes gameOver={gameOver} round={state?.round} />
+          <HostRoundBoxes
+            activeTeam={teams.find((team) => team.id === state?.round?.activeTeamId)}
+            gameOver={gameOver}
+            onOpenQuestion={openQuestion}
+            onRevealQuestion={revealQuestion}
+            onShowLeaderboard={showFinalLeaderboard}
+            round={state?.round}
+          />
 
-          <h2>{gameOver ? "Xếp hạng chung cuộc" : "Bảng điểm"}</h2>
+          <h2>{gameOver ? "Xếp hạng chung cuộc" : "Trạng thái đội"}</h2>
           {rankingRows.map((team, index) => (
             <div className={"rank" + (gameOver && index === 0 ? " winner" : state?.round?.activeTeamId === (team.teamId || team.id) ? " is-active" : "")} key={team.teamId || team.id}>
               <span>{gameOver ? "#" + (team.placement || index + 1) + " · " + team.teamName : team.name}</span>
-              <strong>{team.score} {"\u0111i\u1ec3m"} / {team.hp} {"m\u00e1u"}</strong>
+              <strong>
+                {gameOver
+                  ? team.score + " \u0111i\u1ec3m / " + team.hp + " m\u00e1u"
+                  : state?.round?.activeTeamId === (team.teamId || team.id)
+                    ? "\u0110ang l\u00ean s\u00f3ng"
+                    : "Chờ lượt"}
+              </strong>
             </div>
           ))}
 
-          <h2 className="setup-title">{"Thi\u1ebft l\u1eadp"}</h2>
-          <div className="rank">
-            <span>{"Tr\u1ea1ng th\u00e1i"}</span>
-            <strong>
-              {setupStarted
-                ? gameOver
-                  ? "Đã kết thúc"
-                  : "\u0110ang ch\u01a1i"
-                : state?.setup?.complete
-                  ? "Ch\u1edd b\u1eaft \u0111\u1ea7u"
-                  : "\u0110ang n\u1ed9p m\u00ea cung"}
-            </strong>
-          </div>
-
-          <h2 className="setup-title">{"Th\u1ee9 t\u1ef1 l\u01b0\u1ee3t ch\u01a1i"}</h2>
-          <div className="turn-order">
-            {orderedTeams.map((team, index) => (
-              <div
-                className={"rank turn-order-row" + (state?.round?.activeTeamId === team.id ? " is-active" : "")}
-                key={team.id + "-turn"}
-              >
-                <span><b>{index + 1}</b>{team.name}</span>
-                {setupStarted ? (
-                  <strong>{state?.round?.activeTeamId === team.id ? "\u0110ang l\u01b0\u1ee3t" : "Ch\u1edd"}</strong>
-                ) : (
-                  <div className="turn-order-actions">
-                    <button
-                      aria-label={"\u0110\u01b0a " + team.name + " l\u00ean"}
-                      disabled={index === 0}
-                      onClick={() => moveTeam(index, -1)}
-                      type="button"
-                    >{"\u2191"}</button>
-                    <button
-                      aria-label={"\u0110\u01b0a " + team.name + " xu\u1ed1ng"}
-                      disabled={index === orderedTeams.length - 1}
-                      onClick={() => moveTeam(index, 1)}
-                      type="button"
-                    >{"\u2193"}</button>
-                  </div>
-                )}
+          {!gameOver && (
+            <>
+              <h2 className="setup-title">{"Thi\u1ebft l\u1eadp"}</h2>
+              <div className="rank">
+                <span>{"Tr\u1ea1ng th\u00e1i"}</span>
+                <strong>
+                  {setupStarted
+                    ? "\u0110ang ch\u01a1i"
+                    : state?.setup?.complete
+                      ? "Ch\u1edd b\u1eaft \u0111\u1ea7u"
+                      : "\u0110ang n\u1ed9p m\u00ea cung"}
+                </strong>
               </div>
-            ))}
-          </div>
-          {teams.map((team) => (
-            <div className="rank" key={team.id + "-setup"}>
-              <span>{team.name}</span>
-              <strong>{submitted.has(team.id) ? "\u0110\u00e3 n\u1ed9p" : "\u0110ang ch\u1edd"}</strong>
-            </div>
-          ))}
+
+              <h2 className="setup-title">{"Th\u1ee9 t\u1ef1 l\u01b0\u1ee3t ch\u01a1i"}</h2>
+              <div className="turn-order">
+                {orderedTeams.map((team, index) => (
+                  <div
+                    className={"rank turn-order-row" + (state?.round?.activeTeamId === team.id ? " is-active" : "")}
+                    key={team.id + "-turn"}
+                  >
+                    <span><b>{index + 1}</b>{team.name}</span>
+                    {setupStarted ? (
+                      <strong>{state?.round?.activeTeamId === team.id ? "\u0110ang l\u01b0\u1ee3t" : "Ch\u1edd"}</strong>
+                    ) : (
+                      <div className="turn-order-actions">
+                        <button
+                          aria-label={"\u0110\u01b0a " + team.name + " l\u00ean"}
+                          disabled={index === 0}
+                          onClick={() => moveTeam(index, -1)}
+                          type="button"
+                        >{"\u2191"}</button>
+                        <button
+                          aria-label={"\u0110\u01b0a " + team.name + " xu\u1ed1ng"}
+                          disabled={index === orderedTeams.length - 1}
+                          onClick={() => moveTeam(index, 1)}
+                          type="button"
+                        >{"\u2193"}</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {teams.map((team) => (
+                <div className="rank" key={team.id + "-setup"}>
+                  <span>{team.name}</span>
+                  <strong>{submitted.has(team.id) ? "\u0110\u00e3 n\u1ed9p" : "\u0110ang ch\u1edd"}</strong>
+                </div>
+              ))}
+            </>
+          )}
         </aside>
       </section>
     </main>

@@ -4,6 +4,7 @@ import { DIRECTIONS, EVENTS, ROUND_PHASES } from "../../shared/constants.js";
 import { GameOverOverlay } from "../../shared/GameOverOverlay.jsx";
 import { BombOverlay } from "../../shared/BombOverlay.jsx";
 import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
+import { FinalKahootLeaderboard, FinalStatsCard } from "../../shared/FinalStats.jsx";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
 import smokeTexture from "./assets/smoke-2.png";
@@ -281,7 +282,7 @@ const SetupBoard = ({ state, onSubmit }) => {
             ? draftError
             : submitted
               ? waitingForHostStart
-                ? "\u0110\u1ee7 m\u00ea cung r\u1ed3i. Ch\u1edd host b\u1ea5m B\u1eaft \u0111\u1ea7u."
+                ? "\u0110\u1ee7 m\u00ea cung r\u1ed3i. Ch\u1edd ng\u01b0\u1eddi d\u1eabn b\u1ea5m B\u1eaft \u0111\u1ea7u."
                 : "\u0110\u00e3 n\u1ed9p m\u00ea cung. Ch\u1edd c\u00e1c \u0111\u1ed9i c\u00f2n l\u1ea1i."
               : !mazeConnected
                 ? "M\u00ea cung ph\u1ea3i li\u00ean th\u00f4ng, kh\u00f4ng \u0111\u01b0\u1ee3c ch\u1eb7n t\u00e1ch khu v\u1ef1c."
@@ -569,7 +570,7 @@ const ResultCard = ({ result }) => {
   );
 };
 
-const PendingEventCard = ({ event, onResolve }) => {
+const PendingEventCard = ({ boardSize, currentPosition, event, onResolve }) => {
   if (!event) return null;
 
   if (event.question) {
@@ -597,6 +598,49 @@ const PendingEventCard = ({ event, onResolve }) => {
     );
   }
 
+  if (event.type === EVENT_TILE_TYPES.TELEPORT) {
+    return (
+      <section className="game-card pending-event-card">
+        <div className="section-head">
+          <p>{"S\u1ef1 ki\u1ec7n"}</p>
+          <h2>{event.name}</h2>
+        </div>
+        <div className="pending-event-body">
+          <span className="game-event" style={{ "--event-color": event.color }}>{event.symbol}</span>
+          <p>{"Ch\u1ecdn t\u1ecda \u0111\u1ed9 mu\u1ed1n \u0111\u1ebfn, ho\u1eb7c \u1edf l\u1ea1i v\u1ecb tr\u00ed hi\u1ec7n t\u1ea1i."}</p>
+        </div>
+        <form
+          className="item-use-row trap-row"
+          onSubmit={(submitEvent) => {
+            submitEvent.preventDefault();
+            const data = new FormData(submitEvent.currentTarget);
+            onResolve({
+              action: "teleport",
+              position: { x: Number(data.get("x")) - 1, y: Number(data.get("y")) - 1 }
+            });
+          }}
+        >
+          <label className="coordinate-field">
+            <span>{"X \u00b7 Ngang (c\u1ed9t)"}</span>
+            <input defaultValue={(currentPosition?.x || 0) + 1} max={boardSize} min="1" name="x" required type="number" />
+          </label>
+          <label className="coordinate-field">
+            <span>{"Y \u00b7 D\u1ecdc (h\u00e0ng)"}</span>
+            <input defaultValue={(currentPosition?.y || 0) + 1} max={boardSize} min="1" name="y" required type="number" />
+          </label>
+          <button type="submit">{"D\u1ecbch chuy\u1ec3n"}</button>
+        </form>
+        <div className="event-actions">
+          <button className="secondary-button" onClick={() => onResolve({ action: "skip" })} type="button">
+            {"\u1ede l\u1ea1i"}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  const isDuel = event.type === EVENT_TILE_TYPES.DUEL;
+
   return (
     <section className="game-card pending-event-card">
       <div className="section-head">
@@ -607,17 +651,23 @@ const PendingEventCard = ({ event, onResolve }) => {
         <span className="game-event" style={{ "--event-color": event.color }}>
           {event.symbol}
         </span>
-        <p>{"Chọn đội để trao đổi vị trí, hoặc bỏ qua sự kiện này."}</p>
+        <p>{isDuel ? "Chọn một đội để đối kháng." : "Chọn đội để trao đổi vị trí, hoặc bỏ qua sự kiện này."}</p>
       </div>
       <div className="event-actions">
         {(event.options || []).map((option) => (
-          <button key={option.id} onClick={() => onResolve({ action: "swap", targetTeamId: option.id })} type="button">
+          <button
+            key={option.id}
+            onClick={() => onResolve(isDuel ? { targetTeamId: option.id } : { action: "swap", targetTeamId: option.id })}
+            type="button"
+          >
             {option.name}
           </button>
         ))}
-        <button className="secondary-button" onClick={() => onResolve({ action: "skip" })} type="button">
-          {"Bỏ qua"}
-        </button>
+        {!isDuel && (
+          <button className="secondary-button" onClick={() => onResolve({ action: "skip" })} type="button">
+            {"Bỏ qua"}
+          </button>
+        )}
       </div>
     </section>
   );
@@ -719,7 +769,6 @@ const AuctionPanel = ({ auction, active, onBid }) => {
 const CombatTeamCard = ({ mark, role, team, result }) => {
   const winner = result?.winnerId === team?.id;
   const loser = result?.loserId === team?.id;
-  const hp = Math.max(0, Math.min(100, team?.hp || 0));
 
   return (
     <article className={"combat-team-card" + (winner ? " is-winner" : "") + (loser ? " is-loser" : "")}>
@@ -728,13 +777,6 @@ const CombatTeamCard = ({ mark, role, team, result }) => {
         <span>{role}</span>
       </div>
       <strong>{team?.name || "Đang chọn đội"}</strong>
-      <div className="combat-team-stats">
-        <span>{team?.score ?? 0} điểm</span>
-        <span>{hp} HP</span>
-      </div>
-      <div className="combat-hp" aria-label={(team?.name || "Đội") + " còn " + hp + " máu"}>
-        <span style={{ "--hp-width": hp + "%" }} />
-      </div>
       {winner && <em>Thắng</em>}
       {loser && <em>Thua</em>}
     </article>
@@ -744,8 +786,7 @@ const CombatTeamCard = ({ mark, role, team, result }) => {
 const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
   const dialogRef = useRef(null);
   const [amount, setAmount] = useState(0);
-  const myTeam = [combat?.attacker, combat?.defender].find((team) => team?.id === currentTeamId);
-  const maxBid = myTeam?.score || 0;
+  const maxBid = combat?.maxBid || 0;
   const bid = Number(amount);
   const canSubmit = Number.isInteger(bid) && bid >= 0 && bid <= maxBid;
 
@@ -783,7 +824,7 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
     <section className="game-card combat-panel" aria-live="polite">
       <header className="combat-head">
         <div>
-          <p className="combat-kicker"><span>VS</span> Ô đối kháng · cược kín</p>
+          <p className="combat-kicker"><span>ĐẤU</span> Ô đối kháng · cược kín</p>
           <h2 id="combatTitle">{title}</h2>
         </div>
         <span className="combat-status">
@@ -792,9 +833,9 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
       </header>
 
       <div className="combat-arena">
-        <CombatTeamCard mark="ATK" role="Thách đấu" team={combat.attacker} result={result} />
-        <div className="combat-versus" aria-hidden="true">VS</div>
-        <CombatTeamCard mark="DEF" role="Phòng thủ" team={combat.defender} result={result} />
+        <CombatTeamCard mark="TĐ" role="Thách đấu" team={combat.attacker} result={result} />
+        <div className="combat-versus" aria-hidden="true">ĐẤU</div>
+        <CombatTeamCard mark="PT" role="Phòng thủ" team={combat.defender} result={result} />
       </div>
 
       {active && combat.involved && !combat.submitted && (
@@ -837,7 +878,7 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
           <button className="combat-submit" disabled={!canSubmit} type="submit">
             Khóa điểm cược
           </button>
-          <p className="combat-rule">Điểm cược được giữ kín. Đội thua mất HP bằng chênh lệch cược; hòa thì đội thách đấu thắng và không gây sát thương.</p>
+          <p className="combat-rule">Điểm cược được giữ kín. Đội thua mất máu bằng chênh lệch cược; hòa thì đội thách đấu thắng và không gây sát thương.</p>
         </form>
       )}
 
@@ -861,14 +902,14 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
 
       {result && (
         <div className={"combat-result" + (result.shielded ? " is-shielded" : "")}>
-          <span className="combat-result-seal">{result.shielded ? "SH" : "KO"}</span>
+          <span className="combat-result-seal">{result.shielded ? "CHẮN" : "XONG"}</span>
           <div>
             <small>Kết quả chung cuộc</small>
             <strong>{result.winnerName} chiến thắng</strong>
             <p>
               {result.shielded
                 ? "Lá chắn của " + result.loserName + " đã chặn toàn bộ sát thương."
-                : result.loserName + " mất " + result.hpLoss + " HP."}
+                : result.loserName + " mất " + result.hpLoss + " máu."}
             </p>
           </div>
         </div>
@@ -951,27 +992,33 @@ const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
   );
 };
 
-const GameOverPanel = ({ gameOver, teamId }) => {
+const GameOverPanel = ({ gameOver }) => {
   if (!gameOver) return null;
 
-  const myPlacement = gameOver.rankings.find((entry) => entry.teamId === teamId)?.placement;
+  if (gameOver.stage === "leaderboard") {
+    return <FinalKahootLeaderboard rankings={gameOver.rankings || []} />;
+  }
 
   return (
-    <section className="game-card game-over-card">
+    <section className="game-card game-over-card final-player-summary">
       <div className="section-head">
         <p>Kết thúc trò chơi</p>
         <h2>{gameOver.winnerName} về đích đầu tiên</h2>
       </div>
-      <p className="game-over-summary">
-        {myPlacement === 1 ? "Đội của bạn giành hạng 1." : "Đội của bạn xếp hạng " + (myPlacement || "—") + "."}
-      </p>
-      {gameOver.rankings.map((entry) => (
-        <div className={"leader-row" + (entry.placement === 1 ? " winner" : "")} key={entry.teamId}>
-          <span>#{entry.placement} · {entry.teamName}</span>
-          <strong>{entry.score} điểm / {entry.hp} máu</strong>
-        </div>
-      ))}
+      <FinalStatsCard summary={gameOver.summary} titlePrefix="Tổng kết đội bạn" />
     </section>
+  );
+};
+
+const EnergyPips = ({ energy }) => {
+  if (!energy) return null;
+  return (
+    <div className="energy-pips" aria-label={`Còn ${energy.remaining}/${energy.max} năng lượng`}>
+      {Array.from({ length: energy.max || 3 }, (_, index) => (
+        <span className={index < energy.remaining ? "filled" : ""} key={index} />
+      ))}
+      <strong>{energy.remaining}/{energy.max}</strong>
+    </div>
   );
 };
 
@@ -980,11 +1027,25 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
     return (
       <section className="gameplay two-col">
         <div className="gameplay-left">
-          <GameOverPanel gameOver={state.gameOver} teamId={state.team.id} />
+          <GameOverPanel gameOver={state.gameOver} />
         </div>
         <div className="gameplay-right">
           <NoticePanel messages={state.round?.messages || []} />
-          <Leaderboard teams={state.leaderboard || []} />
+          <section className="game-card game-over-card">
+            <div className="section-head">
+              <p>Chờ người dẫn</p>
+              <h2>
+                {state.gameOver.stage === "leaderboard"
+                  ? "Bảng xếp hạng cuối đã mở."
+                  : "Người dẫn đang xem thống kê từng đội."}
+              </h2>
+            </div>
+            <p className="game-over-summary">
+              {state.gameOver.stage === "leaderboard"
+                ? "Kết quả chung cuộc đang hiển thị theo phong cách Kahoot."
+                : "Bản đồ của đội bạn đã được mở: tường, đường đã khám phá và số câu đúng/sai."}
+            </p>
+          </section>
         </div>
       </section>
     );
@@ -999,8 +1060,10 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
   const isMyTurn = round?.activeTeamId === state.team.id;
   const finishedTurn = movementOpen && pending?.answered;
   const waitingForTurn = movementOpen && !isMyTurn && !finishedTurn;
-  const activeTeam = state.leaderboard?.find((team) => team.id === round?.activeTeamId);
-  const canChooseDirection = movementOpen && isMyTurn && !pending;
+  const activeTeam = state.teams?.find((team) => team.id === round?.activeTeamId);
+  const waitingForReveal = Boolean(round?.questionControl?.answered && !round?.questionControl?.reveal);
+  const canChooseDirection = movementOpen && isMyTurn && !pending && !waitingForReveal;
+  const waitingForHostQuestion = Boolean(pending?.waitingForHost);
 
   return (
     <section className="gameplay two-col">
@@ -1010,6 +1073,7 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
             <p>{"V\u00f2ng " + (round?.roundNumber || 1) + " / " + (phaseLabels[round?.phase] || "Di chuy\u1ec3n")}</p>
             <h2>{"Khung di chuyển"}</h2>
           </div>
+          <EnergyPips energy={round?.turnEnergy} />
           <MovementViewport
             disabled={!canChooseDirection}
             lastResult={result}
@@ -1019,7 +1083,9 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
           />
           <div className="turn-note">
             {canChooseDirection && "Rê chuột vào cạnh để hiện hướng, hoặc chạm cạnh hai lần trên điện thoại để di chuyển."}
+            {waitingForHostQuestion && "Đã khóa hướng: " + directionLabels[pending.direction] + ". Chờ người dẫn mở câu hỏi."}
             {waitingForAnswer && "\u0110\u00e3 khóa hướng: " + directionLabels[pending.direction] + ". Trả lời câu hỏi để thử di chuyển."}
+            {waitingForReveal && "Đã trả lời. Chờ người dẫn hiện đáp án trước khi đi tiếp."}
             {finishedTurn && "\u0110\u00e3 xong l\u01b0\u1ee3t. \u0110ang ch\u1edd \u0111\u1ed9i ti\u1ebfp theo."}
             {waitingForTurn && "\u0110ang ch\u1edd l\u01b0\u1ee3t. Hi\u1ec7n l\u00e0 l\u01b0\u1ee3t c\u1ee7a " + (activeTeam?.name || "\u0111\u1ed9i kh\u00e1c") + "."}
             {round?.phase === ROUND_PHASES.AUCTION && "Đang mở vòng đấu giá kín."}
@@ -1030,7 +1096,12 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
 
       <div className="gameplay-right">
         <QuestionCard answered={Boolean(pending?.answered)} onAnswer={onAnswer} question={question} />
-        <PendingEventCard event={round?.pendingEvent} onResolve={onResolveEvent} />
+        <PendingEventCard
+          boardSize={state.config?.boardSize || BOARD_SIZE}
+          currentPosition={state.team.position}
+          event={round?.pendingEvent}
+          onResolve={onResolveEvent}
+        />
         <AuctionPanel active={round?.phase === ROUND_PHASES.AUCTION} auction={round?.auction} onBid={onAuctionBid} />
         <CombatPanel
           active={round?.phase === ROUND_PHASES.COMBAT}
@@ -1040,7 +1111,6 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
         />
         <ResultCard result={result} />
         <NoticePanel messages={round?.messages || []} />
-        <Leaderboard teams={state.leaderboard || []} />
       </div>
     </section>
   );
@@ -1078,8 +1148,8 @@ const EventReveal = ({ reveal, onClose }) => {
     outcome = { text: "Đấu với " + event.opponentName };
   }
 
-  const hasChallenge =
-    event.type === EVENT_TILE_TYPES.KNOWLEDGE || event.type === EVENT_TILE_TYPES.POSITION_SWAP;
+  const hasChallenge = event.type === EVENT_TILE_TYPES.KNOWLEDGE || event.type === EVENT_TILE_TYPES.POSITION_SWAP ||
+    event.type === EVENT_TILE_TYPES.TELEPORT;
 
   return (
     <div className="event-overlay" role="dialog" aria-label={name}>
@@ -1172,8 +1242,18 @@ export default function App() {
       setLocalError("Không thể kết nối máy chủ. Hãy chạy npm run dev rồi tải lại trang.");
     };
 
+    const onGameRestart = () => {
+      try {
+        window.localStorage.clear();
+      } catch {
+        // Reload still returns the player to a clean join screen.
+      }
+      window.location.reload();
+    };
+
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
+    socket.on(EVENTS.GAME_RESTART, onGameRestart);
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("connect_error", onConnectError);
@@ -1182,6 +1262,7 @@ export default function App() {
     return () => {
       socket.off(EVENTS.GAME_STATE, onState);
       socket.off(EVENTS.ROUND_RESULT, onRoundResult);
+      socket.off(EVENTS.GAME_RESTART, onGameRestart);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("connect_error", onConnectError);
@@ -1324,7 +1405,7 @@ export default function App() {
                 currentTeamId={state.team.id}
                 items={state.team.supportItems || []}
                 onUse={useSupport}
-                teams={state.teams || []}
+                teams={state.leaderboard || []}
               />
             </div>
 

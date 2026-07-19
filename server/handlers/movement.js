@@ -1,6 +1,6 @@
 import { EVENTS } from "../../shared/constants.js";
 import { gameState } from "../gameState.js";
-import { answerQuestion, chooseMoveQuestion, stripQuestionAnswer } from "../movementLogic.js";
+import { answerQuestion, chooseMoveQuestion, openQuestionForAnswer, revealQuestionExplanation, stripQuestionAnswer } from "../movementLogic.js";
 import { scheduleBombTimeout } from "./event.js";
 import { questionBank } from "../questionBank.js";
 import { emitAllStates, emitGameOver, emitPlayerError, emitRoundResult } from "../socketState.js";
@@ -22,10 +22,20 @@ export const registerMovementHandlers = (io, socket) => {
       return;
     }
 
-    socket.emit(EVENTS.ROUND_QUESTION, {
-      direction: result.direction,
-      question: stripQuestionAnswer(result.question)
-    });
+    emitAllStates(io);
+  });
+
+  socket.on(EVENTS.QUESTION_OPEN, () => {
+    if (socket.data.role !== "host") return;
+    const result = openQuestionForAnswer(gameState);
+    if (!result.ok) return;
+    emitAllStates(io);
+  });
+
+  socket.on(EVENTS.QUESTION_REVEAL, () => {
+    if (socket.data.role !== "host") return;
+    const result = revealQuestionExplanation(gameState);
+    if (!result.ok) return;
     emitAllStates(io);
   });
 

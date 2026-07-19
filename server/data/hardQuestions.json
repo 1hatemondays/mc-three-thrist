@@ -1,14 +1,244 @@
 [
   {
-    "id": "hard-001",
-    "text": "Trong lý luận giá trị thặng dư, điều kiện nào làm cho sức lao động trở thành hàng hóa?",
-    "choices": ["Người lao động sở hữu tư liệu sản xuất", "Người lao động tự do thân thể nhưng không có tư liệu sản xuất", "Nhà nước định giá tiền lương", "Tiền tệ biến mất khỏi lưu thông"],
+    "id": "hard-038",
+    "text": "Theo quy luật lưu thông tiền tệ, số tiền cần thiết cho lưu thông khi chỉ xét P, Q, V được tính bằng:",
+    "choices": [
+      "M = P.Q / V",
+      "M = V / P.Q",
+      "M = P + Q + V",
+      "M = P - Q - V"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-039",
+    "text": "Nếu P = 100.000 USD, Q = 1.000 hàng hóa và V = 200 vòng, số tiền cần thiết cho lưu thông M là bao nhiêu?",
+    "choices": [
+      "500.000 USD",
+      "50.000 USD",
+      "20.000.000 USD",
+      "200.000 USD"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-061",
+    "text": "Tỷ suất giá trị thặng dư m' được tính bằng công thức:",
+    "choices": [
+      "m' = M / V x 100%",
+      "m' = C / V x 100%",
+      "m' = P / Q x 100%",
+      "m' = V / M x 100%"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-062",
+    "text": "Nếu M = 15.000 USD và V = 10.000 USD thì tỷ suất giá trị thặng dư m' bằng:",
+    "choices": [
+      "150%",
+      "100%",
+      "50%",
+      "15%"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-063",
+    "text": "Nếu ngày lao động T = 10 giờ và thời gian lao động tất yếu t = 5 giờ, thời gian lao động thặng dư t' là:",
+    "choices": [
+      "5 giờ",
+      "10 giờ",
+      "15 giờ",
+      "2 giờ"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-064",
+    "text": "Nếu t' = 5 giờ và t = 5 giờ thì tỷ suất giá trị thặng dư m' theo thời gian là:",
+    "choices": [
+      "100%",
+      "50%",
+      "150%",
+      "200%"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-065",
+    "text": "Khối lượng giá trị thặng dư được giáo trình ký hiệu và tính bằng:",
+    "choices": [
+      "M = m'.V",
+      "M = C + V",
+      "M = P.Q / V",
+      "M = V / v"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-075",
+    "text": "Nếu V = 10.000 USD và tiền lương mỗi công nhân v = 50 USD, số công nhân N là:",
+    "choices": [
+      "200 người",
+      "50 người",
+      "500 người",
+      "2.000 người"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-076",
+    "text": "Nếu C = 20.000 USD và V = 10.000 USD, chi phí tư bản ứng trước K là:",
+    "choices": [
+      "30.000 USD",
+      "20.000 USD",
+      "10.000 USD",
+      "200.000 USD"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-077",
+    "text": "Nếu V = 10.000 USD và M = 20.000 USD, giá trị mới Wm là:",
+    "choices": [
+      "30.000 USD",
+      "10.000 USD",
+      "20.000 USD",
+      "200.000 USD"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-078",
+    "text": "Nếu C = 10.000 USD, V = 10.000 USD và M = 20.000 USD, tổng giá trị hàng hóa W là:",
+    "choices": [
+      "40.000 USD",
+      "20.000 USD",
+      "30.000 USD",
+      "10.000 USD"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-080",
+    "text": "Tỷ suất lợi nhuận P' là:",
+    "choices": [
+      "Tỷ lệ phần trăm giữa lợi nhuận và toàn bộ giá trị tư bản ứng trước",
+      "Tỷ lệ giữa tiền lương và số công nhân",
+      "Tổng giá trị hàng hóa",
+      "Tổng giá cả hàng hóa bán chịu"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-081",
+    "text": "Nếu P = 20.000 USD và K = 20.000 USD thì tỷ suất lợi nhuận P' là:",
+    "choices": [
+      "100%",
+      "50%",
+      "20%",
+      "200%"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "hard-142",
+    "text": "Nếu C = 80, V = 20, M = 20 thì tổng giá trị hàng hóa W bằng bao nhiêu?",
+    "choices": [
+      "100",
+      "120",
+      "80",
+      "40"
+    ],
     "correctIndex": 1
   },
   {
-    "id": "hard-002",
-    "text": "Tỉ suất giá trị thặng dư phản ánh quan hệ nào?",
-    "choices": ["Giá trị thặng dư so với tư bản khả biến", "Lợi nhuận so với tổng tư bản", "Giá cả so với cung cầu", "Tiền công so với địa tô"],
-    "correctIndex": 0
+    "id": "hard-143",
+    "text": "Nếu M = 30 và V = 20, tỷ suất giá trị thặng dư m' bằng bao nhiêu?",
+    "choices": [
+      "50%",
+      "100%",
+      "150%",
+      "200%"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "hard-144",
+    "text": "Nếu m' = 150% và V = 40, giá trị thặng dư M bằng bao nhiêu?",
+    "choices": [
+      "40",
+      "50",
+      "60",
+      "80"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "hard-145",
+    "text": "Nếu thời gian lao động thặng dư t' = 3 giờ và thời gian lao động tất yếu t = 5 giờ, tỷ suất giá trị thặng dư m' bằng bao nhiêu?",
+    "choices": [
+      "40%",
+      "60%",
+      "80%",
+      "166,7%"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "hard-146",
+    "text": "Nếu C = 70 và V = 30, chi phí tư bản ứng trước K bằng bao nhiêu?",
+    "choices": [
+      "40",
+      "70",
+      "100",
+      "210"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "hard-147",
+    "text": "Nếu tổng quỹ lương V = 120 và giá trị sức lao động của một công nhân v = 6, số công nhân N bằng bao nhiêu?",
+    "choices": [
+      "12",
+      "20",
+      "24",
+      "720"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "hard-148",
+    "text": "Nếu M = 25 và Mc = 5, lợi nhuận P theo công thức P = M + Mc bằng bao nhiêu?",
+    "choices": [
+      "20",
+      "25",
+      "30",
+      "125"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": "hard-149",
+    "text": "Nếu P = 30 và K = 120, tỷ suất lợi nhuận P' bằng bao nhiêu?",
+    "choices": [
+      "20%",
+      "25%",
+      "30%",
+      "40%"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": "hard-150",
+    "text": "Ba ngành có lợi nhuận lần lượt 20, 30, 50 và tổng tư bản ứng trước lần lượt 100, 150, 250. Tỷ suất lợi nhuận bình quân P'(bq) bằng bao nhiêu?",
+    "choices": [
+      "10%",
+      "20%",
+      "25%",
+      "30%"
+    ],
+    "correctIndex": 1
   }
 ]
