@@ -562,7 +562,7 @@ const ResultCard = ({ result }) => {
   );
 };
 
-const PendingEventCard = ({ event, onResolve }) => {
+const PendingEventCard = ({ boardSize, currentPosition, event, onResolve }) => {
   if (!event) return null;
 
   if (event.question) {
@@ -585,6 +585,47 @@ const PendingEventCard = ({ event, onResolve }) => {
               <span>{choice}</span>
             </button>
           ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (event.type === EVENT_TILE_TYPES.TELEPORT) {
+    return (
+      <section className="game-card pending-event-card">
+        <div className="section-head">
+          <p>{"S\u1ef1 ki\u1ec7n"}</p>
+          <h2>{event.name}</h2>
+        </div>
+        <div className="pending-event-body">
+          <span className="game-event" style={{ "--event-color": event.color }}>{event.symbol}</span>
+          <p>{"Ch\u1ecdn t\u1ecda \u0111\u1ed9 mu\u1ed1n \u0111\u1ebfn, ho\u1eb7c \u1edf l\u1ea1i v\u1ecb tr\u00ed hi\u1ec7n t\u1ea1i."}</p>
+        </div>
+        <form
+          className="item-use-row trap-row"
+          onSubmit={(submitEvent) => {
+            submitEvent.preventDefault();
+            const data = new FormData(submitEvent.currentTarget);
+            onResolve({
+              action: "teleport",
+              position: { x: Number(data.get("x")) - 1, y: Number(data.get("y")) - 1 }
+            });
+          }}
+        >
+          <label className="coordinate-field">
+            <span>{"X \u00b7 Ngang (c\u1ed9t)"}</span>
+            <input defaultValue={(currentPosition?.x || 0) + 1} max={boardSize} min="1" name="x" required type="number" />
+          </label>
+          <label className="coordinate-field">
+            <span>{"Y \u00b7 D\u1ecdc (h\u00e0ng)"}</span>
+            <input defaultValue={(currentPosition?.y || 0) + 1} max={boardSize} min="1" name="y" required type="number" />
+          </label>
+          <button type="submit">{"D\u1ecbch chuy\u1ec3n"}</button>
+        </form>
+        <div className="event-actions">
+          <button className="secondary-button" onClick={() => onResolve({ action: "skip" })} type="button">
+            {"\u1ede l\u1ea1i"}
+          </button>
         </div>
       </section>
     );
@@ -1062,7 +1103,12 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
 
       <div className="gameplay-right">
         <QuestionCard answered={Boolean(pending?.answered)} onAnswer={onAnswer} question={question} />
-        <PendingEventCard event={round?.pendingEvent} onResolve={onResolveEvent} />
+        <PendingEventCard
+          boardSize={state.config?.boardSize || BOARD_SIZE}
+          currentPosition={state.team.position}
+          event={round?.pendingEvent}
+          onResolve={onResolveEvent}
+        />
         <AuctionPanel active={round?.phase === ROUND_PHASES.AUCTION} auction={round?.auction} onBid={onAuctionBid} />
         <CombatPanel
           active={round?.phase === ROUND_PHASES.COMBAT}
@@ -1109,8 +1155,8 @@ const EventReveal = ({ reveal, onClose }) => {
     outcome = { text: "Đấu với " + event.opponentName };
   }
 
-  const hasChallenge =
-    event.type === EVENT_TILE_TYPES.KNOWLEDGE || event.type === EVENT_TILE_TYPES.POSITION_SWAP;
+  const hasChallenge = event.type === EVENT_TILE_TYPES.KNOWLEDGE || event.type === EVENT_TILE_TYPES.POSITION_SWAP ||
+    event.type === EVENT_TILE_TYPES.TELEPORT;
 
   return (
     <div className="event-overlay" role="dialog" aria-label={name}>
@@ -1200,8 +1246,18 @@ export default function App() {
       setLocalError("Không thể kết nối máy chủ. Hãy chạy npm run dev rồi tải lại trang.");
     };
 
+    const onGameRestart = () => {
+      try {
+        window.localStorage.clear();
+      } catch {
+        // Reload still returns the player to a clean join screen.
+      }
+      window.location.reload();
+    };
+
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
+    socket.on(EVENTS.GAME_RESTART, onGameRestart);
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("connect_error", onConnectError);
@@ -1210,6 +1266,7 @@ export default function App() {
     return () => {
       socket.off(EVENTS.GAME_STATE, onState);
       socket.off(EVENTS.ROUND_RESULT, onRoundResult);
+      socket.off(EVENTS.GAME_RESTART, onGameRestart);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("connect_error", onConnectError);
@@ -1349,7 +1406,7 @@ export default function App() {
                 currentTeamId={state.team.id}
                 items={state.team.supportItems || []}
                 onUse={useSupport}
-                teams={state.teams || []}
+                teams={state.leaderboard || []}
               />
             </div>
 

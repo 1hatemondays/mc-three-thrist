@@ -3,6 +3,7 @@ import test from "node:test";
 import { MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
 import { EVENT_TILE_TYPES } from "../shared/gameContent.js";
 import { applyEventTileEffect, getPlayerPendingEvent, resolvePendingEvent } from "./eventLogic.js";
+import { hardQuestionBank } from "./questionBank.js";
 
 const makeState = () => ({
   config: { boardSize: 6, teamCount: 2 },
@@ -21,7 +22,7 @@ test("knowledge event asks a hard question and doubles the move reward on correc
   const pending = getPlayerPendingEvent(state.round, "team1");
   assert.equal(pending.question.correctIndex, undefined);
 
-  const result = resolvePendingEvent(state, "team1", { answerIndex: 1 });
+  const result = resolvePendingEvent(state, "team1", { answerIndex: hardQuestionBank[0].correctIndex });
 
   assert.equal(result.ok, true);
   assert.equal(result.result.correct, true);

@@ -1,12 +1,30 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ROUND_PHASES } from "../shared/constants.js";
-import { ensureTeam, gameState, getPlayerState, normalizeTeamId } from "./gameState.js";
+import { ensureTeam, gameState, getPlayerState, normalizeTeamId, resetGameState } from "./gameState.js";
 
 test("normalizes classroom-friendly team codes", () => {
   assert.equal(normalizeTeamId("team1"), "team1");
   assert.equal(normalizeTeamId("team 1"), "team1");
   assert.equal(normalizeTeamId(" TEAM 1 "), "team1");
+});
+
+test("resets the shared game state without replacing its reference", () => {
+  const reference = gameState;
+  gameState.config.teamCount = 2;
+  gameState.teams = [{ id: "team1" }];
+  gameState.setup = { submissions: { team1: {} }, complete: true, started: true };
+  gameState.gameOver = { winnerId: "team1" };
+  gameState.round = { roundNumber: 4, phase: ROUND_PHASES.GAME_OVER };
+
+  resetGameState();
+
+  assert.strictEqual(gameState, reference);
+  assert.deepEqual(gameState.config, { teamCount: 0, boardSize: 6 });
+  assert.deepEqual(gameState.teams, []);
+  assert.deepEqual(gameState.setup, { submissions: {}, complete: false, started: false });
+  assert.equal(gameState.gameOver, null);
+  assert.equal(gameState.round.phase, ROUND_PHASES.MOVEMENT);
 });
 
 test("creates dynamic teams on join and keeps the joined count in config", () => {

@@ -5,7 +5,7 @@ import { GameOverOverlay } from "../../shared/GameOverOverlay.jsx";
 import { BombOverlay } from "../../shared/BombOverlay.jsx";
 import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
 import { FinalKahootLeaderboard, FinalStatsCard } from "../../shared/FinalStats.jsx";
-import { getEventTileMeta } from "../../shared/gameContent.js";
+import { EVENT_TILE_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { hasWall } from "../../shared/maze.js";
 
 const SERVER_URL =
@@ -46,6 +46,11 @@ const TEAM_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#f4
 const TEAM_ICONS = ["♠", "♥", "◆", "♣", "★", "✦", "●", "▲"];
 // Ô sự kiện trên màn TV hiển thị đồng nhất, không lộ loại — giữ tính bí ẩn.
 const MYSTERY_EVENT = { symbol: "?", color: "#d995ff" };
+const GLOBAL_EVENT_TYPES = new Set([
+  EVENT_TILE_TYPES.MONSTER_ATTACK,
+  EVENT_TILE_TYPES.METEOR_STRIKE,
+  EVENT_TILE_TYPES.BLESSING
+]);
 const CONFETTI_COUNT = 60;
 const CONFETTI_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#fff9e9"];
 const pointKey = (point) => (point ? `${point.x}:${point.y}` : "");
@@ -83,6 +88,30 @@ const Confetti = ({ seed, count = CONFETTI_COUNT }) => {
     </div>
   );
 };
+const EventAnnouncement = ({ banner }) => {
+  if (!banner) return null;
+  const eventClass = banner.type ? " event-" + banner.type : "";
+
+  return (
+    <div
+      aria-atomic="true"
+      aria-live="assertive"
+      className={"tv-event-layer" + (banner.global ? " global" : "") + eventClass}
+      role="status"
+    >
+      <div className="tv-banner" key={banner.key}>
+        <span className="tv-banner-icon" style={{ background: banner.color || "#f0b94b" }}>
+          {banner.symbol}
+        </span>
+        <div>
+          <strong>{banner.title}</strong>
+          <span>{banner.text}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const INTERIOR_EDGES = [
   ...Array.from({ length: BOARD_SIZE }, (_, y) =>
     Array.from({ length: BOARD_SIZE - 1 }, (_, index) => ({
@@ -285,18 +314,7 @@ const GuideScreen = ({ state, activeTeam, banner, confettiSeed, flashSeed, onOpe
 
           <Confetti seed={confettiSeed} />
           {flashSeed ? <div className="tv-flash" key={"flash-" + flashSeed} /> : null}
-
-          {banner && (
-            <div className="tv-banner" key={banner.key}>
-              <span className="tv-banner-icon" style={{ background: banner.color || "#f0b94b" }}>
-                {banner.symbol}
-              </span>
-              <div>
-                <strong>{banner.title}</strong>
-                <span>{banner.text}</span>
-              </div>
-            </div>
-          )}
+          <EventAnnouncement banner={banner} />
         </div>
 
         <aside className="guide-panel">
@@ -464,10 +482,8 @@ export default function App() {
     const showBanner = (banner, celebrate) => {
       clearTimeout(bannerTimerRef.current);
       setTvBanner({ ...banner, key: Date.now() });
-      if (celebrate) {
-        setConfettiSeed((n) => n + 1);
-        setFlashSeed((n) => n + 1);
-      }
+      setFlashSeed((n) => n + 1);
+      if (celebrate) setConfettiSeed((n) => n + 1);
       bannerTimerRef.current = setTimeout(() => setTvBanner(null), 4300);
     };
 
@@ -487,8 +503,10 @@ export default function App() {
           title: teamName + " kích hoạt " + event.name + "!",
           text: event.message || event.name,
           color: event.color,
-          symbol: event.symbol
-        });
+          symbol: event.symbol,
+          type: event.type,
+          global: GLOBAL_EVENT_TYPES.has(event.type)
+        }, event.type === EVENT_TILE_TYPES.BLESSING);
         return;
       }
 
@@ -550,8 +568,18 @@ export default function App() {
       );
     };
 
+    const onGameRestart = () => {
+      try {
+        window.localStorage.clear();
+      } catch {
+        // Reload still returns the host to a clean game.
+      }
+      window.location.reload();
+    };
+
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
+    socket.on(EVENTS.GAME_RESTART, onGameRestart);
     socket.on(EVENTS.COMBAT_RESULT, onCombatResult);
     socket.on("connect_error", onConnectError);
 
@@ -559,6 +587,7 @@ export default function App() {
       clearTimeout(bannerTimerRef.current);
       socket.off(EVENTS.GAME_STATE, onState);
       socket.off(EVENTS.ROUND_RESULT, onRoundResult);
+      socket.off(EVENTS.GAME_RESTART, onGameRestart);
       socket.off(EVENTS.COMBAT_RESULT, onCombatResult);
       socket.off("connect_error", onConnectError);
       socketRef.current = null;
@@ -627,6 +656,13 @@ export default function App() {
     socketRef.current?.emit(EVENTS.QUESTION_REVEAL);
   };
 
+  const restartGame = () => {
+    if (window.confirm("Khởi động lại sẽ xóa toàn bộ đội, mê cung và tiến trình hiện tại. Tiếp tục?")) {
+      socketRef.current?.emit(EVENTS.GAME_RESTART);
+    }
+  };
+
+
   if (!hostAccessKey) {
     return (
       <main className="host-auth-shell">
@@ -673,6 +709,9 @@ export default function App() {
       <GameOverOverlay gameOver={state?.gameOver} />
       <BombOverlay bomb={state?.round?.bomb} />
       <MeteorShowerOverlay meteor={state?.round?.meteorShower} />
+      <Confetti seed={confettiSeed} />
+      {flashSeed ? <div className="tv-flash" key={"flash-" + flashSeed} /> : null}
+      <EventAnnouncement banner={tvBanner} />
       <header className="topbar">
         <div>
           <p>{"M\u00e0n h\u00ecnh ng\u01b0\u1eddi d\u1eabn"}</p>
@@ -689,6 +728,9 @@ export default function App() {
           </a>
           <button className="lock-host-button" onClick={lockHost} type="button">
             {"Kh\u00f3a ng\u01b0\u1eddi d\u1eabn"}
+          </button>
+          <button className="restart-button" onClick={restartGame} type="button">
+            {"Khởi động lại"}
           </button>
         </div>
 
