@@ -74,8 +74,8 @@ export const FinalStatsCard = ({ summary, boardSize = DEFAULT_BOARD_SIZE, titleP
               key={x + ":" + y}
               style={wallStyleFor(summary, boardSize, x, y)}
             >
-              {samePoint(point, summary.startPoint) && <span className="final-map-token start">S</span>}
-              {samePoint(point, summary.endPoint) && <span className="final-map-token end">E</span>}
+              {samePoint(point, summary.startPoint) && <span className="final-map-token start">XP</span>}
+              {samePoint(point, summary.endPoint) && <span className="final-map-token end">Đ</span>}
               {samePoint(point, summary.position) && <span className="final-map-token current">●</span>}
               {isExplored && <i className="final-path-dot" />}
             </div>

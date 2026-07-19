@@ -172,25 +172,25 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
         return { scoreLoss: 10, hpLoss: 0, message: "M\u1ea5t 10 \u0111i\u1ec3m." };
       }
       target.hp = Math.max(0, target.hp - 10);
-      return { scoreLoss: 0, hpLoss: 10, message: "Kh\u00f4ng \u0111\u1ee7 \u0111i\u1ec3m, m\u1ea5t 10 HP." };
+      return { scoreLoss: 0, hpLoss: 10, message: "Kh\u00f4ng \u0111\u1ee7 \u0111i\u1ec3m, m\u1ea5t 10 máu." };
     });
-    return makeEventResult(tile, { outcomes, message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i ph\u1ea3i n\u1ed9p 10 \u0111i\u1ec3m ho\u1eb7c m\u1ea5t 10 HP" });
+    return makeEventResult(tile, { outcomes, message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i ph\u1ea3i n\u1ed9p 10 \u0111i\u1ec3m ho\u1eb7c m\u1ea5t 10 máu" });
   }
 
   if (tile.type === EVENT_TILE_TYPES.METEOR_STRIKE) {
     const outcomes = applyShieldedGlobalEffect(state, "M\u01b0a sao b\u0103ng", (target) => {
       target.hp = Math.max(0, target.hp - 10);
-      return { hpLoss: 10, message: "M\u1ea5t 10 HP." };
+      return { hpLoss: 10, message: "M\u1ea5t 10 máu." };
     });
-    return makeEventResult(tile, { outcomes, message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i m\u1ea5t 10 HP" });
+    return makeEventResult(tile, { outcomes, message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i m\u1ea5t 10 máu" });
   }
 
   if (tile.type === EVENT_TILE_TYPES.BLESSING) {
     for (const target of state.teams) {
       target.hp += 10;
-      addRoundMessage(state, target.id, { title: "Ban ph\u01b0\u1edbc", text: "H\u1ed3i 10 HP." });
+      addRoundMessage(state, target.id, { title: "Ban ph\u01b0\u1edbc", text: "H\u1ed3i 10 máu." });
     }
-    return makeEventResult(tile, { message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i h\u1ed3i 10 HP" });
+    return makeEventResult(tile, { message: "T\u1ea5t c\u1ea3 \u0111\u1ed9i h\u1ed3i 10 máu" });
   }
 
   if (tile.type === EVENT_TILE_TYPES.PRISON) {
@@ -256,7 +256,7 @@ const explodeBomb = (state, teamId, reason) => {
   state.round.phase = ROUND_PHASES.MOVEMENT;
   addRoundMessage(state, team.id, {
     title: "Bom ph\u00e1t n\u1ed5",
-    text: "M\u1ea5t 30 HP v\u00ec " + (reason === "timeout" ? "h\u1ebft th\u1eddi gian." : "tr\u1ea3 l\u1eddi sai.")
+    text: "M\u1ea5t 30 máu v\u00ec " + (reason === "timeout" ? "h\u1ebft th\u1eddi gian." : "tr\u1ea3 l\u1eddi sai.")
   });
   return bomb.result;
 };

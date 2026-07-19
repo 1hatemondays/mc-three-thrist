@@ -75,7 +75,7 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
   if (isGameOver(state)) return { ok: false, error: "Trò chơi đã kết thúc." };
 
   if (!isSetupReady(state)) {
-    return { ok: false, error: "Phần di chuyển bắt đầu sau khi host bấm Bắt đầu." };
+    return { ok: false, error: "Phần di chuyển bắt đầu sau khi người dẫn bấm Bắt đầu." };
   }
   const turnOrder = state.round.turnOrder?.length
     ? state.round.turnOrder
@@ -89,11 +89,11 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
   }
 
   if (state.round.pendingEvents?.[teamId]) {
-    return { ok: false, error: "H?y x? l? s? ki?n hi?n t?i tr??c khi ?i ti?p." };
+    return { ok: false, error: "Hãy xử lý sự kiện hiện tại trước khi đi tiếp." };
   }
 
   if (state.round.questionControl?.teamId === teamId && state.round.questionControl.answered && !state.round.questionControl.reveal) {
-    return { ok: false, error: "Chờ host reveal đáp án trước khi đi tiếp." };
+    return { ok: false, error: "Chờ người dẫn hiện đáp án trước khi đi tiếp." };
   }
 
   const existing = state.round.pendingAnswers[teamId];
@@ -190,7 +190,7 @@ export const openQuestionForAnswer = (state, teamId = null) => {
 
 export const revealQuestionExplanation = (state) => {
   const control = state.round.questionControl;
-  if (!control || !control.answered) return { ok: false, error: "Chưa có kết quả câu hỏi để reveal." };
+  if (!control || !control.answered) return { ok: false, error: "Chưa có kết quả câu hỏi để hiện đáp án." };
   control.reveal = true;
   return { ok: true, questionControl: control };
 };
@@ -318,7 +318,7 @@ export const answerQuestion = (state, teamId, payload) => {
   const correct = answerIndex === pending.question.correctIndex;
   const control = state.round.questionControl;
   if (!control?.answerOpen || control.teamId !== teamId) {
-    return { ok: false, error: "Host chưa mở quyền trả lời câu hỏi này." };
+    return { ok: false, error: "Người dẫn chưa mở quyền trả lời câu hỏi này." };
   }
   const spent = spendTurnEnergy(state, teamId);
   if (!spent.ok) return spent;

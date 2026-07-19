@@ -282,7 +282,7 @@ const SetupBoard = ({ state, onSubmit }) => {
             ? draftError
             : submitted
               ? waitingForHostStart
-                ? "\u0110\u1ee7 m\u00ea cung r\u1ed3i. Ch\u1edd host b\u1ea5m B\u1eaft \u0111\u1ea7u."
+                ? "\u0110\u1ee7 m\u00ea cung r\u1ed3i. Ch\u1edd ng\u01b0\u1eddi d\u1eabn b\u1ea5m B\u1eaft \u0111\u1ea7u."
                 : "\u0110\u00e3 n\u1ed9p m\u00ea cung. Ch\u1edd c\u00e1c \u0111\u1ed9i c\u00f2n l\u1ea1i."
               : !mazeConnected
                 ? "M\u00ea cung ph\u1ea3i li\u00ean th\u00f4ng, kh\u00f4ng \u0111\u01b0\u1ee3c ch\u1eb7n t\u00e1ch khu v\u1ef1c."
@@ -824,7 +824,7 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
     <section className="game-card combat-panel" aria-live="polite">
       <header className="combat-head">
         <div>
-          <p className="combat-kicker"><span>VS</span> Ô đối kháng · cược kín</p>
+          <p className="combat-kicker"><span>ĐẤU</span> Ô đối kháng · cược kín</p>
           <h2 id="combatTitle">{title}</h2>
         </div>
         <span className="combat-status">
@@ -833,9 +833,9 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
       </header>
 
       <div className="combat-arena">
-        <CombatTeamCard mark="ATK" role="Thách đấu" team={combat.attacker} result={result} />
-        <div className="combat-versus" aria-hidden="true">VS</div>
-        <CombatTeamCard mark="DEF" role="Phòng thủ" team={combat.defender} result={result} />
+        <CombatTeamCard mark="TĐ" role="Thách đấu" team={combat.attacker} result={result} />
+        <div className="combat-versus" aria-hidden="true">ĐẤU</div>
+        <CombatTeamCard mark="PT" role="Phòng thủ" team={combat.defender} result={result} />
       </div>
 
       {active && combat.involved && !combat.submitted && (
@@ -878,7 +878,7 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
           <button className="combat-submit" disabled={!canSubmit} type="submit">
             Khóa điểm cược
           </button>
-          <p className="combat-rule">Điểm cược được giữ kín. Đội thua mất HP bằng chênh lệch cược; hòa thì đội thách đấu thắng và không gây sát thương.</p>
+          <p className="combat-rule">Điểm cược được giữ kín. Đội thua mất máu bằng chênh lệch cược; hòa thì đội thách đấu thắng và không gây sát thương.</p>
         </form>
       )}
 
@@ -902,14 +902,14 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
 
       {result && (
         <div className={"combat-result" + (result.shielded ? " is-shielded" : "")}>
-          <span className="combat-result-seal">{result.shielded ? "SH" : "KO"}</span>
+          <span className="combat-result-seal">{result.shielded ? "CHẮN" : "XONG"}</span>
           <div>
             <small>Kết quả chung cuộc</small>
             <strong>{result.winnerName} chiến thắng</strong>
             <p>
               {result.shielded
                 ? "Lá chắn của " + result.loserName + " đã chặn toàn bộ sát thương."
-                : result.loserName + " mất " + result.hpLoss + " HP."}
+                : result.loserName + " mất " + result.hpLoss + " máu."}
             </p>
           </div>
         </div>
@@ -1033,11 +1033,11 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
           <NoticePanel messages={state.round?.messages || []} />
           <section className="game-card game-over-card">
             <div className="section-head">
-              <p>Chờ host</p>
+              <p>Chờ người dẫn</p>
               <h2>
                 {state.gameOver.stage === "leaderboard"
                   ? "Bảng xếp hạng cuối đã mở."
-                  : "Host đang xem thống kê từng đội."}
+                  : "Người dẫn đang xem thống kê từng đội."}
               </h2>
             </div>
             <p className="game-over-summary">
@@ -1083,9 +1083,9 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
           />
           <div className="turn-note">
             {canChooseDirection && "Rê chuột vào cạnh để hiện hướng, hoặc chạm cạnh hai lần trên điện thoại để di chuyển."}
-            {waitingForHostQuestion && "Đã khóa hướng: " + directionLabels[pending.direction] + ". Chờ host mở câu hỏi."}
+            {waitingForHostQuestion && "Đã khóa hướng: " + directionLabels[pending.direction] + ". Chờ người dẫn mở câu hỏi."}
             {waitingForAnswer && "\u0110\u00e3 khóa hướng: " + directionLabels[pending.direction] + ". Trả lời câu hỏi để thử di chuyển."}
-            {waitingForReveal && "Đã trả lời. Chờ host reveal đáp án trước khi đi tiếp."}
+            {waitingForReveal && "Đã trả lời. Chờ người dẫn hiện đáp án trước khi đi tiếp."}
             {finishedTurn && "\u0110\u00e3 xong l\u01b0\u1ee3t. \u0110ang ch\u1edd \u0111\u1ed9i ti\u1ebfp theo."}
             {waitingForTurn && "\u0110ang ch\u1edd l\u01b0\u1ee3t. Hi\u1ec7n l\u00e0 l\u01b0\u1ee3t c\u1ee7a " + (activeTeam?.name || "\u0111\u1ed9i kh\u00e1c") + "."}
             {round?.phase === ROUND_PHASES.AUCTION && "Đang mở vòng đấu giá kín."}

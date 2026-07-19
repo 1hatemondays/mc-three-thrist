@@ -50,11 +50,11 @@ export const BombOverlay = ({ bomb, currentTeamId, onAnswer }) => {
 
         {result && !bomb.active ? (
           <div className="bomb-result">
-            <span aria-hidden="true">BOOM</span>
+            <span aria-hidden="true">BÙM</span>
             <h3>{result.loserTeamName}</h3>
             <p>
               {result.reason === "timeout" ? "H\u1ebft 10 gi\u00e2y" : "Tr\u1ea3 l\u1eddi sai"}
-              {" · M\u1ea5t "}{result.hpLoss} HP
+              {" · M\u1ea5t "}{result.hpLoss} {"máu"}
             </p>
           </div>
         ) : (

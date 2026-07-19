@@ -87,7 +87,7 @@ export const MeteorShowerOverlay = ({ meteor, currentTeamId, onAnswer, onBuzz })
           <div className="meteor-finale">
             <span>{"QU\u00c1N QU\u00c2N"}</span>
             <strong>{result.winnerName}</strong>
-            <p>+{result.bonus} {"\u0111i\u1ec3m"} · {"C\u00e1c \u0111\u1ed9i c\u00f2n l\u1ea1i m\u1ea5t "}{result.hpLoss} HP {"v\u00e0 1 l\u01b0\u1ee3t"}</p>
+            <p>+{result.bonus} {"\u0111i\u1ec3m"} · {"C\u00e1c \u0111\u1ed9i c\u00f2n l\u1ea1i m\u1ea5t "}{result.hpLoss} {"máu"} {"v\u00e0 1 l\u01b0\u1ee3t"}</p>
           </div>
         ) : (
           <>
@@ -109,7 +109,7 @@ export const MeteorShowerOverlay = ({ meteor, currentTeamId, onAnswer, onBuzz })
                 </div>
               ) : (
                 <button className="meteor-space" disabled={!onBuzz} onClick={onBuzz} type="button">
-                  <kbd>SPACE</kbd>
+                  <kbd>PHÍM CÁCH</kbd>
                   <span>{"NH\u1ea4N NGAY"}</span>
                 </button>
               )}

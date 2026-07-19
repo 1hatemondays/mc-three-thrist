@@ -62,7 +62,7 @@ export const startMeteorShower = (
   for (const team of state.teams) {
     addRoundMessage(state, team.id, {
       title: "\u0110\u1ea5u tr\u00ed",
-      text: "10 c\u00e2u h\u1ecfi tranh quy\u1ec1n. Ch\u1edd 3-2-1 r\u1ed3i nh\u1ea5n Space."
+      text: "10 c\u00e2u h\u1ecfi tranh quy\u1ec1n. Ch\u1edd 3-2-1 r\u1ed3i nh\u1ea5n ph\u00edm c\u00e1ch."
     });
   }
   return { ok: true };
