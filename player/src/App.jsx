@@ -8,6 +8,7 @@ import { FinalStatsScreen } from "../../shared/FinalStats.jsx";
 import { GameIcon } from "../../shared/GameIcon.jsx";
 import { AnimatedScore } from "../../shared/AnimatedScore.jsx";
 import { AuctionRevealOverlay } from "../../shared/AuctionRevealOverlay.jsx";
+import { shouldRevealAuctionResult } from "../../shared/auctionReveal.js";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { WALL_COUNT, hasEnclosedCell, hasWall, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
 import "../../shared/scoreEffects.css";
@@ -1235,6 +1236,7 @@ export default function App() {
   const [lastResult, setLastResult] = useState(null);
   const [reveal, setReveal] = useState(null);
   const [auctionReveal, setAuctionReveal] = useState(null);
+  const auctionRevealIdRef = useRef(null);
   const teamIdRef = useRef(savedSession?.teamId || null);
   const teamNameRef = useRef(savedSession?.teamName || "");
   const socket = useMemo(() => io(SERVER_URL, { autoConnect: false }), []);
@@ -1245,6 +1247,11 @@ export default function App() {
       console.log("player game:state", nextState);
       setState(nextState);
       setLocalError("");
+      const auctionResult = nextState?.round?.auction?.result;
+      if (shouldRevealAuctionResult(auctionResult, auctionRevealIdRef.current)) {
+        auctionRevealIdRef.current = auctionResult.revealId;
+        setAuctionReveal({ ...auctionResult, nonce: Date.now() });
+      }
       teamIdRef.current = nextState?.team?.id || teamIdRef.current;
       teamNameRef.current = nextState?.team?.name || teamNameRef.current;
       if (nextState?.team?.id) {
@@ -1261,6 +1268,7 @@ export default function App() {
       }
     };
     const onAuctionResult = (result) => {
+      if (result?.revealId) auctionRevealIdRef.current = result.revealId;
       setAuctionReveal({ ...(result || {}), nonce: Date.now() });
     };
     const onConnect = () => {

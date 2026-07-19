@@ -12,6 +12,9 @@ export const getAuctionOutcomes = (result) => {
   }));
 };
 
+export const shouldRevealAuctionResult = (result, lastRevealId) =>
+  Boolean(result?.revealId && result.revealId !== lastRevealId);
+
 export const getPersonalAuctionSummary = (result, teamId) => {
   if (!result || !teamId) return null;
 

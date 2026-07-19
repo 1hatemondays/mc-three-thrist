@@ -7,6 +7,7 @@ import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
 import { FinalStatsScreen } from "../../shared/FinalStats.jsx";
 import { AnimatedScore } from "../../shared/AnimatedScore.jsx";
 import { AuctionRevealOverlay } from "../../shared/AuctionRevealOverlay.jsx";
+import { shouldRevealAuctionResult } from "../../shared/auctionReveal.js";
 import { EVENT_TILE_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
 import { hasWall } from "../../shared/maze.js";
 import "../../shared/scoreEffects.css";
@@ -489,6 +490,7 @@ export default function App() {
   const [hostAuthError, setHostAuthError] = useState("");
   const socketRef = useRef(null);
   const teamsRef = useRef([]);
+  const auctionRevealIdRef = useRef(null);
   const bannerTimerRef = useRef(null);
 
   useEffect(() => {
@@ -511,6 +513,11 @@ export default function App() {
       console.log("host game:state", nextState);
       setState(nextState);
       teamsRef.current = nextState?.teams || [];
+      const auctionResult = nextState?.round?.auction?.result;
+      if (shouldRevealAuctionResult(auctionResult, auctionRevealIdRef.current)) {
+        auctionRevealIdRef.current = auctionResult.revealId;
+        setAuctionReveal({ ...auctionResult, nonce: Date.now() });
+      }
     };
 
     const onRoundResult = (result) => {
@@ -561,6 +568,7 @@ export default function App() {
     };
 
     const onAuctionResult = (result) => {
+      if (result?.revealId) auctionRevealIdRef.current = result.revealId;
       setAuctionReveal({ ...(result || {}), nonce: Date.now() });
       if (result?.winners?.length) setConfettiSeed((n) => n + 1);
     };

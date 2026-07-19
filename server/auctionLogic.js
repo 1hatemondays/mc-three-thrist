@@ -71,7 +71,8 @@ const resolveAuction = (state) => {
     return { teamId: team.id, teamName: team.name, status, items };
   });
 
-  state.round.auction = { result: { winners, outcomes, teamResults } };
+  const revealId = `auction-${state.round.roundNumber}`;
+  state.round.auction = { result: { revealId, winners, outcomes, teamResults } };
   state.round.roundNumber += 1;
   state.round.phase = ROUND_PHASES.MOVEMENT;
   state.round.activeTeamId = state.round.turnOrder?.[0] || state.teams[0]?.id || null;

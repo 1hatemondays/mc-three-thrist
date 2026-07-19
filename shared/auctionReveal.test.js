@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getAuctionOutcomes, getPersonalAuctionSummary } from "./auctionReveal.js";
+import { getAuctionOutcomes, getPersonalAuctionSummary, shouldRevealAuctionResult } from "./auctionReveal.js";
 
 const wonItems = [
   { itemId: "shield", itemName: "Lá chắn", amount: 25 },
@@ -57,4 +57,12 @@ test("legacy winners are converted into revealable outcomes", () => {
       winner
     }
   ]);
+});
+
+test("state-backed auction results reveal once per auction id", () => {
+  assert.equal(shouldRevealAuctionResult({ revealId: "auction-2" }, null), true);
+  assert.equal(shouldRevealAuctionResult({ revealId: "auction-2" }, "auction-2"), false);
+  assert.equal(shouldRevealAuctionResult({ revealId: "auction-4" }, "auction-2"), true);
+  assert.equal(shouldRevealAuctionResult({ winners: [] }, null), false);
+  assert.equal(shouldRevealAuctionResult(null, null), false);
 });
