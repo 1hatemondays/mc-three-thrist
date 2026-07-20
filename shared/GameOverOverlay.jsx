@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import angelIcon from "./assets/angel.svg";
 import "./gameOver.css";
 
 const PARTICLE_COUNT = 28;
@@ -27,8 +28,10 @@ export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
     <div aria-labelledby="gameOverTitle" aria-modal="true" className="game-over-overlay" role="dialog">
       <div aria-hidden="true" className="game-over-particles">
         {Array.from({ length: PARTICLE_COUNT }, (_, index) => (
-          <i
+          <img
+            alt=""
             key={index}
+            src={angelIcon}
             style={{
               "--go-delay": (index % 9) * 0.11 + "s",
               "--go-left": (index * 37) % 101 + "%",

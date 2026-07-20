@@ -105,6 +105,7 @@ main {
   border: 0;
   color: #15281f;
   cursor: pointer;
+  font: inherit;
   font-weight: 900;
   margin-top: 10px;
   padding: 10px 12px;
@@ -1059,8 +1060,66 @@ main {
   100% { opacity: 1; transform: translateX(0) rotate(0); }
 }
 
+.tv-blessing-crosses {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tv-blessing-crosses i {
+  position: absolute;
+  bottom: -54px;
+  left: var(--cross-left, 50%);
+  width: var(--cross-size, 34px);
+  height: var(--cross-size, 34px);
+  filter: drop-shadow(0 0 12px rgba(101, 200, 162, 0.9));
+  animation: blessCrossRise var(--cross-duration, 3.1s) ease-out var(--cross-delay, 0s) infinite;
+}
+
+.tv-blessing-crosses i::before,
+.tv-blessing-crosses i::after {
+  position: absolute;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #c9ffe2, #65c8a2 62%, #2f8a68);
+  content: "";
+}
+
+.tv-blessing-crosses i::before {
+  top: 0;
+  left: 50%;
+  width: 22%;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.tv-blessing-crosses i::after {
+  top: 42%;
+  left: 0;
+  width: 100%;
+  height: 22%;
+}
+
+.tv-blessing-crosses i:nth-child(1) { --cross-left: 8%; --cross-size: 26px; --cross-delay: 0.08s; --cross-duration: 2.7s; }
+.tv-blessing-crosses i:nth-child(2) { --cross-left: 19%; --cross-size: 42px; --cross-delay: 0.38s; --cross-duration: 3.2s; }
+.tv-blessing-crosses i:nth-child(3) { --cross-left: 31%; --cross-size: 32px; --cross-delay: 0.7s; --cross-duration: 2.9s; }
+.tv-blessing-crosses i:nth-child(4) { --cross-left: 43%; --cross-size: 48px; --cross-delay: 0.18s; --cross-duration: 3.5s; }
+.tv-blessing-crosses i:nth-child(5) { --cross-left: 55%; --cross-size: 30px; --cross-delay: 0.58s; --cross-duration: 2.8s; }
+.tv-blessing-crosses i:nth-child(6) { --cross-left: 66%; --cross-size: 44px; --cross-delay: 0.28s; --cross-duration: 3.3s; }
+.tv-blessing-crosses i:nth-child(7) { --cross-left: 76%; --cross-size: 28px; --cross-delay: 0.86s; --cross-duration: 2.9s; }
+.tv-blessing-crosses i:nth-child(8) { --cross-left: 86%; --cross-size: 38px; --cross-delay: 0.48s; --cross-duration: 3.4s; }
+.tv-blessing-crosses i:nth-child(9) { --cross-left: 94%; --cross-size: 24px; --cross-delay: 1.02s; --cross-duration: 2.6s; }
+
+@keyframes blessCrossRise {
+  0% { opacity: 0; transform: translateY(0) translateX(-10px) scale(0.45) rotate(-8deg); }
+  12% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-420px) translateX(12px) scale(1.08) rotate(7deg); }
+}
 @media (prefers-reduced-motion: reduce) {
   .tv-event-layer::before,
+  .tv-blessing-crosses i,
   .tv-banner,
   .tv-banner-icon,
   .guide-event-marker,

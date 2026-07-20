@@ -42,6 +42,14 @@ const clearHostAccessKey = () => {
   }
 };
 
+const reloadAfterRestart = () => {
+  try {
+    window.localStorage.clear();
+  } catch {
+    // Reload still returns the host to a clean game.
+  }
+  window.location.reload();
+};
 const TEAM_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#f4e06d", "#8bd6e8", "#f7a6c8"];
 const TEAM_ICONS = ["♠", "♥", "◆", "♣", "★", "✦", "●", "▲"];
 // Ô sự kiện trên màn TV hiển thị đồng nhất, không lộ loại — giữ tính bí ẩn.
@@ -91,6 +99,7 @@ const Confetti = ({ seed, count = CONFETTI_COUNT }) => {
 const EventAnnouncement = ({ banner }) => {
   if (!banner) return null;
   const eventClass = banner.type ? " event-" + banner.type : "";
+  const isBlessing = banner.type === EVENT_TILE_TYPES.BLESSING;
 
   return (
     <div
@@ -99,6 +108,11 @@ const EventAnnouncement = ({ banner }) => {
       className={"tv-event-layer" + (banner.global ? " global" : "") + eventClass}
       role="status"
     >
+      {isBlessing && (
+        <div aria-hidden="true" className="tv-blessing-crosses">
+          {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
+        </div>
+      )}
       <div className="tv-banner" key={banner.key}>
         <span className="tv-banner-icon" style={{ background: banner.color || "#f0b94b" }}>
           {banner.symbol}
@@ -340,13 +354,16 @@ const GuideScreen = ({ state, banner, confettiSeed, flashSeed }) => {
   );
 };
 
-const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion, onShowLeaderboard, round }) => {
+const HostRoundBoxes = ({ activeTeam, gameOver, hiddenQuestionKey, onOpenQuestion, onRevealQuestion, onShowLeaderboard, round }) => {
   if (!round) return null;
   const auction = round.auction;
   const combat = round.combat;
   const questionControl = round.questionControl;
   const correctChoice = questionControl?.question?.choices?.[questionControl.question.correctIndex];
-
+  const questionKey = questionControl
+    ? [questionControl.teamId || "", questionControl.question?.id || questionControl.question?.text || "", questionControl.reveal ? "reveal" : "live"].join(":")
+    : "";
+  const questionVisible = questionControl && !gameOver && (!questionControl.reveal || hiddenQuestionKey !== questionKey);
   return (
     <div className="host-boxes">
       {gameOver && (
@@ -386,7 +403,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
         </section>
       )}
 
-      {questionControl && !gameOver && (
+      {questionVisible && (
         <section className="host-box host-question-box">
           <p>{"Câu hỏi người dẫn"}</p>
           <strong>{questionControl.question?.text}</strong>
@@ -459,6 +476,7 @@ export default function App() {
   const [hostAccessKey, setHostAccessKey] = useState(loadHostAccessKey);
   const [hostKeyDraft, setHostKeyDraft] = useState("");
   const [hostAuthError, setHostAuthError] = useState("");
+  const [hiddenQuestionKey, setHiddenQuestionKey] = useState("");
   const socketRef = useRef(null);
   const teamsRef = useRef([]);
   const bannerTimerRef = useRef(null);
@@ -527,14 +545,7 @@ export default function App() {
       );
     };
 
-    const onGameRestart = () => {
-      try {
-        window.localStorage.clear();
-      } catch {
-        // Reload still returns the host to a clean game.
-      }
-      window.location.reload();
-    };
+    const onGameRestart = () => reloadAfterRestart();
 
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
@@ -585,6 +596,16 @@ export default function App() {
   const isSetupReview = !setupStarted;
   const canStartGame = Boolean(state?.setup?.complete && !setupStarted);
   const isGuideScreen = window.location.pathname.replace(/\/+$/, "").endsWith("/guide");
+  const hostQuestionControl = state?.round?.questionControl;
+  const hostQuestionKey = hostQuestionControl
+    ? [hostQuestionControl.teamId || "", hostQuestionControl.question?.id || hostQuestionControl.question?.text || "", hostQuestionControl.reveal ? "reveal" : "live"].join(":")
+    : "";
+  const hideRevealedHostQuestion = (event) => {
+    if (!hostQuestionControl?.reveal || hiddenQuestionKey === hostQuestionKey) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest(".host-question-box")) return;
+    setHiddenQuestionKey(hostQuestionKey);
+  };
   const turnOrder = state?.round?.turnOrder?.length
     ? state.round.turnOrder
     : teams.map((team) => team.id);
@@ -616,11 +637,22 @@ export default function App() {
   };
 
   const restartGame = () => {
-    if (window.confirm("Khởi động lại sẽ xóa toàn bộ đội, mê cung và tiến trình hiện tại. Tiếp tục?")) {
-      socketRef.current?.emit(EVENTS.GAME_RESTART);
-    }
-  };
+    if (!window.confirm("Kh\u1edfi \u0111\u1ed9ng l\u1ea1i s\u1ebd x\u00f3a to\u00e0n b\u1ed9 \u0111\u1ed9i, m\u00ea cung v\u00e0 ti\u1ebfn tr\u00ecnh hi\u1ec7n t\u1ea1i. Ti\u1ebfp t\u1ee5c?")) return;
 
+    const socket = socketRef.current;
+    if (!socket?.connected) {
+      window.alert("Ch\u01b0a k\u1ebft n\u1ed1i m\u00e1y ch\u1ee7, kh\u00f4ng th\u1ec3 kh\u1edfi \u0111\u1ed9ng l\u1ea1i.");
+      return;
+    }
+
+    socket.timeout(3000).emit(EVENTS.GAME_RESTART, (error, response = {}) => {
+      if (error || !response.ok) {
+        window.alert("Kh\u00f4ng th\u1ec3 kh\u1edfi \u0111\u1ed9ng l\u1ea1i. H\u00e3y m\u1edf kh\u00f3a l\u1ea1i m\u00e0n ng\u01b0\u1eddi d\u1eabn.");
+        return;
+      }
+      reloadAfterRestart();
+    });
+  };
 
   if (!hostAccessKey) {
     return (
@@ -660,7 +692,7 @@ export default function App() {
   }
 
   return (
-    <main>
+    <main onClick={hideRevealedHostQuestion}>
       <GameOverOverlay gameOver={state?.gameOver} />
       <BombOverlay bomb={state?.round?.bomb} />
       <MeteorShowerOverlay meteor={state?.round?.meteorShower} />
@@ -746,6 +778,7 @@ export default function App() {
           <HostRoundBoxes
             activeTeam={teams.find((team) => team.id === state?.round?.activeTeamId)}
             gameOver={gameOver}
+            hiddenQuestionKey={hiddenQuestionKey}
             onOpenQuestion={openQuestion}
             onRevealQuestion={revealQuestion}
             onShowLeaderboard={showFinalLeaderboard}

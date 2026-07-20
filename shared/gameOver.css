@@ -41,18 +41,19 @@
   pointer-events: none;
 }
 
-.game-over-particles i {
+.game-over-particles img {
   position: absolute;
-  top: -20px;
+  top: -36px;
   left: var(--go-left);
-  width: 8px;
-  height: 18px;
-  background: var(--gold, #f0b94b);
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(255, 249, 233, 0.42));
   animation: gameOverParticle 4.8s linear var(--go-delay) infinite;
 }
 
-.game-over-particles i:nth-child(3n) { background: var(--jade, #2f8a68); }
-.game-over-particles i:nth-child(3n + 1) { width: 14px; height: 7px; background: var(--coral, #ef8f6b); }
+.game-over-particles img:nth-child(3n) { width: 28px; height: 28px; }
+.game-over-particles img:nth-child(3n + 1) { width: 38px; height: 38px; }
 
 .game-over-card {
   position: relative;

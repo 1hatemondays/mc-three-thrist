@@ -1137,6 +1137,7 @@ const EventReveal = ({ reveal, onClose }) => {
   const symbol = event.symbol || meta.symbol || "?";
   const name = event.name || meta.name || "Sự kiện";
   const desc = meta.description || event.message || "Đã kích hoạt ô sự kiện.";
+  const eventClass = event.type ? " event-" + event.type : "";
 
   // Với các sự kiện xử lý ngay (không có bước tiếp theo), hiện luôn kết quả trong thẻ.
   let outcome = null;
@@ -1152,7 +1153,12 @@ const EventReveal = ({ reveal, onClose }) => {
     event.type === EVENT_TILE_TYPES.TELEPORT;
 
   return (
-    <div className="event-overlay" role="dialog" aria-label={name}>
+    <div className={"event-overlay" + eventClass} role="dialog" aria-label={name}>
+      {event.type === EVENT_TILE_TYPES.BLESSING && (
+        <div aria-hidden="true" className="event-blessing-crosses">
+          {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
+        </div>
+      )}
       <div className="event-ticker">
         <div className="event-ticker-track">
           <span>{EVENT_TICKER_TEXT}</span>
