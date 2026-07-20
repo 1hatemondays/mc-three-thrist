@@ -378,6 +378,9 @@ const GuideScreen = ({ state, activeTeam, auctionReveal, banner, combatReveal, c
       <GameOverOverlay gameOver={state?.gameOver} />
       <BombOverlay bomb={state?.round?.bomb} />
       <MeteorShowerOverlay meteor={state?.round?.meteorShower} />
+      <Confetti seed={confettiSeed} />
+      {flashSeed ? <div className="tv-flash" key={"flash-" + flashSeed} /> : null}
+      <EventAnnouncement banner={banner} />
       <header className="guide-top">
         <div>
           <p>Màn dẫn trò chơi</p>
@@ -461,9 +464,6 @@ const GuideScreen = ({ state, activeTeam, auctionReveal, banner, combatReveal, c
               ))}
             </div>
 
-            <Confetti seed={confettiSeed} />
-            {flashSeed ? <div className="tv-flash" key={"flash-" + flashSeed} /> : null}
-            <EventAnnouncement banner={banner} />
           </div>
         ) : (
           <GuideSetupStatus submittedTeams={submittedTeams} teams={teams} />
