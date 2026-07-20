@@ -4,18 +4,22 @@ import "./meteorShower.css";
 const STREAKS = 14;
 
 export const MeteorShowerOverlay = ({ meteor, currentTeamId, onAnswer, onBuzz }) => {
-  const [clock, setClock] = useState({ questionNumber: null, deadline: 0 });
+  const [clock, setClock] = useState({ phase: null, questionNumber: null, deadline: 0 });
   const [now, setNow] = useState(Date.now());
   const [showResult, setShowResult] = useState(false);
+  const answerActive = Boolean(meteor?.active && meteor.buzzerTeamId);
+  const clockPhase = answerActive ? "answer" : "buzz";
+  const activeCountdownMs = answerActive ? meteor?.answerCountdownMs || 0 : meteor?.countdownMs || 0;
 
   useEffect(() => {
     if (!meteor?.active) return;
     setClock({
+      phase: clockPhase,
       questionNumber: meteor.questionNumber,
-      deadline: Date.now() + (meteor.countdownMs || 0)
+      deadline: Date.now() + activeCountdownMs
     });
     setNow(Date.now());
-  }, [meteor?.active, meteor?.questionNumber]);
+  }, [activeCountdownMs, clockPhase, meteor?.active, meteor?.questionNumber]);
 
   useEffect(() => {
     if (!meteor?.active) return undefined;
@@ -35,11 +39,14 @@ export const MeteorShowerOverlay = ({ meteor, currentTeamId, onAnswer, onBuzz })
   }, [meteor?.active, meteor?.result?.completedAt]);
 
   const remainingMs =
-    clock.questionNumber === meteor?.questionNumber
+    clock.questionNumber === meteor?.questionNumber && clock.phase === clockPhase
       ? Math.max(0, clock.deadline - now)
-      : Math.max(0, meteor?.countdownMs || 0);
+      : Math.max(0, activeCountdownMs);
   const countdown = Math.ceil(remainingMs / 1000);
-  const buzzOpen = Boolean(meteor?.active && remainingMs === 0 && !meteor.buzzerTeamId);
+  const answerProgress = answerActive
+    ? Math.max(0, Math.min(100, (remainingMs / (meteor.answerTimeMs || 10000)) * 100))
+    : 0;
+  const buzzOpen = Boolean(meteor?.active && !answerActive && remainingMs === 0 && !meteor.buzzerTeamId);
 
   useEffect(() => {
     if (!buzzOpen || !onBuzz) return undefined;
@@ -110,6 +117,11 @@ export const MeteorShowerOverlay = ({ meteor, currentTeamId, onAnswer, onBuzz })
                 <div className={"meteor-buzz-winner" + (myBuzz ? " is-mine" : "")}>
                   <small>{myBuzz ? "\u0110\u1ed8I B\u1ea0N GI\u00c0NH QUY\u1ec0N" : "QUY\u1ec0N TR\u1ea2 L\u1edcI"}</small>
                   <strong>{meteor.buzzerTeamName}</strong>
+                  <div className="meteor-answer-timer" aria-label={`Còn ${Math.max(0, countdown)} giây trả lời`}>
+                    <b>{Math.max(0, countdown)}s</b>
+                    <span><i style={{ "--combat-time": `${answerProgress}%` }} /></span>
+                    <em>hết giờ = sai</em>
+                  </div>
                 </div>
               ) : (
                 <button className="meteor-space" disabled={!onBuzz} onClick={onBuzz} type="button">
@@ -122,7 +134,8 @@ export const MeteorShowerOverlay = ({ meteor, currentTeamId, onAnswer, onBuzz })
             <div className="meteor-choices">
               {(meteor.question?.choices || []).map((choice, index) => (
                 <button
-                  disabled={!meteor.canAnswer || !onAnswer}
+                  disabled={!meteor.canAnswer || !onAnswer || (answerActive && remainingMs <= 0)}
+                  aria-disabled={!meteor.canAnswer || !onAnswer || (answerActive && remainingMs <= 0)}
                   key={meteor.question.id + ":" + index}
                   onClick={() => onAnswer(index)}
                   type="button"

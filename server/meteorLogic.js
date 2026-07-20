@@ -4,6 +4,7 @@ import { addRoundMessage, maybeFinishMovementRound } from "./roundFlow.js";
 
 const QUESTION_COUNT = 10;
 const COUNTDOWN_MS = 3000;
+const ANSWER_TIME_MS = 10000;
 const WINNER_BONUS = 50;
 const LOSER_HP_LOSS = 15;
 
@@ -44,6 +45,7 @@ export const startMeteorShower = (
     questionIndex: 0,
     totalQuestions: QUESTION_COUNT,
     countdownEndsAt: now + COUNTDOWN_MS,
+    answerDeadline: 0,
     buzzerTeamId: null,
     scores: Object.fromEntries(state.teams.map((team) => [team.id, 0])),
     lastAnswer: null,
@@ -72,6 +74,8 @@ export const getMeteorShowerState = (state, teamId = null, now = Date.now()) => 
     totalQuestions: meteor.totalQuestions,
     question: active ? publicQuestion(meteor.questions[meteor.questionIndex]) : null,
     countdownMs: active ? Math.max(0, meteor.countdownEndsAt - now) : 0,
+    answerCountdownMs: active && meteor.buzzerTeamId ? Math.max(0, (meteor.answerDeadline || 0) - now) : 0,
+    answerTimeMs: ANSWER_TIME_MS,
     buzzerTeamId: meteor.buzzerTeamId,
     buzzerTeamName: buzzer?.name || null,
     canAnswer: Boolean(active && teamId && meteor.buzzerTeamId === teamId),
@@ -95,6 +99,7 @@ export const submitMeteorBuzz = (state, teamId, now = Date.now()) => {
   if (meteor.buzzerTeamId) return { ok: false, error: "\u0110\u00e3 c\u00f3 \u0111\u1ed9i gi\u00e0nh quy\u1ec1n tr\u1ea3 l\u1eddi." };
 
   meteor.buzzerTeamId = teamId;
+  meteor.answerDeadline = now + ANSWER_TIME_MS;
   return { ok: true };
 };
 
@@ -121,6 +126,7 @@ const finishMeteorShower = (state, now) => {
 
   meteor.questions = [];
   meteor.buzzerTeamId = null;
+  meteor.answerDeadline = 0;
   meteor.countdownEndsAt = 0;
   meteor.result = {
     winnerId,
@@ -135,6 +141,24 @@ const finishMeteorShower = (state, now) => {
   return meteor.result;
 };
 
+const resolveMeteorAnswer = (state, teamId, correct, now, reason = "answer") => {
+  const meteor = state.round.meteorShower;
+  if (correct) meteor.scores[teamId] += 1;
+  const team = findTeam(state, teamId);
+  recordAnswer(team, correct);
+  meteor.lastAnswer = { teamId, teamName: team.name, correct, timeout: reason === "timeout" };
+
+  if (meteor.questionIndex + 1 === meteor.totalQuestions) {
+    return { ok: true, completed: true, result: finishMeteorShower(state, now), timeout: reason === "timeout" };
+  }
+
+  meteor.questionIndex += 1;
+  meteor.countdownEndsAt = now + COUNTDOWN_MS;
+  meteor.answerDeadline = 0;
+  meteor.buzzerTeamId = null;
+  return { ok: true, completed: false, correct, timeout: reason === "timeout" };
+};
+
 export const submitMeteorAnswer = (state, teamId, payload = {}, now = Date.now()) => {
   const meteor = state.round.meteorShower;
   if (state.round.phase !== ROUND_PHASES.METEOR_SHOWER || !meteor) {
@@ -143,23 +167,22 @@ export const submitMeteorAnswer = (state, teamId, payload = {}, now = Date.now()
   if (meteor.buzzerTeamId !== teamId) return { ok: false, error: "\u0110\u1ed9i ch\u01b0a gi\u00e0nh quy\u1ec1n tr\u1ea3 l\u1eddi." };
 
   const question = meteor.questions[meteor.questionIndex];
+  if (meteor.answerDeadline && now >= meteor.answerDeadline) {
+    return resolveMeteorAnswer(state, teamId, false, now, "timeout");
+  }
+
   const answerIndex = Number(payload.answerIndex);
   if (!Number.isInteger(answerIndex) || answerIndex < 0 || answerIndex >= question.choices.length) {
     return { ok: false, error: "\u0110\u00e1p \u00e1n kh\u00f4ng h\u1ee3p l\u1ec7." };
   }
 
   const correct = answerIndex === question.correctIndex;
-  if (correct) meteor.scores[teamId] += 1;
-  const team = findTeam(state, teamId);
-  recordAnswer(team, correct);
-  meteor.lastAnswer = { teamId, teamName: team.name, correct };
+  return resolveMeteorAnswer(state, teamId, correct, now);
+};
 
-  if (meteor.questionIndex + 1 === meteor.totalQuestions) {
-    return { ok: true, completed: true, result: finishMeteorShower(state, now) };
-  }
-
-  meteor.questionIndex += 1;
-  meteor.countdownEndsAt = now + COUNTDOWN_MS;
-  meteor.buzzerTeamId = null;
-  return { ok: true, completed: false, correct };
+export const resolveMeteorAnswerTimeout = (state, now = Date.now()) => {
+  const meteor = state.round.meteorShower;
+  if (state.round.phase !== ROUND_PHASES.METEOR_SHOWER || !meteor) return null;
+  if (!meteor.buzzerTeamId || !meteor.answerDeadline || now < meteor.answerDeadline) return null;
+  return resolveMeteorAnswer(state, meteor.buzzerTeamId, false, now, "timeout");
 };

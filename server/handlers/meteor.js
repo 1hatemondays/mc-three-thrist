@@ -1,7 +1,21 @@
 import { EVENTS } from "../../shared/constants.js";
 import { gameState } from "../gameState.js";
-import { submitMeteorAnswer, submitMeteorBuzz } from "../meteorLogic.js";
+import { resolveMeteorAnswerTimeout, submitMeteorAnswer, submitMeteorBuzz } from "../meteorLogic.js";
 import { emitAllStates, emitPlayerError } from "../socketState.js";
+
+let meteorAnswerTimer = null;
+
+export const scheduleMeteorAnswerTimeout = (io) => {
+  clearTimeout(meteorAnswerTimer);
+  const meteor = gameState.round.meteorShower;
+  if (!meteor?.buzzerTeamId || !meteor.answerDeadline || meteor.result) return;
+
+  meteorAnswerTimer = setTimeout(() => {
+    const result = resolveMeteorAnswerTimeout(gameState);
+    if (!result) return;
+    emitAllStates(io);
+  }, Math.max(0, meteor.answerDeadline - Date.now() + 5));
+};
 
 export const registerMeteorHandlers = (io, socket) => {
   socket.on(EVENTS.METEOR_BUZZ, () => {
@@ -10,6 +24,7 @@ export const registerMeteorHandlers = (io, socket) => {
       emitPlayerError(socket, result.error);
       return;
     }
+    scheduleMeteorAnswerTimeout(io);
     emitAllStates(io);
   });
 
@@ -19,6 +34,7 @@ export const registerMeteorHandlers = (io, socket) => {
       emitPlayerError(socket, result.error);
       return;
     }
+    clearTimeout(meteorAnswerTimer);
     emitAllStates(io);
   });
 };

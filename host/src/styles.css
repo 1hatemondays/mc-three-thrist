@@ -353,6 +353,18 @@ main {
   padding-top: 22px;
 }
 
+.setup-helper {
+  margin: -6px 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.setup-helper.ready {
+  color: var(--jade);
+}
+
 .rank {
   align-items: center;
   padding: 13px 0;

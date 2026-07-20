@@ -825,6 +825,7 @@ export default function App() {
   const rankingRows = gameOver?.rankings || teams.map((team) => ({ teamId: team.id, teamName: team.name, score: team.score, hp: team.hp }));
   const isSetupReview = !setupStarted;
   const canStartGame = Boolean(state?.setup?.complete && !setupStarted);
+  const canEditTurnOrder = Boolean(state?.setup?.complete && !setupStarted);
   const isGuideScreen = window.location.pathname.replace(/\/+$/, "").endsWith("/guide");
   const turnOrder = state?.round?.turnOrder?.length
     ? state.round.turnOrder
@@ -834,6 +835,7 @@ export default function App() {
     .filter(Boolean);
 
   const moveTeam = (index, offset) => {
+    if (!canEditTurnOrder) return;
     const nextOrder = [...turnOrder];
     [nextOrder[index], nextOrder[index + offset]] = [nextOrder[index + offset], nextOrder[index]];
     socketRef.current?.emit(EVENTS.SETUP_SET_TURN_ORDER, { teamIds: nextOrder });
@@ -1019,6 +1021,11 @@ export default function App() {
               </div>
 
               <h2 className="setup-title">{"Th\u1ee9 t\u1ef1 l\u01b0\u1ee3t ch\u01a1i"}</h2>
+              <p className={canEditTurnOrder ? "setup-helper ready" : "setup-helper"}>
+                {canEditTurnOrder
+                  ? "Tất cả đội đã nộp mê cung. Sắp xếp thứ tự rồi bấm Bắt đầu."
+                  : "Chờ tất cả đội nộp mê cung để mở sắp xếp thứ tự chơi."}
+              </p>
               <div className="turn-order">
                 {orderedTeams.map((team, index) => (
                   <div
@@ -1028,17 +1035,19 @@ export default function App() {
                     <span><b>{index + 1}</b>{team.name}</span>
                     {setupStarted ? (
                       <strong>{state?.round?.activeTeamId === team.id ? "\u0110ang l\u01b0\u1ee3t" : "Ch\u1edd"}</strong>
+                    ) : !canEditTurnOrder ? (
+                      <strong>{submitted.has(team.id) ? "Sẵn sàng" : "Chưa nộp"}</strong>
                     ) : (
                       <div className="turn-order-actions">
                         <button
                           aria-label={"\u0110\u01b0a " + team.name + " l\u00ean"}
-                          disabled={index === 0}
+                          disabled={index === 0 || !canEditTurnOrder}
                           onClick={() => moveTeam(index, -1)}
                           type="button"
                         >{"\u2191"}</button>
                         <button
                           aria-label={"\u0110\u01b0a " + team.name + " xu\u1ed1ng"}
-                          disabled={index === orderedTeams.length - 1}
+                          disabled={index === orderedTeams.length - 1 || !canEditTurnOrder}
                           onClick={() => moveTeam(index, 1)}
                           type="button"
                         >{"\u2193"}</button>

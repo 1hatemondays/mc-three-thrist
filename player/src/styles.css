@@ -1015,9 +1015,9 @@ dd {
 
 .result-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.95fr);
-  gap: 14px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 240px);
+  gap: clamp(18px, 5vw, 56px);
+  align-items: center;
 }
 
 .result-card.success {
@@ -1031,12 +1031,22 @@ dd {
 }
 
 .result-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
+  justify-self: stretch;
   margin: 0;
 }
 
+.result-grid > div {
+  min-width: 0;
+  padding: 16px 18px;
+}
+
+.result-grid dt {
+  white-space: nowrap;
+}
+
 .result-grid dd {
-  font-size: 16px;
+  font-size: clamp(24px, 5vw, 40px);
   line-height: 1.15;
 }
 
