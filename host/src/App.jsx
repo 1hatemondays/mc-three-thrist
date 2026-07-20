@@ -258,9 +258,13 @@ const Board = ({ cardLabel, eventTiles = [], hideMazeDetails = false, metaLabel,
           return (
             <div className={classes.join(" ")} key={key} style={{ gridColumn: x * 2 + 2, gridRow: y * 2 + 2 }}>
               {eventMeta && (
-                <span className="event-marker board-event" style={{ "--event-color": eventMeta.color }} title={eventMeta.name}>
-                  {eventMeta.symbol}
-                </span>
+                <GameIcon
+                  className="event-marker board-event"
+                  color={eventMeta.color}
+                  label={eventMeta.name}
+                  symbol={eventMeta.symbol}
+                  type={eventMeta.type}
+                />
               )}
               {key === startKey ? "S" : key === endKey ? "E" : ""}
             </div>
@@ -825,7 +829,7 @@ export default function App() {
   const rankingRows = gameOver?.rankings || teams.map((team) => ({ teamId: team.id, teamName: team.name, score: team.score, hp: team.hp }));
   const isSetupReview = !setupStarted;
   const canStartGame = Boolean(state?.setup?.complete && !setupStarted);
-  const canEditTurnOrder = Boolean(state?.setup?.complete && !setupStarted);
+  const canEditTurnOrder = Boolean(teams.length > 0 && !setupStarted);
   const isGuideScreen = window.location.pathname.replace(/\/+$/, "").endsWith("/guide");
   const turnOrder = state?.round?.turnOrder?.length
     ? state.round.turnOrder
@@ -1022,9 +1026,11 @@ export default function App() {
 
               <h2 className="setup-title">{"Th\u1ee9 t\u1ef1 l\u01b0\u1ee3t ch\u01a1i"}</h2>
               <p className={canEditTurnOrder ? "setup-helper ready" : "setup-helper"}>
-                {canEditTurnOrder
-                  ? "Tất cả đội đã nộp mê cung. Sắp xếp thứ tự rồi bấm Bắt đầu."
-                  : "Chờ tất cả đội nộp mê cung để mở sắp xếp thứ tự chơi."}
+                {setupStarted
+                  ? "Thứ tự đã khóa sau khi bắt đầu trò chơi."
+                  : canEditTurnOrder
+                    ? "Có thể sắp xếp các đội đang trong lobby. Khi bấm Bắt đầu, thứ tự sẽ được khóa."
+                    : "Chờ đội vào lobby để sắp xếp thứ tự chơi."}
               </p>
               <div className="turn-order">
                 {orderedTeams.map((team, index) => (

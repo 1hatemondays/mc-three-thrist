@@ -1,7 +1,7 @@
 import { EVENTS, ROUND_PHASES } from "../../shared/constants.js";
 import { gameState } from "../gameState.js";
 import { resolveBombAnswer, resolveBombTimeout, resolvePendingEvent } from "../eventLogic.js";
-import { emitAllStates, emitGameOver, emitPlayerError } from "../socketState.js";
+import { emitAllStates, emitGameOver, emitPlayerError, emitRoundResult } from "../socketState.js";
 import { scheduleCombatTimeout } from "./combat.js";
 
 let bombTimer = null;
@@ -32,6 +32,9 @@ export const registerEventHandlers = (io, socket) => {
       return;
     }
 
+    if (result.result?.event) {
+      emitRoundResult(io, { teamId: socket.data.teamId, ...result.result });
+    }
     emitAllStates(io);
     if (result.result?.gameOver) emitGameOver(io, result.result.gameOver);
     if (gameState.round.phase === ROUND_PHASES.COMBAT) scheduleCombatTimeout(io);

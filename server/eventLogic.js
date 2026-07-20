@@ -396,10 +396,12 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
       return { ok: false, error: "H\u00e3y ch\u1ecdn t\u1ecda \u0111\u1ed9 h\u1ee3p l\u1ec7 \u0111\u1ec3 d\u1ecbch chuy\u1ec3n." };
     }
 
+    delete state.round.pendingEvents[teamId];
     team.position = point;
     discover(team, point);
     const gameOver = finishGameIfNeeded(state, teamId);
-    delete state.round.pendingEvents[teamId];
+    const landedEventTile = gameOver ? null : findEventTileAt(state.round.eventTiles, point);
+    const event = landedEventTile ? applyEventTileEffect(state, teamId, landedEventTile) : null;
     addRoundMessage(state, teamId, {
       title: "Dịch chuyển",
       text: "Đội đã dịch chuyển đến (" + (point.x + 1) + ", " + (point.y + 1) + ")."
@@ -410,6 +412,7 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
       result: {
         type: pending.type,
         newPosition: point,
+        event,
         gameOver,
         message: "D\u1ecbch chuy\u1ec3n \u0111\u1ebfn (" + (point.x + 1) + ", " + (point.y + 1) + ")"
       }

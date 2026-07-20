@@ -164,6 +164,21 @@ test("teleporting onto the end point finishes the game", () => {
   assert.equal(result.gameOver.winnerId, "team1");
   assert.equal(state.round.phase, "gameOver");
 });
+
+test("teleporting onto an event tile activates and consumes that event", () => {
+  const state = makeState();
+  state.round.eventTiles = [{ id: "knowledge:4:3", type: EVENT_TILE_TYPES.KNOWLEDGE, x: 4, y: 3 }];
+  applyEventTileEffect(state, "team1", { type: EVENT_TILE_TYPES.TELEPORT, x: 1, y: 0 });
+
+  const result = resolvePendingEvent(state, "team1", { position: { x: 4, y: 3 } }).result;
+
+  assert.equal(result.type, EVENT_TILE_TYPES.TELEPORT);
+  assert.equal(result.event.type, EVENT_TILE_TYPES.KNOWLEDGE);
+  assert.deepEqual(state.round.eventTiles, []);
+  assert.equal(state.round.pendingEvents.team1.type, EVENT_TILE_TYPES.KNOWLEDGE);
+  assert.deepEqual(state.teams[0].position, { x: 4, y: 3 });
+});
+
 test("position swap event waits for the team to choose or skip", () => {
   const state = makeState();
   const eventResult = applyEventTileEffect(state, "team1", { type: EVENT_TILE_TYPES.POSITION_SWAP, x: 1, y: 0 });
