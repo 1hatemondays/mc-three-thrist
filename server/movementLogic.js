@@ -323,6 +323,7 @@ export const answerQuestion = (state, teamId, payload) => {
 
   const turnEnded = Boolean(result.event?.endsTurn);
   const energyEnded = spent.energy.remaining <= 0;
+  const phaseInterrupted = state.round.phase !== ROUND_PHASES.MOVEMENT;
   let roundComplete = false;
 
   state.round.questionControl = {
@@ -338,7 +339,9 @@ export const answerQuestion = (state, teamId, payload) => {
     pending.answered = true;
     pending.result = result;
 
-    roundComplete = finishTeamTurn(state, teamId, result);
+    if (!phaseInterrupted) {
+      roundComplete = finishTeamTurn(state, teamId, result);
+    }
   } else {
     delete state.round.pendingAnswers[teamId];
     state.round.currentQuestion = null;

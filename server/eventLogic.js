@@ -8,7 +8,7 @@ import {
 import { finishGameIfNeeded, isGameOver } from "./gameOver.js";
 import { startCombat } from "./combatLogic.js";
 import { drawQuestion, hardQuestionBank, questionBank } from "./questionBank.js";
-import { addRoundMessage } from "./roundFlow.js";
+import { addRoundMessage, maybeFinishMovementRound } from "./roundFlow.js";
 import { consumeShield, grantSupportItem } from "./supportLogic.js";
 
 const pointKey = ({ x, y }) => x + ":" + y;
@@ -255,6 +255,7 @@ const explodeBomb = (state, teamId, reason) => {
     explodedAt: Date.now()
   };
   state.round.phase = ROUND_PHASES.MOVEMENT;
+  maybeFinishMovementRound(state);
   addRoundMessage(state, team.id, {
     title: "Bom ph\u00e1t n\u1ed5",
     text: "M\u1ea5t 30 máu v\u00ec " + (reason === "timeout" ? "h\u1ebft th\u1eddi gian." : "tr\u1ea3 l\u1eddi sai.")

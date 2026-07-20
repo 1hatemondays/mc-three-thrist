@@ -208,6 +208,23 @@ test("event tiles trigger after a successful move without changing the base move
   assert.deepEqual(state.round.eventTiles, []);
 });
 
+test("bomb event pauses round completion so the overlay can show", () => {
+  const state = makeState();
+  state.round.turnOrder = ["team1"];
+  state.round.activeTeamId = "team1";
+  state.round.turnEnergy = { teamId: "team1", remaining: 1, max: 3 };
+  state.round.eventTiles = [{ id: "bomb:1:0", type: EVENT_TILE_TYPES.BOMB, x: 1, y: 0 }];
+
+  chooseMoveQuestion(state, "team1", { direction: "right" }, questions, () => 0);
+  openQuestionForAnswer(state);
+  const result = answerQuestion(state, "team1", { answerIndex: 1 });
+
+  assert.equal(result.result.event.type, EVENT_TILE_TYPES.BOMB);
+  assert.equal(state.round.phase, ROUND_PHASES.BOMB);
+  assert.equal(state.round.bomb.holderTeamId, "team1");
+  assert.ok(state.round.bomb.question);
+});
+
 test("wrong answers consume one energy without moving", () => {
   const state = makeState();
 
