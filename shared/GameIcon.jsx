@@ -6,6 +6,7 @@ import jailIcon from "./assets/jail.svg";
 import healIcon from "./assets/heal.svg";
 import lightbulbIcon from "./assets/lightbulb.svg";
 import meteorIcon from "./assets/meteor.svg";
+import monsterIcon from "./assets/monster.svg";
 import shieldIcon from "./assets/shield.svg";
 import snowflakeIcon from "./assets/snowflake.svg";
 import switchIcon from "./assets/switch.svg";
@@ -23,6 +24,7 @@ const IMAGE_ICONS = {
   [EVENT_TILE_TYPES.BLESSING]: healIcon,
   [EVENT_TILE_TYPES.KNOWLEDGE]: wiseIcon,
   [EVENT_TILE_TYPES.METEOR_STRIKE]: meteorIcon,
+  [EVENT_TILE_TYPES.MONSTER_ATTACK]: monsterIcon,
   [EVENT_TILE_TYPES.POSITION_SWAP]: switchIcon,
   [EVENT_TILE_TYPES.PRISON]: jailIcon,
   [EVENT_TILE_TYPES.TELEPORT]: teleportIcon,

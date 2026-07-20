@@ -1,6 +1,7 @@
 export const EVENTS = {
   TEAM_JOIN: "team:join",
   SETUP_SUBMIT_MAZE: "setup:submitMaze",
+  SETUP_UNREADY_MAZE: "setup:unreadyMaze",
   SETUP_SET_TEAM_COUNT: "setup:setTeamCount",
   SETUP_START_GAME: "setup:startGame",
   SETUP_SET_TURN_ORDER: "setup:setTurnOrder",

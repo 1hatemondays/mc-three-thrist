@@ -226,28 +226,29 @@ const edgeGridPosition = (edge) =>
     ? { gridColumn: edge.side === "left" ? edge.x * 2 + 1 : BOARD_SIZE * 2 + 1, gridRow: edge.y * 2 + 2 }
     : { gridColumn: edge.x * 2 + 2, gridRow: edge.side === "top" ? edge.y * 2 + 1 : BOARD_SIZE * 2 + 1 };
 
-const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
-  const startKey = pointKey(team.startPoint);
-  const endKey = pointKey(team.endPoint);
-  const positionKey = pointKey(team.position);
-  const walls = team.walls || [];
+const Board = ({ cardLabel, eventTiles = [], hideMazeDetails = false, metaLabel, setupStatus = false, submitted, team }) => {
+  const startKey = hideMazeDetails ? "" : pointKey(team.startPoint);
+  const endKey = hideMazeDetails ? "" : pointKey(team.endPoint);
+  const positionKey = hideMazeDetails ? "" : pointKey(team.position);
+  const walls = hideMazeDetails ? [] : team.walls || [];
+  const visibleEventTiles = hideMazeDetails ? [] : eventTiles;
 
   return (
-    <section className="team-card">
+    <section className={setupStatus ? "team-card setup-status-card" : "team-card"}>
       <header>
         <div>
           <strong>{cardLabel}</strong>
           <small>{metaLabel}</small>
         </div>
-        <span className={submitted ? "status ready" : "status"}>{submitted ? "Đã nộp" : "Đang chờ"}</span>
+        <span className={submitted ? "status ready" : "status"}>{setupStatus ? (submitted ? "Sẵn Sàng" : "Đang xây") : submitted ? "Đã nộp" : "Đang chờ"}</span>
       </header>
 
-      <div className="board" aria-label={`${cardLabel} mê cung`}>
+      <div className={setupStatus ? "board setup-status-board" : "board"} aria-label={`${cardLabel} mê cung`}>
         {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
           const x = index % BOARD_SIZE;
           const y = Math.floor(index / BOARD_SIZE);
           const key = `${x}:${y}`;
-          const eventTile = eventTiles.find((tile) => tile.x === x && tile.y === y);
+          const eventTile = visibleEventTiles.find((tile) => tile.x === x && tile.y === y);
           const eventMeta = eventTile ? getEventTileMeta(eventTile.type) : null;
           const classes = ["board-cell"];
           if (key === startKey) classes.push("start");
@@ -286,8 +287,48 @@ const Board = ({ cardLabel, eventTiles = [], metaLabel, submitted, team }) => {
             />
           );
         })}
+
+        {setupStatus && (
+          <div className={submitted ? "maze-status-overlay ready" : "maze-status-overlay loading"}>
+            {submitted ? (
+              <strong>Sẵn Sàng</strong>
+            ) : (
+              <span className="maze-loading-spinner" aria-label="Đang chờ đội nộp mê cung" role="status" />
+            )}
+          </div>
+        )}
       </div>
     </section>
+  );
+};
+
+const GuideSetupStatus = ({ submittedTeams, teams }) => {
+  if (!teams.length) {
+    return (
+      <section className="guide-empty-setup">
+        <strong>Đang chờ đội tham gia</strong>
+        <span>Các ô trạng thái sẽ xuất hiện khi đội chơi vào phòng.</span>
+      </section>
+    );
+  }
+
+  return (
+    <div className="guide-setup-status" aria-label="Trạng thái xây mê cung của các đội">
+      {teams.map((team) => {
+        const isReady = submittedTeams.has(team.id);
+        return (
+          <Board
+            cardLabel={team.name}
+            hideMazeDetails
+            key={team.id}
+            metaLabel={isReady ? "Đã nộp mê cung" : "Đang xây mê cung"}
+            setupStatus
+            submitted={isReady}
+            team={team}
+          />
+        );
+      })}
+    </div>
   );
 };
 
@@ -297,6 +338,7 @@ const GuideScreen = ({ state, activeTeam, auctionReveal, banner, combatReveal, c
   const gameOver = state?.gameOver || null;
   const rankingRows = gameOver?.rankings || teams;
   const setupStarted = Boolean(state?.setup?.started);
+  const submittedTeams = new Set(Object.keys(state?.setup?.submissions || {}));
   const eventTiles = setupStarted ? round?.eventTiles || [] : [];
 
   if (gameOver) {
@@ -335,75 +377,79 @@ const GuideScreen = ({ state, activeTeam, auctionReveal, banner, combatReveal, c
       </header>
 
       <section className="guide-layout">
-        <div className="guide-map-wrap">
-          <div className="guide-map" aria-label="Bản đồ chính 6x6">
-            {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
-              const x = index % BOARD_SIZE;
-              const y = Math.floor(index / BOARD_SIZE);
-              const cellTeams = teams.filter((team) => team.position?.x === x && team.position?.y === y);
-              const visibleTeams = cellTeams.slice(0, 4);
-              const extraTeamCount = Math.max(0, cellTeams.length - visibleTeams.length);
-              const eventTile = eventTiles.find((tile) => tile.x === x && tile.y === y);
-              const bobDelay = ((index % 7) * 0.25).toFixed(2) + "s";
+        {setupStarted ? (
+          <div className="guide-map-wrap">
+            <div className="guide-map" aria-label="Bản đồ chính 6x6">
+              {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => {
+                const x = index % BOARD_SIZE;
+                const y = Math.floor(index / BOARD_SIZE);
+                const cellTeams = teams.filter((team) => team.position?.x === x && team.position?.y === y);
+                const visibleTeams = cellTeams.slice(0, 4);
+                const extraTeamCount = Math.max(0, cellTeams.length - visibleTeams.length);
+                const eventTile = eventTiles.find((tile) => tile.x === x && tile.y === y);
+                const bobDelay = ((index % 7) * 0.25).toFixed(2) + "s";
 
-              return (
-                <div
-                  className={"guide-cell" + (cellTeams.length > 1 ? " has-stack" : "")}
-                  key={x + ":" + y}
-                  style={{ gridColumn: x * 2 + 2, gridRow: y * 2 + 2 }}
-                >
-                  <span className="guide-coord">{x + 1}.{y + 1}</span>
-                  {eventTile && !cellTeams.length && (
-                    <span className="guide-event-marker" style={{ animationDelay: bobDelay }} title="Ô sự kiện bí ẩn">
-                      <span className="guide-event-ring" style={{ borderColor: MYSTERY_EVENT.color, animationDelay: bobDelay }} />
-                      <span className="event-marker mystery" style={{ "--event-color": MYSTERY_EVENT.color }}>
-                        {MYSTERY_EVENT.symbol}
-                      </span>
-                    </span>
-                  )}
-                  <div className="guide-markers">
-                    {visibleTeams.map((team) => {
-                      const realIndex = teams.findIndex((item) => item.id === team.id);
-                      return (
-                        <span
-                          className={"team-marker round" + (cellTeams.length === 1 ? " bob" : " mini")}
-                          key={team.id}
-                          style={{ "--team-color": teamColor(realIndex), animationDelay: bobDelay }}
-                          title={team.name}
-                        >
-                          {teamIcon(realIndex)}
+                return (
+                  <div
+                    className={"guide-cell" + (cellTeams.length > 1 ? " has-stack" : "")}
+                    key={x + ":" + y}
+                    style={{ gridColumn: x * 2 + 2, gridRow: y * 2 + 2 }}
+                  >
+                    <span className="guide-coord">{x + 1}.{y + 1}</span>
+                    {eventTile && !cellTeams.length && (
+                      <span className="guide-event-marker" style={{ animationDelay: bobDelay }} title="Ô sự kiện bí ẩn">
+                        <span className="guide-event-ring" style={{ borderColor: MYSTERY_EVENT.color, animationDelay: bobDelay }} />
+                        <span className="event-marker mystery" style={{ "--event-color": MYSTERY_EVENT.color }}>
+                          {MYSTERY_EVENT.symbol}
                         </span>
-                      );
-                    })}
-                    {extraTeamCount > 0 && <span className="team-marker-overflow">+{extraTeamCount}</span>}
+                      </span>
+                    )}
+                    <div className="guide-markers">
+                      {visibleTeams.map((team) => {
+                        const realIndex = teams.findIndex((item) => item.id === team.id);
+                        return (
+                          <span
+                            className={"team-marker round" + (cellTeams.length === 1 ? " bob" : " mini")}
+                            key={team.id}
+                            style={{ "--team-color": teamColor(realIndex), animationDelay: bobDelay }}
+                            title={team.name}
+                          >
+                            {teamIcon(realIndex)}
+                          </span>
+                        );
+                      })}
+                      {extraTeamCount > 0 && <span className="team-marker-overflow">+{extraTeamCount}</span>}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
 
-            {BORDER_SEGMENTS.map((edge) => (
-              <div
-                aria-hidden="true"
-                className={`guide-edge border ${edge.orientation}`}
-                key={`guide-border-${edge.side}-${edge.x}-${edge.y}`}
-                style={edgeGridPosition(edge)}
-              />
-            ))}
+              {BORDER_SEGMENTS.map((edge) => (
+                <div
+                  aria-hidden="true"
+                  className={`guide-edge border ${edge.orientation}`}
+                  key={`guide-border-${edge.side}-${edge.x}-${edge.y}`}
+                  style={edgeGridPosition(edge)}
+                />
+              ))}
 
-            {INTERIOR_EDGES.map((edge) => (
-              <div
-                aria-hidden="true"
-                className={`guide-edge ${edge.orientation}`}
-                key={`guide-edge-${edge.side}-${edge.x}-${edge.y}`}
-                style={edgeGridPosition(edge)}
-              />
-            ))}
+              {INTERIOR_EDGES.map((edge) => (
+                <div
+                  aria-hidden="true"
+                  className={`guide-edge ${edge.orientation}`}
+                  key={`guide-edge-${edge.side}-${edge.x}-${edge.y}`}
+                  style={edgeGridPosition(edge)}
+                />
+              ))}
+            </div>
+
+            <Confetti seed={confettiSeed} />
+            {flashSeed ? <div className="tv-flash" key={"flash-" + flashSeed} /> : null}
+            <EventAnnouncement banner={banner} />
           </div>
-
-          <Confetti seed={confettiSeed} />
-          {flashSeed ? <div className="tv-flash" key={"flash-" + flashSeed} /> : null}
-          <EventAnnouncement banner={banner} />
-        </div>
+        ) : (
+          <GuideSetupStatus submittedTeams={submittedTeams} teams={teams} />
+        )}
 
         <aside className="guide-panel">
           <HostRoundBoxes
@@ -414,8 +460,8 @@ const GuideScreen = ({ state, activeTeam, auctionReveal, banner, combatReveal, c
             onShowLeaderboard={onShowLeaderboard}
             round={round}
           />
-          <h2>{gameOver ? "Xếp hạng chung cuộc" : "Vị trí đội"}</h2>
-          {rankingRows.map((team, index) => (
+          <h2>{gameOver ? "Xếp hạng chung cuộc" : setupStarted ? "Vị trí đội" : "Trạng thái xây mê cung"}</h2>
+          {(setupStarted ? rankingRows : teams).map((team, index) => (
             <div className="guide-team" key={team.teamId || team.id}>
               <span className="team-marker round" style={{ "--team-color": teamColor(index) }}>
                 {teamIcon(index)}
@@ -425,7 +471,11 @@ const GuideScreen = ({ state, activeTeam, auctionReveal, banner, combatReveal, c
                 <small>
                   {gameOver
                     ? team.score + " điểm / " + team.hp + " máu"
-                    : <><AnimatedScore value={team.score} /> điểm · ({(team.position?.x ?? 0) + 1}, {(team.position?.y ?? 0) + 1})</>}
+                    : setupStarted
+                    ? <><AnimatedScore value={team.score} /> điểm · ({(team.position?.x ?? 0) + 1}, {(team.position?.y ?? 0) + 1})</>
+                    : submittedTeams.has(team.id)
+                    ? "Sẵn Sàng"
+                    : "Đang xây mê cung"}
                 </small>
               </div>
             </div>

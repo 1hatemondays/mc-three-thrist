@@ -133,7 +133,7 @@ const formatBlockedReason = (reason) => {
   return "Bị chặn";
 };
 
-const SetupBoard = ({ state, onSubmit }) => {
+const SetupBoard = ({ state, onSubmit, onUnready }) => {
   const [draft, setDraft] = useState(emptyDraft);
   const [mode, setMode] = useState("wall");
   const [draftError, setDraftError] = useState("");
@@ -146,6 +146,7 @@ const SetupBoard = ({ state, onSubmit }) => {
   const endpointsReady = Boolean(draft.startPoint && draft.endPoint && startKey !== endKey);
   const mazeConnected = isMazeConnected(draft.walls, BOARD_SIZE);
   const canSubmit = !submitted && draft.walls.length === WALL_COUNT && endpointsReady && mazeConnected;
+  const canUseSetupAction = submitted || canSubmit;
   const waitingForHostStart = setup?.complete && !setup?.started;
 
   useEffect(() => {
@@ -307,8 +308,12 @@ const SetupBoard = ({ state, onSubmit }) => {
                   ? "B\u1ea5m v\u00e0o c\u1ea1nh gi\u1eefa c\u00e1c \u00f4 \u0111\u1ec3 \u0111\u1eb7t \u0111\u00fang 20 t\u01b0\u1eddng n\u1ed9i b\u1ed9."
                   : "Ch\u1ecdn \u00f4 xu\u1ea5t ph\u00e1t v\u00e0 \u00f4 \u0111\u00edch cho \u0111\u1ed9i k\u1ebf ti\u1ebfp."}
         </span>
-        <button disabled={!canSubmit} onClick={() => onSubmit(draft)} type="button">
-          Nộp mê cung
+        <button
+          disabled={!canUseSetupAction}
+          onClick={() => (submitted ? onUnready() : onSubmit(draft))}
+          type="button"
+        >
+          {submitted ? "Chỉnh mê cung" : "Nộp mê cung"}
         </button>
       </div>
     </section>
@@ -1437,6 +1442,10 @@ export default function App() {
     socket.emit(EVENTS.SETUP_SUBMIT_MAZE, draft);
   };
 
+  const unreadyMaze = () => {
+    socket.emit(EVENTS.SETUP_UNREADY_MAZE);
+  };
+
   const chooseDirection = (direction) => {
     setLastResult(null);
     socket.emit(EVENTS.MOVE_CHOOSE, { direction });
@@ -1568,7 +1577,7 @@ export default function App() {
             </div>
 
             {!state.setup?.started ? (
-              <SetupBoard state={state} onSubmit={submitMaze} />
+              <SetupBoard state={state} onSubmit={submitMaze} onUnready={unreadyMaze} />
             ) : (
               <GameplayPanel
                 combatReveal={combatReveal}
