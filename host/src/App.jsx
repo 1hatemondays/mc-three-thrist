@@ -161,7 +161,7 @@ const HostCombatSpotlight = ({ combat, reveal, teams = [] }) => {
         <small>{liveTeam?.hp ?? 100} máu · {liveTeam?.score ?? 0} điểm</small>
         <div className="combat-spotlight-hp"><i style={{ "--combat-hp": `${Math.min(100, Math.max(0, liveTeam?.hp ?? 100))}%` }} /></div>
         <div className="combat-spotlight-bid">
-          <small>Điểm cược</small>
+          <small>{"\u0110i\u1ec3m \u0111\u00e3 ch\u1ecdn"}</small>
           <b>{result ? `${amount} điểm` : "●●●"}</b>
         </div>
       </article>
@@ -173,8 +173,8 @@ const HostCombatSpotlight = ({ combat, reveal, teams = [] }) => {
       <section>
         <header>
           <div>
-            <p>Đối kháng trực tiếp · cược kín</p>
-            <h2 id="hostCombatTitle">{result ? "Công bố kết quả" : "Hai đội đang khóa điểm"}</h2>
+            <p>{"\u0110\u1ed1i kh\u00e1ng \u00b7 So \u0111i\u1ec3m"}</p>
+            <h2 id="hostCombatTitle">{result ? "Công bố kết quả" : "Hai \u0111\u1ed9i \u0111ang ch\u1ecdn \u0111i\u1ec3m"}</h2>
           </div>
           <strong>{result ? "ĐÃ CHỐT" : `${remainingSeconds}s`}</strong>
         </header>
@@ -193,7 +193,7 @@ const HostCombatSpotlight = ({ combat, reveal, teams = [] }) => {
             </div>
           </div>
         ) : (
-          <p className="combat-spotlight-note">Điểm cược đang được niêm phong · hết giờ tự động cược 0 điểm</p>
+          <p className="combat-spotlight-note">{"\u0110i\u1ec3m c\u1ee7a hai \u0111\u1ed9i \u0111\u01b0\u1ee3c gi\u1eef k\u00edn \u00b7 H\u1ebft gi\u1edd = m\u1eb7c \u0111\u1ecbnh 0 \u0111i\u1ec3m"}</p>
         )}
       </section>
     </div>
@@ -602,7 +602,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, hiddenQuestionKey, onOpenQuestio
         <section className="host-box combat-box">
           <div className="combat-box-head">
             <p>Đối kháng trực tiếp</p>
-            <span>{combat.result ? "Kết quả" : combat.submittedCount + "/2 đã khóa"}</span>
+            <span>{combat.result ? "K\u1ebft qu\u1ea3" : combat.submittedCount + "/2 \u0111\u1ed9i \u0111\u00e3 ch\u1ecdn"}</span>
           </div>
           <div className="combat-matchup">
             <strong>{combat.attacker?.name || "Đội thách đấu"}</strong>
@@ -610,7 +610,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, hiddenQuestionKey, onOpenQuestio
             <strong>{combat.defender?.name || "Đội phòng thủ"}</strong>
           </div>
           {!combat.result && (
-            <div className="combat-box-progress" aria-label={combat.submittedCount + " trên 2 đội đã đặt cược"}>
+            <div className="combat-box-progress" aria-label={combat.submittedCount + " tr\u00ean 2 \u0111\u1ed9i \u0111\u00e3 ch\u1ecdn"}>
               <span className={combat.submittedCount > 0 ? "locked" : ""} />
               <span className={combat.submittedCount > 1 ? "locked" : ""} />
             </div>
@@ -620,7 +620,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, hiddenQuestionKey, onOpenQuestio
               ? combat.result.shielded
                 ? combat.result.winnerName + " thắng · lá chắn đã chặn sát thương"
                 : combat.result.winnerName + " thắng đối kháng"
-              : "Điểm cược đang được niêm phong."}
+              : "\u0110i\u1ec3m c\u1ee7a hai \u0111\u1ed9i \u0111\u01b0\u1ee3c gi\u1eef k\u00edn."}
           </small>
         </section>
       )}
