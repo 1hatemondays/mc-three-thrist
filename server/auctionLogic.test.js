@@ -71,5 +71,39 @@ test("auction resolves after every team bids and awards highest sealed bids", ()
   assert.equal(state.teams[1].supportItems[0].type, SUPPORT_ITEM_TYPES.SHIELD);
   assert.equal(state.teams[0].supportItems.length, 0);
   assert.equal(state.round.auction.result.winners[0].teamId, "team2");
+  assert.equal(state.round.auction.result.revealId, "auction-2");
   assert.equal(state.round.auction.bids, undefined);
+
+  assert.equal(getPlayerAuctionState(state, "team1").result.revealId, "auction-2");
+  assert.equal(getHostAuctionState(state).result.revealId, "auction-2");
+
+  const shieldOutcome = result.result.outcomes.find((outcome) => outcome.itemId === SUPPORT_ITEM_TYPES.SHIELD);
+  assert.deepEqual(shieldOutcome.winner, {
+    teamId: "team2",
+    teamName: "team2",
+    itemId: SUPPORT_ITEM_TYPES.SHIELD,
+    itemName: "Lá chắn",
+    amount: 25
+  });
+  assert.deepEqual(shieldOutcome.bids, [
+    { teamId: "team2", teamName: "team2", amount: 25, won: true },
+    { teamId: "team1", teamName: "team1", amount: 20, won: false }
+  ]);
+
+  const directionOutcome = result.result.outcomes.find(
+    (outcome) => outcome.itemId === SUPPORT_ITEM_TYPES.DIRECTION_HINT
+  );
+  assert.equal(directionOutcome.winner, null);
+  assert.deepEqual(directionOutcome.bids, []);
+
+  assert.deepEqual(result.result.teamResults, [
+    { teamId: "team1", teamName: "team1", status: "no_win", items: [] },
+    {
+      teamId: "team2",
+      teamName: "team2",
+      status: "won",
+      items: [{ itemId: SUPPORT_ITEM_TYPES.SHIELD, itemName: "Lá chắn", amount: 25 }]
+    },
+    { teamId: "team3", teamName: "team3", status: "skipped", items: [] }
+  ]);
 });

@@ -7,7 +7,7 @@ import {
 } from "../shared/gameContent.js";
 import { finishGameIfNeeded, isGameOver } from "./gameOver.js";
 import { startCombat } from "./combatLogic.js";
-import { hardQuestionBank, questionBank } from "./questionBank.js";
+import { drawQuestion, hardQuestionBank, questionBank } from "./questionBank.js";
 import { addRoundMessage } from "./roundFlow.js";
 import { consumeShield, grantSupportItem } from "./supportLogic.js";
 
@@ -44,7 +44,8 @@ const publicMeta = (meta) => ({
   name: meta.name,
   symbol: meta.symbol,
   color: meta.color,
-  lucideIcon: meta.lucideIcon
+  lucideIcon: meta.lucideIcon,
+  description: meta.description
 });
 
 const consumeEventTile = (state, tile) => {
@@ -136,7 +137,7 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
   }
 
   if (tile.type === EVENT_TILE_TYPES.KNOWLEDGE) {
-    const question = choose(hardQuestionBank, random);
+    const question = drawQuestion(state, "hard", hardQuestionBank, random);
     state.round.pendingEvents = state.round.pendingEvents || {};
     state.round.pendingEvents[teamId] = {
       type: EVENT_TILE_TYPES.KNOWLEDGE,
@@ -202,7 +203,7 @@ export const applyEventTileEffect = (state, teamId, tile, random = Math.random) 
     state.round.phase = ROUND_PHASES.BOMB;
     state.round.bomb = {
       holderTeamId: teamId,
-      question: choose(questionBank, random),
+      question: drawQuestion(state, "normal", questionBank, random),
       deadline: Date.now() + BOMB_TIME_MS,
       passCount: 0,
       lastPass: null,
@@ -312,7 +313,7 @@ export const resolveBombAnswer = (state, teamId, payload = {}, random = Math.ran
   const nextTeamId = nextBombHolder(state, teamId);
   const nextTeam = state.teams.find((team) => team.id === nextTeamId);
   bomb.holderTeamId = nextTeamId;
-  bomb.question = choose(questionBank, random);
+  bomb.question = drawQuestion(state, "normal", questionBank, random);
   bomb.deadline = now + BOMB_TIME_MS;
   bomb.passCount += 1;
   bomb.lastPass = { fromTeamId: teamId, toTeamId: nextTeamId, toTeamName: nextTeam?.name || nextTeamId };
@@ -399,6 +400,10 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
     discover(team, point);
     const gameOver = finishGameIfNeeded(state, teamId);
     delete state.round.pendingEvents[teamId];
+    addRoundMessage(state, teamId, {
+      title: "Dịch chuyển",
+      text: "Đội đã dịch chuyển đến (" + (point.x + 1) + ", " + (point.y + 1) + ")."
+    });
 
     return {
       ok: true,
@@ -435,6 +440,14 @@ export const resolvePendingEvent = (state, teamId, payload = {}) => {
   discover(target, target.position);
   const gameOver = finishGameIfNeeded(state, teamId);
   delete state.round.pendingEvents[teamId];
+  addRoundMessage(state, team.id, {
+    title: "Đổi vị trí",
+    text: "Đã đổi vị trí với " + target.name + "."
+  });
+  addRoundMessage(state, target.id, {
+    title: "Bị đổi vị trí",
+    text: team.name + " đã đổi vị trí với đội bạn."
+  });
 
   return {
     ok: true,

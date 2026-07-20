@@ -3,6 +3,7 @@ import test from "node:test";
 import { ROUND_PHASES } from "../shared/constants.js";
 import {
   getMeteorShowerState,
+  resolveMeteorAnswerTimeout,
   startMeteorShower,
   submitMeteorAnswer,
   submitMeteorBuzz
@@ -65,4 +66,28 @@ test("meteor shower runs 10 sealed buzzer questions and applies rewards", () => 
   assert.equal(state.round.pendingAnswers.team1.result.skipped, true);
   assert.equal(state.round.pendingAnswers.team3.result.skipped, true);
   assert.equal(state.round.activeTeamId, "team2");
+});
+
+test("meteor shower auto counts a buzzer timeout as a wrong answer", () => {
+  const state = makeState();
+  assert.equal(startMeteorShower(state, "team1", questions, () => 0, 1000).ok, true);
+
+  assert.equal(submitMeteorBuzz(state, "team2", 4000).ok, true);
+  const active = getMeteorShowerState(state, "team2", 4000);
+  assert.equal(active.canAnswer, true);
+  assert.equal(active.answerCountdownMs, 10_000);
+
+  assert.equal(resolveMeteorAnswerTimeout(state, 13_999), null);
+  const timeout = resolveMeteorAnswerTimeout(state, 14_000);
+
+  assert.equal(timeout.ok, true);
+  assert.equal(timeout.timeout, true);
+  assert.equal(timeout.correct, false);
+  assert.equal(state.round.meteorShower.lastAnswer.teamId, "team2");
+  assert.equal(state.round.meteorShower.lastAnswer.correct, false);
+  assert.equal(state.round.meteorShower.lastAnswer.timeout, true);
+  assert.equal(state.round.meteorShower.questionIndex, 1);
+  assert.equal(state.round.meteorShower.buzzerTeamId, null);
+  assert.equal(state.round.meteorShower.answerDeadline, 0);
+  assert.equal(state.teams[1].answerStats.wrong, 1);
 });

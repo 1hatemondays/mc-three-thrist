@@ -82,6 +82,15 @@ test("freeze item immediately ends the target team's current movement turn", () 
   });
 
   assert.equal(result.ok, true);
+  assert.deepEqual(result.result, {
+    type: SUPPORT_ITEM_TYPES.FREEZE_OPPONENT,
+    sourceTeamId: "team1",
+    sourceTeamName: "team1",
+    targetTeamId: "team2",
+    targetTeamName: "team2",
+    resolvedAt: result.result.resolvedAt
+  });
+  assert.equal(Number.isFinite(result.result.resolvedAt), true);
   assert.equal(state.round.pendingAnswers.team2.answered, true);
   assert.equal(chooseMoveQuestion(state, "team2", { direction: "right" }, questions, () => 0).ok, false);
 });
@@ -149,7 +158,7 @@ test("direction hint randomizes between equally useful open routes", () => {
   assert.equal(result.result.hint.unexplored, true);
 });
 
-test("using an active item costs one energy and no energy rejects active items", () => {
+test("using an active item does not spend turn energy", () => {
   const state = makeState();
   state.teams[0].supportItems.push(
     item(SUPPORT_ITEM_TYPES.DIRECTION_HINT),
@@ -159,15 +168,16 @@ test("using an active item costs one energy and no energy rejects active items",
   const used = useSupportItem(state, "team1", { itemInstanceId: SUPPORT_ITEM_TYPES.DIRECTION_HINT + ":1" });
 
   assert.equal(used.ok, true);
-  assert.equal(state.round.turnEnergy.remaining, 2);
+  assert.equal(state.round.turnEnergy.remaining, 3);
 
   state.round.turnEnergy.remaining = 0;
-  const rejected = useSupportItem(state, "team1", {
+  const trap = useSupportItem(state, "team1", {
     itemInstanceId: SUPPORT_ITEM_TYPES.TRAP + ":2",
     x: 1,
     y: 0
   });
 
-  assert.equal(rejected.ok, false);
-  assert.match(rejected.error, /năng lượng/i);
+  assert.equal(trap.ok, true);
+  assert.equal(state.round.turnEnergy.remaining, 0);
+  assert.deepEqual(state.round.traps, [{ x: 1, y: 0, ownerTeamId: "team1" }]);
 });

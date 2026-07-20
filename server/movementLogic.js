@@ -2,6 +2,7 @@ import { DIRECTIONS, MOVE_SCORE, ROUND_PHASES } from "../shared/constants.js";
 import { canonicalWall, hasWall, wallKey } from "../shared/maze.js";
 import { applyEventTileEffect, findEventTileAt, getPlayerPendingEvent } from "./eventLogic.js";
 import { finishGameIfNeeded, isGameOver } from "./gameOver.js";
+import { drawQuestion } from "./questionBank.js";
 import { ensureTurnEnergy, finishTeamTurn, maybeFinishMovementRound, spendTurnEnergy } from "./roundFlow.js";
 import { applyTrapAtPosition } from "./supportLogic.js";
 
@@ -59,15 +60,6 @@ export const normalizeDirection = (direction) => String(direction || "").trim().
 const findTeam = (state, teamId) => state.teams.find((team) => team.id === teamId);
 
 const isSetupReady = (state) => state.setup?.started && state.teams.every((team) => team.startPoint);
-
-const chooseQuestion = (questions, random = Math.random) => {
-  if (!Array.isArray(questions) || questions.length === 0) {
-    return null;
-  }
-
-  const index = Math.min(Math.floor(random() * questions.length), questions.length - 1);
-  return questions[index];
-};
 
 export const chooseMoveQuestion = (state, teamId, payload, questions, random) => {
   const team = findTeam(state, teamId);
@@ -152,7 +144,7 @@ export const chooseMoveQuestion = (state, teamId, payload, questions, random) =>
     return { ok: true, instant: true, result, roundComplete };
   }
 
-  const question = chooseQuestion(questions, random);
+  const question = drawQuestion(state, "normal", questions, random);
   if (!question) {
     return { ok: false, error: "Ngân hàng câu hỏi đang trống." };
   }

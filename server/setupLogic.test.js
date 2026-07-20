@@ -4,6 +4,7 @@ import {
   applyMazeSubmission,
   getHostSetupPreviewMap,
   getSetupSummary,
+  retractMazeSubmission,
   startGame,
   setTurnOrder,
   validateMazeSubmission
@@ -282,6 +283,32 @@ test("builds host setup previews keyed by the submitting team", () => {
   assert.equal(previews.team2, undefined);
 
 });
+
+test("lets a submitted team unready before the game starts and clears pending assignments", () => {
+  const state = makeState();
+
+  for (const team of state.teams) {
+    applyMazeSubmission(state, team.id, {
+      walls,
+      startPoint: { x: 0, y: 0 },
+      endPoint: { x: 5, y: 5 }
+    });
+  }
+
+  assert.equal(state.setup.complete, true);
+  assert.equal(getSetupSummary(state, "team1").mySubmission, true);
+  assert.equal(state.teams.every((team) => team.startPoint), true);
+
+  const result = retractMazeSubmission(state, "team1");
+
+  assert.equal(result.ok, true);
+  assert.equal(state.setup.complete, false);
+  assert.equal(getSetupSummary(state, "team1").mySubmission, false);
+  assert.equal(state.setup.submissions.team1, undefined);
+  assert.equal(state.teams.every((team) => team.startPoint === null), true);
+  assert.equal(Object.values(state.setup.submissions).some((submission) => "targetTeamId" in submission), false);
+});
+
 test("host can set the turn order before the game starts", () => {
   const state = makeState();
   const teamIds = ["team3", "team1", "team2"];

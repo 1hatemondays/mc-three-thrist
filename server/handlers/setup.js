@@ -1,7 +1,7 @@
 import { EVENTS } from "../../shared/constants.js";
 import { gameState, resetGameState } from "../gameState.js";
 import { showGameOverLeaderboard } from "../gameOver.js";
-import { applyMazeSubmission, configureTeamCount, setTurnOrder, startGame } from "../setupLogic.js";
+import { applyMazeSubmission, configureTeamCount, retractMazeSubmission, setTurnOrder, startGame } from "../setupLogic.js";
 import { emitAllStates, emitHostError, emitPlayerError } from "../socketState.js";
 
 export const registerSetupHandlers = (io, socket) => {
@@ -71,6 +71,17 @@ export const registerSetupHandlers = (io, socket) => {
 
   socket.on(EVENTS.SETUP_SUBMIT_MAZE, (payload = {}) => {
     const result = applyMazeSubmission(gameState, socket.data.teamId, payload);
+
+    if (!result.ok) {
+      emitPlayerError(socket, result.error);
+      return;
+    }
+
+    emitAllStates(io);
+  });
+
+  socket.on(EVENTS.SETUP_UNREADY_MAZE, () => {
+    const result = retractMazeSubmission(gameState, socket.data.teamId);
 
     if (!result.ok) {
       emitPlayerError(socket, result.error);

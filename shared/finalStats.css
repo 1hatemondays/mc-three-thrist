@@ -2,11 +2,125 @@
 .final-kahoot-board {
   --final-wall: #173529;
   --final-grid: rgba(23, 53, 41, 0.18);
+  --final-maze-edge: 8px;
   background: linear-gradient(145deg, #fff8df 0%, #f2e8cf 100%);
   border: 2px solid rgba(23, 53, 41, 0.28);
   box-shadow: 0 18px 44px rgba(20, 35, 24, 0.16);
   color: #163125;
   padding: 18px;
+}
+
+.final-screen {
+  display: block;
+  min-height: 100vh;
+  width: 100%;
+  padding: clamp(18px, 3vw, 34px);
+  color: #163125;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0 / 42px 42px,
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 42px 42px,
+    radial-gradient(circle at 78% 18%, rgba(240, 185, 75, 0.2), transparent 30%),
+    #132019;
+}
+
+.final-screen-player {
+  background:
+    linear-gradient(90deg, rgba(16, 23, 19, 0.06) 1px, transparent 1px) 0 0 / 34px 34px,
+    linear-gradient(rgba(16, 23, 19, 0.05) 1px, transparent 1px) 0 0 / 34px 34px,
+    radial-gradient(circle at 12% 18%, rgba(47, 138, 104, 0.22), transparent 28%),
+    #eee5d2;
+}
+
+.final-screen-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+  color: #fff9e9;
+}
+
+.final-screen-player .final-screen-head {
+  color: #101713;
+}
+
+.final-screen-head p,
+.final-screen-label {
+  margin: 0 0 5px;
+  color: #f0b94b;
+  font-weight: 1000;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.final-screen-player .final-screen-head p {
+  color: #218859;
+}
+
+.final-screen-head h1 {
+  margin: 0;
+  font-family: Cambria, Georgia, "Times New Roman", serif;
+  font-size: clamp(40px, 6vw, 86px);
+  line-height: 0.95;
+}
+
+.final-screen-head button {
+  min-height: 46px;
+  padding: 0 18px;
+  border: 2px solid #173529;
+  color: #101713;
+  background: #f0b94b;
+  box-shadow: 4px 4px 0 rgba(255, 249, 233, 0.36);
+  font: inherit;
+  font-weight: 1000;
+}
+
+.final-screen-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.final-screen-head .final-back-button {
+  color: #fff9e9;
+  background: #218859;
+}
+
+.final-screen-player .final-screen-head .final-back-button {
+  color: #fff9e9;
+  box-shadow: 4px 4px 0 rgba(23, 53, 41, 0.28);
+}
+
+.final-back-button span { margin-right: 5px; font-size: 20px; }
+
+.final-screen-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 18px;
+}
+
+.final-screen-stats.single {
+  width: min(100%, 980px);
+  margin-inline: auto;
+}
+
+.final-screen-stats.single .final-stats-card {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.75fr) minmax(320px, 1.25fr);
+  gap: 16px 20px;
+  align-items: start;
+}
+
+.final-screen-stats.single .final-stats-head,
+.final-screen-stats.single .final-stat-grid {
+  grid-column: 1;
+}
+
+.final-screen-stats.single .final-map {
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 
 .final-stats-head,
@@ -71,48 +185,126 @@
 }
 
 .final-map {
+  position: relative;
   aspect-ratio: 1;
-  background: #fff6df;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  width: min(100%, 440px);
+  width: min(100%, 460px);
+  padding: 10px;
+  border: 2px solid var(--final-wall);
+  background: #d9cfb8;
 }
 
 .final-map-cell {
-  align-items: center;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.45), rgba(240,232,204,0.5));
-  border-style: solid;
-  display: flex;
-  justify-content: center;
-  min-width: 0;
   position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid rgba(23, 53, 41, 0.16);
+  background: #fff9e9;
+}
+
+.final-map-edge {
+  z-index: 2;
+  min-width: 0;
+  min-height: 0;
+  background: rgba(23, 53, 41, 0.14);
+}
+
+.final-map-edge.active,
+.final-map-edge.border {
+  background: var(--final-wall);
 }
 
 .final-map-cell.explored {
-  background: #fff9e7;
-  box-shadow: inset 0 0 0 999px rgba(33, 136, 89, 0.07);
+  background:
+    radial-gradient(circle, rgba(33, 136, 89, 0.16), transparent 58%),
+    #fff9e7;
+}
+
+.final-path-route {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.final-path-route span {
+  position: absolute;
+  background: rgba(33, 136, 89, 0.35);
+}
+
+.final-path-route .to-left,
+.final-path-route .to-right {
+  top: calc(50% - 4px);
+  height: 8px;
+}
+
+.final-path-route .to-left {
+  left: 0;
+  width: 50%;
+}
+
+.final-path-route .to-right {
+  right: 0;
+  width: 50%;
+}
+
+.final-path-route .to-top,
+.final-path-route .to-bottom {
+  left: calc(50% - 4px);
+  width: 8px;
+}
+
+.final-path-route .to-top {
+  top: 0;
+  height: 50%;
+}
+
+.final-path-route .to-bottom {
+  bottom: 0;
+  height: 50%;
 }
 
 .final-path-dot {
-  background: rgba(33, 136, 89, 0.25);
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(20px, 34%, 34px);
+  aspect-ratio: 1;
+  border: 2px solid var(--final-wall);
   border-radius: 999px;
-  height: 16%;
+  color: #fff9e9;
+  background: #218859;
+  font-size: clamp(10px, 1.5vw, 13px);
+  font-style: normal;
+  font-weight: 1000;
+}
+
+.final-map-tokens {
   position: absolute;
-  width: 16%;
+  inset: 6px;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 3px;
 }
 
 .final-map-token {
   align-items: center;
-  border-radius: 999px;
   color: #07140f;
   display: inline-flex;
   font-weight: 1000;
-  height: 54%;
+  height: clamp(18px, 36%, 30px);
   justify-content: center;
-  position: relative;
-  width: 54%;
-  z-index: 2;
+  min-width: clamp(18px, 36%, 30px);
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: clamp(9px, 1.4vw, 12px);
 }
 
 .final-map-token.start {
@@ -127,9 +319,8 @@
 
 .final-map-token.current {
   background: #218859;
-  border: 4px solid #ffe9a8;
+  border: 3px solid #ffe9a8;
   color: #fff;
-  font-size: 0.8rem;
 }
 
 .final-kahoot-board {
@@ -192,6 +383,24 @@
 }
 
 @media (max-width: 720px) {
+  .final-screen-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .final-screen-actions { justify-content: flex-start; }
+  .final-screen-actions button { flex: 1 1 180px; }
+
+  .final-screen-stats,
+  .final-screen-stats.single .final-stats-card {
+    grid-template-columns: 1fr;
+  }
+
+  .final-screen-stats.single .final-map {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
   .final-stat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

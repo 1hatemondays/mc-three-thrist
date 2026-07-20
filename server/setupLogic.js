@@ -49,6 +49,21 @@ const assignMazeToTeam = (team, maze) => {
   team.answerStats = { correct: 0, wrong: 0 };
 };
 
+const clearPendingMazeAssignments = (state) => {
+  state.teams.forEach((team) => {
+    team.walls = [];
+    team.startPoint = null;
+    team.endPoint = null;
+    team.position = { x: 0, y: 0 };
+    team.discoveredCells = [{ x: 0, y: 0 }];
+    team.revealedWalls = [];
+  });
+
+  Object.values(state.setup?.submissions || {}).forEach((submission) => {
+    delete submission.targetTeamId;
+  });
+};
+
 const shuffle = (items, random = Math.random) => {
   const result = [...items];
   for (let i = result.length - 1; i > 0; i -= 1) {
@@ -250,6 +265,28 @@ export const applyMazeSubmission = (state, sourceTeamId, payload) => {
   if (state.setup.complete) {
     finalizeMazeAssignments(state);
   }
+
+  return { ok: true };
+};
+
+export const retractMazeSubmission = (state, sourceTeamId) => {
+  const sourceIndex = state.teams.findIndex((team) => team.id === sourceTeamId);
+
+  if (sourceIndex === -1) {
+    return { ok: false, error: "Hãy vào đội trước khi chỉnh mê cung." };
+  }
+
+  if (state.setup?.started) {
+    return { ok: false, error: "Trò chơi đã bắt đầu, không thể chỉnh mê cung." };
+  }
+
+  if (!state.setup?.submissions?.[sourceTeamId]) {
+    return { ok: true };
+  }
+
+  delete state.setup.submissions[sourceTeamId];
+  state.setup.complete = false;
+  clearPendingMazeAssignments(state);
 
   return { ok: true };
 };

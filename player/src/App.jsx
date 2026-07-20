@@ -4,9 +4,18 @@ import { DIRECTIONS, EVENTS, ROUND_PHASES } from "../../shared/constants.js";
 import { GameOverOverlay } from "../../shared/GameOverOverlay.jsx";
 import { BombOverlay } from "../../shared/BombOverlay.jsx";
 import { MeteorShowerOverlay } from "../../shared/MeteorShowerOverlay.jsx";
-import { FinalKahootLeaderboard, FinalStatsCard } from "../../shared/FinalStats.jsx";
+import { FinalStatsScreen } from "../../shared/FinalStats.jsx";
+import { GameIcon } from "../../shared/GameIcon.jsx";
+import { AnimatedScore } from "../../shared/AnimatedScore.jsx";
+import { AuctionRevealOverlay } from "../../shared/AuctionRevealOverlay.jsx";
+import { shouldRevealAuctionResult } from "../../shared/auctionReveal.js";
+import { EventEffectOverlay } from "../../shared/EventEffectOverlay.jsx";
+import { getActivePlayerAlert, normalizeCombatEffect, normalizeRoundEffect, normalizeSupportEffect } from "../../shared/eventEffects.js";
 import { EVENT_TILE_TYPES, SUPPORT_ITEM_TYPES, getEventTileMeta } from "../../shared/gameContent.js";
-import { WALL_COUNT, hasEnclosedCell, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
+import { WALL_COUNT, hasEnclosedCell, hasWall, isMazeConnected, isInteriorWall, uniqueWalls, wallKey } from "../../shared/maze.js";
+import { getOpponentTeams } from "../../shared/teamTargets.js";
+import "../../shared/scoreEffects.css";
+import "../../shared/auctionReveal.css";
 import smokeTexture from "./assets/smoke-2.png";
 
 const SERVER_URL =
@@ -31,6 +40,14 @@ const normalizeViewportWall = (wall) =>
     : wall?.side === "bottom"
       ? { x: wall.x, y: wall.y + 1, side: "top" }
       : wall;
+const hasKnownWall = (walls, x, y, side) => {
+  const border =
+    (side === "top" && y === 0) ||
+    (side === "left" && x === 0) ||
+    (side === "right" && x === BOARD_SIZE - 1) ||
+    (side === "bottom" && y === BOARD_SIZE - 1);
+  return border || hasWall(walls || [], BOARD_SIZE, x, y, side);
+};
 const loadSavedTeamSession = () => {
   try {
     return JSON.parse(window.localStorage.getItem(TEAM_SESSION_KEY) || "null");
@@ -116,7 +133,7 @@ const formatBlockedReason = (reason) => {
   return "Bị chặn";
 };
 
-const SetupBoard = ({ state, onSubmit }) => {
+const SetupBoard = ({ state, onSubmit, onUnready }) => {
   const [draft, setDraft] = useState(emptyDraft);
   const [mode, setMode] = useState("wall");
   const [draftError, setDraftError] = useState("");
@@ -129,6 +146,7 @@ const SetupBoard = ({ state, onSubmit }) => {
   const endpointsReady = Boolean(draft.startPoint && draft.endPoint && startKey !== endKey);
   const mazeConnected = isMazeConnected(draft.walls, BOARD_SIZE);
   const canSubmit = !submitted && draft.walls.length === WALL_COUNT && endpointsReady && mazeConnected;
+  const canUseSetupAction = submitted || canSubmit;
   const waitingForHostStart = setup?.complete && !setup?.started;
 
   useEffect(() => {
@@ -210,7 +228,7 @@ const SetupBoard = ({ state, onSubmit }) => {
           <p>Thiết lập mê cung</p>
           <h2>Tạo bàn chơi cho đội kế tiếp</h2>
         </div>
-        <strong>{draft.walls.length}/{WALL_COUNT} walls</strong>
+        <strong>{draft.walls.length}/{WALL_COUNT} tường</strong>
       </div>
 
       <div className="toolbar" aria-label="Setup tools">
@@ -290,21 +308,62 @@ const SetupBoard = ({ state, onSubmit }) => {
                   ? "B\u1ea5m v\u00e0o c\u1ea1nh gi\u1eefa c\u00e1c \u00f4 \u0111\u1ec3 \u0111\u1eb7t \u0111\u00fang 20 t\u01b0\u1eddng n\u1ed9i b\u1ed9."
                   : "Ch\u1ecdn \u00f4 xu\u1ea5t ph\u00e1t v\u00e0 \u00f4 \u0111\u00edch cho \u0111\u1ed9i k\u1ebf ti\u1ebfp."}
         </span>
-        <button disabled={!canSubmit} onClick={() => onSubmit(draft)} type="button">
-          Nộp mê cung
+        <button
+          disabled={!canUseSetupAction}
+          onClick={() => (submitted ? onUnready() : onSubmit(draft))}
+          type="button"
+        >
+          {submitted ? "Chỉnh mê cung" : "Nộp mê cung"}
         </button>
       </div>
     </section>
   );
 };
 
+const MovementOverviewMap = ({ team }) => {
+  const discoveredOrder = team.discoveredCells || [];
+  const discoveredByKey = new Map(discoveredOrder.map((point, index) => [boardPointKey(point.x, point.y), index + 1]));
+  const revealedWalls = team.revealedWalls || [];
+  const cells = Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => ({
+    x: index % BOARD_SIZE,
+    y: Math.floor(index / BOARD_SIZE)
+  }));
+
+  return (
+    <div className="movement-overview-map" aria-label="Bản đồ các ô đã đi qua" role="img">
+      {cells.map((cell) => {
+        const key = boardPointKey(cell.x, cell.y);
+        const step = discoveredByKey.get(key);
+        const current = cell.x === team.position.x && cell.y === team.position.y;
+        const cellStyle = {
+          "--top-wall": hasKnownWall(revealedWalls, cell.x, cell.y, "top") ? "var(--line)" : "rgba(29, 51, 41, 0.16)",
+          "--right-wall": hasKnownWall(revealedWalls, cell.x, cell.y, "right") ? "var(--line)" : "rgba(29, 51, 41, 0.16)",
+          "--bottom-wall": hasKnownWall(revealedWalls, cell.x, cell.y, "bottom") ? "var(--line)" : "rgba(29, 51, 41, 0.16)",
+          "--left-wall": hasKnownWall(revealedWalls, cell.x, cell.y, "left") ? "var(--line)" : "rgba(29, 51, 41, 0.16)"
+        };
+
+        return (
+          <div
+            className={`movement-overview-cell${step ? " explored" : " hidden"}${current ? " current" : ""}`}
+            key={key}
+            style={cellStyle}
+          >
+            {step ? <span className="overview-path-dot">{current ? "●" : step}</span> : <span className="overview-fog" />}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDirection, team }) => {
   const [activeDirection, setActiveDirection] = useState(null);
   const [moveFeedback, setMoveFeedback] = useState(null);
+  const [mapOpen, setMapOpen] = useState(false);
+  const animatedResultKeyRef = useRef("");
   const feedbackTimerRef = useRef(null);
   const currentDirection = pendingDirection || activeDirection;
   const directions = Object.values(DIRECTIONS);
-  const currentPositionKey = boardPointKey(team.position.x, team.position.y);
   const fogTextureStyle = useMemo(() => ({ "--fog-texture": `url(${smokeTexture})` }), []);
   const resultKey = lastResult
     ? [
@@ -314,7 +373,8 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
         lastResult.blockedReason || "open",
         lastResult.newPosition?.x,
         lastResult.newPosition?.y,
-        lastResult.scoreDelta
+        lastResult.scoreDelta,
+        lastResult.clientNonce || ""
       ].join(":")
     : "";
   const viewportCells = Array.from({ length: MOVEMENT_VIEW_SIZE * MOVEMENT_VIEW_SIZE }, (_, index) => {
@@ -378,7 +438,8 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
   }, [team.id]);
 
   useEffect(() => {
-    if (!lastResult?.direction) return;
+    if (!lastResult?.direction || lastResult.teamId !== team.id || !resultKey) return;
+    if (animatedResultKeyRef.current === resultKey) return;
 
     const vector = directionVectors[lastResult.direction];
     if (!vector) return;
@@ -394,9 +455,10 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
     };
 
     clearTimeout(feedbackTimerRef.current);
+    animatedResultKeyRef.current = resultKey;
     setMoveFeedback(feedback);
     feedbackTimerRef.current = setTimeout(() => setMoveFeedback(null), 900);
-  }, [currentPositionKey, lastResult, resultKey]);
+  }, [lastResult, resultKey, team.id]);
 
   const clearDirection = (direction) => {
     if (pendingDirection) return;
@@ -425,51 +487,60 @@ const MovementViewport = ({ disabled, lastResult, pendingDirection, onChooseDire
 
   return (
     <div className="movement-viewport" aria-label="Khung điều hướng di chuyển">
+      <button className="movement-map-toggle" onClick={() => setMapOpen((value) => !value)} type="button">
+        {mapOpen ? "Quay lại di chuyển" : "Xem bản đồ"}
+      </button>
       <div className="movement-scene" style={fogTextureStyle}>
-        <div
-          className={[
-            "movement-world",
-            moveFeedback?.type === "success" ? `move-success-${moveFeedback.direction}` : "",
-            moveFeedback?.type === "blocked" ? `move-blocked-${moveFeedback.direction}` : ""
-          ].filter(Boolean).join(" ")}
-          key={moveFeedback?.key || "still"}
-        >
-          <div className="movement-grid" aria-hidden="true">
-            {viewportCellStates.map((cell) => {
-              return (
-                <div
-                  className={`movement-grid-cell${cell.center ? " center" : " outer"}${cell.known ? " known" : ""}`}
-                  key={cell.key}
-                >
-                  {!cell.known && <div className="movement-cell-fog" />}
-                </div>
-              );
-            })}
-          </div>
-          {visibleRevealedWalls.map((wall) => {
-            const relX = wall.x - team.position.x + MOVEMENT_VIEW_RADIUS;
-            const relY = wall.y - team.position.y + MOVEMENT_VIEW_RADIUS;
-            return (
+        {mapOpen ? (
+          <MovementOverviewMap team={team} />
+        ) : (
+          <>
+            <div
+              className={[
+                "movement-world",
+                moveFeedback?.type === "success" ? `move-success-${moveFeedback.direction}` : "",
+                moveFeedback?.type === "blocked" ? `move-blocked-${moveFeedback.direction}` : ""
+              ].filter(Boolean).join(" ")}
+              key={moveFeedback?.key || "still"}
+            >
+              <div className="movement-grid" aria-hidden="true">
+                {viewportCellStates.map((cell) => {
+                  return (
+                    <div
+                      className={`movement-grid-cell${cell.center ? " center" : " outer"}${cell.known ? " known" : ""}`}
+                      key={cell.key}
+                    >
+                      {!cell.known && <div className="movement-cell-fog" />}
+                    </div>
+                  );
+                })}
+              </div>
+              {visibleRevealedWalls.map((wall) => {
+                const relX = wall.x - team.position.x + MOVEMENT_VIEW_RADIUS;
+                const relY = wall.y - team.position.y + MOVEMENT_VIEW_RADIUS;
+                return (
+                  <div
+                    aria-hidden="true"
+                    className={`movement-revealed-wall ${wall.side}${wall.impact ? " impact" : ""}`}
+                    key={wallFromKey(wall)}
+                    style={{
+                      left: wall.side === "left" ? `calc(${relX * 20}% - 3.5px)` : `${relX * 20}%`,
+                      top: wall.side === "top" ? `calc(${relY * 20}% - 3.5px)` : `${relY * 20}%`
+                    }}
+                  />
+                );
+              })}
+            </div>
+            <div className="movement-player-wrap">
               <div
-                aria-hidden="true"
-                className={`movement-revealed-wall ${wall.side}${wall.impact ? " impact" : ""}`}
-                key={wallFromKey(wall)}
-                style={{
-                  left: wall.side === "left" ? `calc(${relX * 20}% - 3.5px)` : `${relX * 20}%`,
-                  top: wall.side === "top" ? `calc(${relY * 20}% - 3.5px)` : `${relY * 20}%`
-                }}
+                className="movement-player"
+                aria-label={`Người chơi tại ô ${team.position.x + 1},${team.position.y + 1}`}
               />
-            );
-          })}
-        </div>
-        <div className="movement-player-wrap">
-          <div
-            className="movement-player"
-            aria-label={`Người chơi tại ô ${team.position.x + 1},${team.position.y + 1}`}
-          />
-        </div>
+            </div>
+          </>
+        )}
 
-        {directions.map((direction) => {
+        {!mapOpen && directions.map((direction) => {
           const selected = currentDirection === direction;
           return (
             <button
@@ -542,23 +613,13 @@ const ResultCard = ({ result }) => {
       </div>
       <dl className="result-grid">
         <div>
-          <dt>{"\u0110\u00e1p \u00e1n"}</dt>
-          <dd>{result.usedQuestion ? (result.correct ? "\u0110\u00fang" : "Sai") : "Kh\u00f4ng c\u1ea7n"}</dd>
-        </div>
-        <div>
-          <dt>{"\u0110\u01b0\u1eddng \u0111i"}</dt>
-          <dd>{result.blocked ? formatBlockedReason(result.blockedReason) : "Th\u00f4ng"}</dd>
-        </div>
-        <div>
-          <dt>{"\u0110i\u1ec3m"}</dt>
+          <dt>{"\u0110i\u1ec3m c\u1ed9ng"}</dt>
           <dd>+{result.scoreDelta}</dd>
         </div>
       </dl>
       {event && (
         <div className="event-result">
-          <span className="game-event" style={{ "--event-color": event.color }}>
-            {event.symbol}
-          </span>
+          <GameIcon className="game-event" color={event.color} label={event.name} symbol={event.symbol} type={event.type} />
           <div>
             <strong>{event.name}</strong>
             <small>{event.message || "\u0110\u00e3 k\u00edch ho\u1ea1t \u00f4 s\u1ef1 ki\u1ec7n."}</small>
@@ -570,7 +631,50 @@ const ResultCard = ({ result }) => {
   );
 };
 
+const CellPickerPopup = ({
+  boardSize = BOARD_SIZE,
+  cancelLabel = "Hủy",
+  note = "Bấm vào một ô để chọn vị trí.",
+  onClose,
+  onPick,
+  title = "Chọn ô",
+  titlePrefix = "Bản đồ"
+}) => (
+  <div className="trap-placement-overlay" role="presentation">
+    <section aria-labelledby="cellPickerTitle" aria-modal="true" className="trap-placement-card" role="dialog">
+      <div className="section-head">
+        <p>{titlePrefix}</p>
+        <h2 id="cellPickerTitle">{title}</h2>
+      </div>
+      <p className="trap-placement-note">{note}</p>
+      <div className="trap-placement-grid" aria-label={title}>
+        {Array.from({ length: boardSize * boardSize }, (_, index) => {
+          const x = index % boardSize;
+          const y = Math.floor(index / boardSize);
+          return (
+            <button
+              aria-label={`Chọn cột ${x + 1}, hàng ${y + 1}`}
+              key={`${x}:${y}`}
+              onClick={() => onPick({ x, y })}
+              type="button"
+            >
+              <span aria-hidden="true" />
+            </button>
+          );
+        })}
+      </div>
+      <button className="secondary-button" onClick={onClose} type="button">{cancelLabel}</button>
+    </section>
+  </div>
+);
+
 const PendingEventCard = ({ boardSize, currentPosition, event, onResolve }) => {
+  const [cellPickerOpen, setCellPickerOpen] = useState(false);
+
+  useEffect(() => {
+    setCellPickerOpen(false);
+  }, [event?.type]);
+
   if (!event) return null;
 
   if (event.question) {
@@ -581,9 +685,7 @@ const PendingEventCard = ({ boardSize, currentPosition, event, onResolve }) => {
           <h2>{event.name}</h2>
         </div>
         <div className="pending-event-body">
-          <span className="game-event" style={{ "--event-color": event.color }}>
-            {event.symbol}
-          </span>
+          <GameIcon className="game-event" color={event.color} label={event.name} symbol={event.symbol} type={event.type} />
           <p>{event.question.text}</p>
         </div>
         <div className="choices compact-choices">
@@ -601,36 +703,31 @@ const PendingEventCard = ({ boardSize, currentPosition, event, onResolve }) => {
   if (event.type === EVENT_TILE_TYPES.TELEPORT) {
     return (
       <section className="game-card pending-event-card">
+        {cellPickerOpen && (
+          <CellPickerPopup
+            boardSize={boardSize}
+            note="Bản đồ trống 6x6; bấm vào ô muốn dịch chuyển đến."
+            onClose={() => setCellPickerOpen(false)}
+            onPick={(position) => {
+              onResolve({ action: "teleport", position });
+              setCellPickerOpen(false);
+            }}
+            title="Chọn ô dịch chuyển"
+            titlePrefix="Dịch chuyển"
+          />
+        )}
         <div className="section-head">
           <p>{"S\u1ef1 ki\u1ec7n"}</p>
           <h2>{event.name}</h2>
         </div>
         <div className="pending-event-body">
-          <span className="game-event" style={{ "--event-color": event.color }}>{event.symbol}</span>
-          <p>{"Ch\u1ecdn t\u1ecda \u0111\u1ed9 mu\u1ed1n \u0111\u1ebfn, ho\u1eb7c \u1edf l\u1ea1i v\u1ecb tr\u00ed hi\u1ec7n t\u1ea1i."}</p>
+          <GameIcon className="game-event" color={event.color} label={event.name} symbol={event.symbol} type={event.type} />
+          <p>{"Mở bản đồ để chọn ô muốn đến, hoặc ở lại vị trí hiện tại."}</p>
         </div>
-        <form
-          className="item-use-row trap-row"
-          onSubmit={(submitEvent) => {
-            submitEvent.preventDefault();
-            const data = new FormData(submitEvent.currentTarget);
-            onResolve({
-              action: "teleport",
-              position: { x: Number(data.get("x")) - 1, y: Number(data.get("y")) - 1 }
-            });
-          }}
-        >
-          <label className="coordinate-field">
-            <span>{"X \u00b7 Ngang (c\u1ed9t)"}</span>
-            <input defaultValue={(currentPosition?.x || 0) + 1} max={boardSize} min="1" name="x" required type="number" />
-          </label>
-          <label className="coordinate-field">
-            <span>{"Y \u00b7 D\u1ecdc (h\u00e0ng)"}</span>
-            <input defaultValue={(currentPosition?.y || 0) + 1} max={boardSize} min="1" name="y" required type="number" />
-          </label>
-          <button type="submit">{"D\u1ecbch chuy\u1ec3n"}</button>
-        </form>
         <div className="event-actions">
+          <button onClick={() => setCellPickerOpen(true)} type="button">
+            {"Mở bản đồ chọn ô"}
+          </button>
           <button className="secondary-button" onClick={() => onResolve({ action: "skip" })} type="button">
             {"\u1ede l\u1ea1i"}
           </button>
@@ -648,9 +745,7 @@ const PendingEventCard = ({ boardSize, currentPosition, event, onResolve }) => {
         <h2>{event.name}</h2>
       </div>
       <div className="pending-event-body">
-        <span className="game-event" style={{ "--event-color": event.color }}>
-          {event.symbol}
-        </span>
+        <GameIcon className="game-event" color={event.color} label={event.name} symbol={event.symbol} type={event.type} />
         <p>{isDuel ? "Chọn một đội để đối kháng." : "Chọn đội để trao đổi vị trí, hoặc bỏ qua sự kiện này."}</p>
       </div>
       <div className="event-actions">
@@ -674,16 +769,46 @@ const PendingEventCard = ({ boardSize, currentPosition, event, onResolve }) => {
 };
 
 const NoticePanel = ({ messages = [] }) => {
-  if (!messages.length) return null;
+  const latest = messages[0] || null;
+  const latestKey = latest ? latest.id || latest.title + latest.text : "";
+  const [visibleKey, setVisibleKey] = useState("");
+  const [dismissedKey, setDismissedKey] = useState("");
+
+  useEffect(() => {
+    if (!latestKey || latestKey === dismissedKey) return undefined;
+
+    setVisibleKey(latestKey);
+    const timer = setTimeout(() => {
+      setVisibleKey("");
+      setDismissedKey(latestKey);
+    }, 3200);
+
+    return () => clearTimeout(timer);
+  }, [latestKey, dismissedKey]);
+
+  if (!latest || visibleKey !== latestKey) return null;
 
   return (
-    <section className="notice-stack" aria-label="Thông báo">
-      {messages.map((message) => (
-        <article className="notice-box" key={message.id || message.title + message.text}>
-          <strong>{message.title}</strong>
-          <span>{message.text}</span>
-        </article>
-      ))}
+    <div className="notice-popup" aria-live="polite" role="status">
+      <article className="notice-box">
+        <strong>{latest.title}</strong>
+        <span>{latest.text}</span>
+      </article>
+    </div>
+  );
+};
+
+const ActivePlayerAlert = ({ alert }) => {
+  if (!alert) return null;
+
+  return (
+    <section className={`active-player-alert is-${alert.kind}`} aria-live="polite" role="status">
+      <GameIcon color={alert.color} label={alert.title} symbol={alert.symbol} type={alert.type} />
+      <div>
+        <small>Trạng thái hiện tại</small>
+        <strong>{alert.title}</strong>
+        <p>{alert.message}</p>
+      </div>
     </section>
   );
 };
@@ -705,13 +830,13 @@ const AuctionPanel = ({ auction, active, onBid }) => {
     if (selected) setAmount(selected.minPrice);
   }, [itemId]);
 
-  if (!active && !auction?.result) return null;
+  if (!active) return null;
 
   return (
     <section className="game-card auction-panel">
       <div className="section-head">
         <p>{"Đấu giá kín"}</p>
-        <h2>{active ? "Chọn vật phẩm muốn đấu" : "Kết quả đấu giá"}</h2>
+        <h2>{"Chọn vật phẩm muốn đấu"}</h2>
       </div>
 
       {active && (
@@ -728,7 +853,7 @@ const AuctionPanel = ({ auction, active, onBid }) => {
                 onClick={() => setItemId(item.type)}
                 type="button"
               >
-                <span style={{ "--item-color": item.color }}>{item.symbol}</span>
+                <GameIcon className="auction-item-icon" color={item.color} label={item.name} symbol={item.symbol} type={item.type} />
                 <strong>{item.name}</strong>
                 <small>{"Khởi điểm " + item.minPrice + " điểm"}</small>
               </button>
@@ -749,24 +874,11 @@ const AuctionPanel = ({ auction, active, onBid }) => {
           )}
         </>
       )}
-
-      {auction?.result?.winners?.length ? (
-        <div className="result-list">
-          {auction.result.winners.map((winner) => (
-            <div className="leader-row" key={winner.teamId + winner.itemId}>
-              <span>{winner.teamName}</span>
-              <strong>{winner.itemName} / {winner.amount} điểm</strong>
-            </div>
-          ))}
-        </div>
-      ) : auction?.result ? (
-        <p className="empty-note">{"Không có đội nào thắng vật phẩm."}</p>
-      ) : null}
     </section>
   );
 };
 
-const CombatTeamCard = ({ mark, role, team, result }) => {
+const CombatTeamCard = ({ bid, mark, role, team, result }) => {
   const winner = result?.winnerId === team?.id;
   const loser = result?.loserId === team?.id;
 
@@ -777,35 +889,48 @@ const CombatTeamCard = ({ mark, role, team, result }) => {
         <span>{role}</span>
       </div>
       <strong>{team?.name || "Đang chọn đội"}</strong>
+      {result && <span className="combat-revealed-bid"><small>Điểm cược</small><b>{bid} điểm</b></span>}
       {winner && <em>Thắng</em>}
       {loser && <em>Thua</em>}
     </article>
   );
 };
 
-const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
+const CombatPanel = ({ combat, active, currentTeamId, onBet, reveal }) => {
   const dialogRef = useRef(null);
   const [amount, setAmount] = useState(0);
+  const [now, setNow] = useState(Date.now());
   const maxBid = combat?.maxBid || 0;
   const bid = Number(amount);
-  const canSubmit = Number.isInteger(bid) && bid >= 0 && bid <= maxBid;
+  const result = reveal || (active ? combat?.result : null);
+  const visible = Boolean(combat && (active || result));
+  const remainingMs = active ? Math.max(0, (combat?.deadline || 0) - now) : 0;
+  const remainingSeconds = Math.ceil(remainingMs / 1000);
+  const timeProgress = active && combat?.deadline ? Math.max(0, Math.min(100, (remainingMs / 20_000) * 100)) : 0;
+  const canSubmit = remainingMs > 0 && Number.isInteger(bid) && bid >= 0 && bid <= maxBid;
 
   useEffect(() => {
     setAmount(0);
   }, [active, combat?.attacker?.id, combat?.defender?.id]);
 
   useEffect(() => {
+    if (!active) return undefined;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 200);
+    return () => clearInterval(timer);
+  }, [active, combat?.deadline]);
+
+  useEffect(() => {
     const dialog = dialogRef.current;
-    if (!active || !dialog || dialog.open) return undefined;
+    if (!visible || !dialog || dialog.open) return undefined;
     dialog.showModal();
     return () => {
       if (dialog.open) dialog.close();
     };
-  }, [active]);
+  }, [visible]);
 
-  if (!combat || !active) return null;
+  if (!visible) return null;
 
-  const result = combat.result;
   const title = result
     ? "Kết quả đối kháng"
     : combat.involved
@@ -828,14 +953,22 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet }) => {
           <h2 id="combatTitle">{title}</h2>
         </div>
         <span className="combat-status">
-          {result ? "Đã phân thắng bại" : combat.submittedCount + "/2 đã khóa"}
+          {result ? "Đã phân thắng bại" : remainingSeconds + "s · " + combat.submittedCount + "/2 đã khóa"}
         </span>
       </header>
 
+      {!result && (
+        <div className="combat-countdown" aria-label={`Còn ${remainingSeconds} giây`}>
+          <strong>{remainingSeconds}s</strong>
+          <span><i style={{ "--combat-time": `${timeProgress}%` }} /></span>
+          <small>hết giờ = cược 0 điểm</small>
+        </div>
+      )}
+
       <div className="combat-arena">
-        <CombatTeamCard mark="TĐ" role="Thách đấu" team={combat.attacker} result={result} />
+        <CombatTeamCard bid={result?.attackerBet} mark="TĐ" role="Thách đấu" team={combat.attacker} result={result} />
         <div className="combat-versus" aria-hidden="true">ĐẤU</div>
-        <CombatTeamCard mark="PT" role="Phòng thủ" team={combat.defender} result={result} />
+        <CombatTeamCard bid={result?.defenderBet} mark="PT" role="Phòng thủ" team={combat.defender} result={result} />
       </div>
 
       {active && combat.involved && !combat.submitted && (
@@ -938,22 +1071,43 @@ const Leaderboard = ({ teams }) => {
   );
 };
 
-const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
-  const opponents = teams.filter((team) => team.id !== currentTeamId);
-  const [targets, setTargets] = useState({});
-  const [traps, setTraps] = useState({});
+const TrapPlacementPopup = ({ item, onClose, onPlace }) => {
+  if (!item) return null;
 
-  const trapDraft = (item) => traps[item.instanceId] || { x: 1, y: 1 };
+  return (
+    <CellPickerPopup
+      note="Bản đồ trống 6x6; bấm vào một ô để khóa vị trí bẫy."
+      onClose={onClose}
+      onPick={(point) => onPlace({ itemInstanceId: item.instanceId, ...point })}
+      title="Chọn ô để đặt bẫy"
+      titlePrefix="Cạm bẫy"
+    />
+  );
+};
+
+const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
+  const opponents = getOpponentTeams(teams, currentTeamId);
+  const [targets, setTargets] = useState({});
+  const [placingTrap, setPlacingTrap] = useState(null);
+
   const targetDraft = (item) => targets[item.instanceId] || opponents[0]?.id || "";
 
   return (
     <div className="support-inventory">
+      <TrapPlacementPopup
+        item={placingTrap}
+        onClose={() => setPlacingTrap(null)}
+        onPlace={(payload) => {
+          onUse(payload);
+          setPlacingTrap(null);
+        }}
+      />
       <h3>{"Vật phẩm hỗ trợ"}</h3>
       {items.length ? (
         <div className="support-list rich">
           {items.map((item) => (
             <article className="support-item-card" key={item.instanceId || item.type}>
-              <span className="support-token" style={{ "--item-color": item.color }}>{item.symbol}</span>
+              <GameIcon className="support-token" color={item.color} label={item.name} symbol={item.symbol} type={item.type} />
               <div>
                 <strong>{item.name}</strong>
                 <small>{item.description}</small>
@@ -963,22 +1117,13 @@ const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
               ) : item.type === SUPPORT_ITEM_TYPES.FREEZE_OPPONENT ? (
                 <div className="item-use-row">
                   <select value={targetDraft(item)} onChange={(event) => setTargets({ ...targets, [item.instanceId]: event.target.value })}>
+                    {!opponents.length && <option value="">Chưa có đối thủ</option>}
                     {opponents.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
                   </select>
-                  <button onClick={() => onUse({ itemInstanceId: item.instanceId, targetTeamId: targetDraft(item) })} type="button">{"Dùng"}</button>
+                  <button disabled={!targetDraft(item)} onClick={() => onUse({ itemInstanceId: item.instanceId, targetTeamId: targetDraft(item) })} type="button">{"Dùng"}</button>
                 </div>
               ) : item.type === SUPPORT_ITEM_TYPES.TRAP ? (
-                <div className="item-use-row trap-row">
-                  <label className="coordinate-field">
-                    <span>{"X \u00b7 Ngang (c\u1ed9t)"}</span>
-                    <input aria-label={"T\u1ecda \u0111\u1ed9 ngang, c\u1ed9t X"} min="1" max="6" type="number" value={trapDraft(item).x} onChange={(event) => setTraps({ ...traps, [item.instanceId]: { ...trapDraft(item), x: event.target.value } })} />
-                  </label>
-                  <label className="coordinate-field">
-                    <span>{"Y \u00b7 D\u1ecdc (h\u00e0ng)"}</span>
-                    <input aria-label={"T\u1ecda \u0111\u1ed9 d\u1ecdc, h\u00e0ng Y"} min="1" max="6" type="number" value={trapDraft(item).y} onChange={(event) => setTraps({ ...traps, [item.instanceId]: { ...trapDraft(item), y: event.target.value } })} />
-                  </label>
-                  <button onClick={() => onUse({ itemInstanceId: item.instanceId, x: Number(trapDraft(item).x) - 1, y: Number(trapDraft(item).y) - 1 })} type="button">{"Đặt"}</button>
-                </div>
+                <button onClick={() => setPlacingTrap(item)} type="button">{"Mở bản đồ đặt bẫy"}</button>
               ) : (
                 <button onClick={() => onUse({ itemInstanceId: item.instanceId })} type="button">{"Dùng"}</button>
               )}
@@ -989,24 +1134,6 @@ const SupportInventory = ({ currentTeamId, items = [], onUse, teams = [] }) => {
         <p>{"Chưa có vật phẩm."}</p>
       )}
     </div>
-  );
-};
-
-const GameOverPanel = ({ gameOver }) => {
-  if (!gameOver) return null;
-
-  if (gameOver.stage === "leaderboard") {
-    return <FinalKahootLeaderboard rankings={gameOver.rankings || []} />;
-  }
-
-  return (
-    <section className="game-card game-over-card final-player-summary">
-      <div className="section-head">
-        <p>Kết thúc trò chơi</p>
-        <h2>{gameOver.winnerName} về đích đầu tiên</h2>
-      </div>
-      <FinalStatsCard summary={gameOver.summary} titlePrefix="Tổng kết đội bạn" />
-    </section>
   );
 };
 
@@ -1022,33 +1149,9 @@ const EnergyPips = ({ energy }) => {
   );
 };
 
-const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onAnswer, onCombatBet, onResolveEvent }) => {
+const GameplayPanel = ({ state, lastResult, combatReveal, onAuctionBid, onChooseDirection, onAnswer, onCombatBet, onResolveEvent }) => {
   if (state.gameOver) {
-    return (
-      <section className="gameplay two-col">
-        <div className="gameplay-left">
-          <GameOverPanel gameOver={state.gameOver} />
-        </div>
-        <div className="gameplay-right">
-          <NoticePanel messages={state.round?.messages || []} />
-          <section className="game-card game-over-card">
-            <div className="section-head">
-              <p>Chờ người dẫn</p>
-              <h2>
-                {state.gameOver.stage === "leaderboard"
-                  ? "Bảng xếp hạng cuối đã mở."
-                  : "Người dẫn đang xem thống kê từng đội."}
-              </h2>
-            </div>
-            <p className="game-over-summary">
-              {state.gameOver.stage === "leaderboard"
-                ? "Kết quả chung cuộc đang hiển thị theo phong cách Kahoot."
-                : "Bản đồ của đội bạn đã được mở: tường, đường đã khám phá và số câu đúng/sai."}
-            </p>
-          </section>
-        </div>
-      </section>
-    );
+    return <FinalStatsScreen gameOver={state.gameOver} mode="player" summary={state.gameOver.summary} />;
   }
 
   const round = state.round;
@@ -1076,7 +1179,7 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
           <EnergyPips energy={round?.turnEnergy} />
           <MovementViewport
             disabled={!canChooseDirection}
-            lastResult={result}
+            lastResult={lastResult?.teamId === state.team.id ? lastResult : null}
             onChooseDirection={onChooseDirection}
             pendingDirection={pending?.direction}
             team={state.team}
@@ -1108,6 +1211,7 @@ const GameplayPanel = ({ state, lastResult, onAuctionBid, onChooseDirection, onA
           combat={round?.combat}
           currentTeamId={state.team.id}
           onBet={onCombatBet}
+          reveal={combatReveal}
         />
         <ResultCard result={result} />
         <NoticePanel messages={round?.messages || []} />
@@ -1142,7 +1246,7 @@ const EventReveal = ({ reveal, onClose }) => {
   // Với các sự kiện xử lý ngay (không có bước tiếp theo), hiện luôn kết quả trong thẻ.
   let outcome = null;
   if (event.item) {
-    outcome = { badge: { symbol: event.item.symbol, color: event.item.color }, text: "Nhận: " + event.item.name };
+    outcome = { badge: { symbol: event.item.symbol, color: event.item.color, type: event.item.type }, text: "Nhận: " + event.item.name };
   } else if (event.newPosition) {
     outcome = { text: "Dịch chuyển tới (" + (event.newPosition.x + 1) + ", " + (event.newPosition.y + 1) + ")" };
   } else if (event.opponentName) {
@@ -1176,16 +1280,14 @@ const EventReveal = ({ reveal, onClose }) => {
         ) : (
           <>
             <div className="event-card flipped" style={{ "--event-color": color }}>
-              <span className="event-card-icon">{symbol}</span>
+              <GameIcon className="event-card-icon" color={color} label={name} symbol={symbol} type={event.type} />
             </div>
             <h2 className="event-name">{name}</h2>
             <p className="event-desc">{desc}</p>
             {outcome && (
               <div className="event-outcome">
                 {outcome.badge && (
-                  <span className="event-outcome-badge" style={{ "--event-color": outcome.badge.color }}>
-                    {outcome.badge.symbol}
-                  </span>
+                  <GameIcon className="event-outcome-badge" color={outcome.badge.color} symbol={outcome.badge.symbol} type={outcome.badge.type} />
                 )}
                 <span>{outcome.text}</span>
               </div>
@@ -1207,33 +1309,60 @@ export default function App() {
   const [localError, setLocalError] = useState("");
   const [lastResult, setLastResult] = useState(null);
   const [reveal, setReveal] = useState(null);
+  const [auctionReveal, setAuctionReveal] = useState(null);
+  const [eventEffect, setEventEffect] = useState(null);
+  const [combatReveal, setCombatReveal] = useState(null);
+  const auctionRevealIdRef = useRef(null);
+  const effectTimerRef = useRef(null);
+  const combatRevealTimerRef = useRef(null);
   const teamIdRef = useRef(savedSession?.teamId || null);
   const teamNameRef = useRef(savedSession?.teamName || "");
   const socket = useMemo(() => io(SERVER_URL, { autoConnect: false }), []);
   const [socketStatus, setSocketStatus] = useState(socket.connected ? "đã kết nối" : "đang kết nối");
 
   useEffect(() => {
+    const showEffect = (effect, duration = 4600) => {
+      if (!effect) return;
+      clearTimeout(effectTimerRef.current);
+      setEventEffect({ ...effect, id: `${effect.id}:${Date.now()}` });
+      effectTimerRef.current = setTimeout(() => setEventEffect(null), duration);
+    };
+
     const onState = (nextState) => {
       console.log("player game:state", nextState);
       setState(nextState);
       setLocalError("");
+      const auctionResult = nextState?.round?.auction?.result;
+      if (shouldRevealAuctionResult(auctionResult, auctionRevealIdRef.current)) {
+        auctionRevealIdRef.current = auctionResult.revealId;
+        setAuctionReveal({ ...auctionResult, nonce: Date.now() });
+      }
       teamIdRef.current = nextState?.team?.id || teamIdRef.current;
       teamNameRef.current = nextState?.team?.name || teamNameRef.current;
       if (nextState?.team?.id) {
         saveTeamSession({ teamId: nextState.team.id, teamName: nextState.team.name });
         setTeamName(nextState.team.name);
       }
-      if (nextState?.team && nextState.round?.pendingAnswer?.result) {
-        setLastResult(nextState.round.pendingAnswer.result);
-      }
     };
     const onRoundResult = (result) => {
+      showEffect(normalizeRoundEffect(result, teamIdRef.current));
       if (result?.teamId === teamIdRef.current) {
-        setLastResult(result);
+        setLastResult({ ...result, clientNonce: Date.now() });
         if (result.event) {
           setReveal({ event: result.event, nonce: Date.now() });
         }
       }
+    };
+    const onAuctionResult = (result) => {
+      if (result?.revealId) auctionRevealIdRef.current = result.revealId;
+      setAuctionReveal({ ...(result || {}), nonce: Date.now() });
+    };
+    const onSupportResult = (result) => showEffect(normalizeSupportEffect(result, teamIdRef.current));
+    const onCombatResult = (result) => {
+      clearTimeout(combatRevealTimerRef.current);
+      setCombatReveal(result);
+      combatRevealTimerRef.current = setTimeout(() => setCombatReveal(null), 6200);
+      if (result?.shielded) showEffect(normalizeCombatEffect(result, teamIdRef.current));
     };
     const onConnect = () => {
       setSocketStatus("đã kết nối");
@@ -1259,6 +1388,9 @@ export default function App() {
 
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
+    socket.on(EVENTS.AUCTION_RESULT, onAuctionResult);
+    socket.on(EVENTS.SUPPORT_RESULT, onSupportResult);
+    socket.on(EVENTS.COMBAT_RESULT, onCombatResult);
     socket.on(EVENTS.GAME_RESTART, onGameRestart);
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
@@ -1268,10 +1400,15 @@ export default function App() {
     return () => {
       socket.off(EVENTS.GAME_STATE, onState);
       socket.off(EVENTS.ROUND_RESULT, onRoundResult);
+      socket.off(EVENTS.AUCTION_RESULT, onAuctionResult);
+      socket.off(EVENTS.SUPPORT_RESULT, onSupportResult);
+      socket.off(EVENTS.COMBAT_RESULT, onCombatResult);
       socket.off(EVENTS.GAME_RESTART, onGameRestart);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("connect_error", onConnectError);
+      clearTimeout(effectTimerRef.current);
+      clearTimeout(combatRevealTimerRef.current);
       socket.disconnect();
     };
   }, [socket]);
@@ -1311,6 +1448,10 @@ export default function App() {
     socket.emit(EVENTS.SETUP_SUBMIT_MAZE, draft);
   };
 
+  const unreadyMaze = () => {
+    socket.emit(EVENTS.SETUP_UNREADY_MAZE);
+  };
+
   const chooseDirection = (direction) => {
     setLastResult(null);
     socket.emit(EVENTS.MOVE_CHOOSE, { direction });
@@ -1345,11 +1486,39 @@ export default function App() {
   };
 
   const visibleError = localError || state?.error;
+  const activePlayerAlert = getActivePlayerAlert(state);
+
+  const leaveFinalScreen = () => {
+    try {
+      window.localStorage.removeItem(TEAM_SESSION_KEY);
+    } catch {
+      // Reload still returns to the join screen when storage is unavailable.
+    }
+    teamIdRef.current = null;
+    teamNameRef.current = "";
+    window.location.reload();
+  };
+
+  if (state?.gameOver && state?.team) {
+    return (
+      <>
+        <GameOverOverlay gameOver={state.gameOver} currentTeamId={state.team.id} />
+        <FinalStatsScreen gameOver={state.gameOver} mode="player" onBack={leaveFinalScreen} summary={state.gameOver.summary} />
+      </>
+    );
+  }
 
   return (
     <main>
+      <EventEffectOverlay effect={eventEffect} />
       <GameOverOverlay gameOver={state?.gameOver} currentTeamId={state?.team?.id} />
       <EventReveal reveal={reveal} onClose={() => setReveal(null)} />
+      <AuctionRevealOverlay
+        currentTeamId={state?.team?.id}
+        mode="player"
+        onClose={() => setAuctionReveal(null)}
+        result={auctionReveal}
+      />
       <BombOverlay
         bomb={state?.round?.bomb}
         currentTeamId={state?.team?.id}
@@ -1362,30 +1531,31 @@ export default function App() {
         onBuzz={buzzMeteor}
       />
       <section className={state?.setup?.started ? "panel playing" : "panel"}>
-        <p>Màn hình đội chơi</p>
         <h1>{APP_TITLE}</h1>
-        <div className={socketStatus === "đã kết nối" ? "connection online" : "connection"}>
-          Máy chủ: {socketStatus}
-          {socketStatus !== "đã kết nối" && (
+        {socketStatus !== "đã kết nối" && (
+          <div className="connection">
+            Máy chủ: {socketStatus}
             <button className="reconnect-button" onClick={reconnect} type="button">
               Kết nối lại
             </button>
-          )}
-        </div>
-
-        <form onSubmit={joinTeam}>
-          <label htmlFor="teamName">Tên đội</label>
-          <div className="join-row">
-            <input
-              id="teamName"
-              maxLength="40"
-              placeholder="Ví dụ: Chim Cánh Cụt"
-              value={teamName}
-              onChange={(event) => setTeamName(event.target.value)}
-            />
-            <button type="submit">Vào đội</button>
           </div>
-        </form>
+        )}
+
+        {!state?.team && (
+          <form onSubmit={joinTeam}>
+            <label htmlFor="teamName">Tên đội</label>
+            <div className="join-row">
+              <input
+                id="teamName"
+                maxLength="40"
+                placeholder="Ví dụ: Chim Cánh Cụt"
+                value={teamName}
+                onChange={(event) => setTeamName(event.target.value)}
+              />
+              <button type="submit">Vào đội</button>
+            </div>
+          </form>
+        )}
 
         {visibleError && <div className="error">{visibleError}</div>}
 
@@ -1396,29 +1566,27 @@ export default function App() {
               <dl>
                 <div>
                   <dt>Điểm</dt>
-                  <dd>{state.team.score}</dd>
+                  <dd><AnimatedScore className="player-score-effect" value={state.team.score} /></dd>
                 </div>
                 <div>
                   <dt>Máu</dt>
                   <dd>{state.team.hp}</dd>
                 </div>
-                <div>
-                  <dt>Vị trí</dt>
-                  <dd>{state.team.position.x}, {state.team.position.y}</dd>
-                </div>
               </dl>
+              <ActivePlayerAlert alert={activePlayerAlert} />
               <SupportInventory
                 currentTeamId={state.team.id}
                 items={state.team.supportItems || []}
                 onUse={useSupport}
-                teams={state.leaderboard || []}
+                teams={state.teams || []}
               />
             </div>
 
             {!state.setup?.started ? (
-              <SetupBoard state={state} onSubmit={submitMaze} />
+              <SetupBoard state={state} onSubmit={submitMaze} onUnready={unreadyMaze} />
             ) : (
               <GameplayPanel
+                combatReveal={combatReveal}
                 lastResult={lastResult}
                 onAnswer={answerQuestion}
                 onAuctionBid={submitAuctionBid}

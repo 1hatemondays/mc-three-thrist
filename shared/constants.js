@@ -1,6 +1,7 @@
 export const EVENTS = {
   TEAM_JOIN: "team:join",
   SETUP_SUBMIT_MAZE: "setup:submitMaze",
+  SETUP_UNREADY_MAZE: "setup:unreadyMaze",
   SETUP_SET_TEAM_COUNT: "setup:setTeamCount",
   SETUP_START_GAME: "setup:startGame",
   SETUP_SET_TURN_ORDER: "setup:setTurnOrder",
@@ -12,6 +13,7 @@ export const EVENTS = {
   COMBAT_BET: "combat:bet",
   EVENT_RESOLVE: "event:resolve",
   SUPPORT_USE: "support:use",
+  SUPPORT_RESULT: "support:result",
   METEOR_BUZZ: "meteor:buzz",
   METEOR_ANSWER: "meteor:answer",
   GAME_OVER_SHOW_LEADERBOARD: "gameOver:showLeaderboard",
