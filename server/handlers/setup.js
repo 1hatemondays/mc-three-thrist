@@ -57,10 +57,14 @@ export const registerSetupHandlers = (io, socket) => {
     emitAllStates(io);
   });
 
-  socket.on(EVENTS.GAME_RESTART, () => {
-    if (socket.data.role !== "host") return;
+  socket.on(EVENTS.GAME_RESTART, (ack) => {
+    if (socket.data.role !== "host") {
+      if (typeof ack === "function") ack({ ok: false, error: "host_only" });
+      return;
+    }
 
     resetGameState();
+    if (typeof ack === "function") ack({ ok: true });
     io.emit(EVENTS.GAME_RESTART);
     emitAllStates(io);
   });

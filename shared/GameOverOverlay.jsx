@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
+import angelIcon from "./assets/angel.svg";
 import "./gameOver.css";
 
 const PARTICLE_COUNT = 48;
 const HERALDS = [
-  { side: "left", delay: "0s", note: "♪" },
-  { side: "right", delay: "-0.8s", note: "♫" },
-  { side: "top", delay: "-1.4s", note: "♬" }
+  { side: "left", delay: "0s", note: "\u266a" },
+  { side: "right", delay: "-0.8s", note: "\u266b" },
+  { side: "top", delay: "-1.4s", note: "\u266c" }
 ];
 
 export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
@@ -32,8 +33,10 @@ export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
     <div aria-labelledby="gameOverTitle" aria-modal="true" className="game-over-overlay" role="dialog">
       <div aria-hidden="true" className="game-over-particles">
         {Array.from({ length: PARTICLE_COUNT }, (_, index) => (
-          <i
+          <img
+            alt=""
             key={index}
+            src={angelIcon}
             style={{
               "--go-delay": (index % 9) * 0.11 + "s",
               "--go-left": (index * 37) % 101 + "%",
@@ -45,7 +48,7 @@ export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
 
       <section className="game-over-stage">
         <p className="game-over-kicker">{label}</p>
-        <h2 id="gameOverTitle">KẾT THÚC TRÒ CHƠI</h2>
+        <h2 id="gameOverTitle">{"K\u1ebeT TH\u00daC TR\u00d2 CH\u01a0I"}</h2>
 
         <div className="game-over-rays" aria-hidden="true" />
         <div className="game-over-trophy" aria-hidden="true">
@@ -59,20 +62,16 @@ export const GameOverOverlay = ({ gameOver, currentTeamId }) => {
         <div className="game-over-heralds" aria-hidden="true">
           {HERALDS.map((herald) => (
             <i className={`game-over-herald is-${herald.side}`} key={herald.side} style={{ "--herald-delay": herald.delay }}>
-              <span className="herald-wing left" />
-              <span className="herald-head" />
-              <span className="herald-body" />
-              <span className="herald-wing right" />
-              <span className="herald-horn" />
+              <img alt="" src={angelIcon} />
               <b>{herald.note}</b>
             </i>
           ))}
         </div>
 
         <div className="game-over-winner-banner">
-          <small>NHÀ VÔ ĐỊCH</small>
+          <small>{"NH\u00c0 V\u00d4 \u0110\u1ecaCH"}</small>
           <strong>{gameOver.winnerName}</strong>
-          <span>Đã tìm thấy đích đến trong mê cung</span>
+          <span>{"\u0110\u00e3 t\u00ecm th\u1ea5y \u0111\u00edch \u0111\u1ebfn trong m\u00ea cung"}</span>
         </div>
       </section>
     </div>

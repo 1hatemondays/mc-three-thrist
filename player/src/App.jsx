@@ -889,7 +889,7 @@ const CombatTeamCard = ({ bid, mark, role, team, result }) => {
         <span>{role}</span>
       </div>
       <strong>{team?.name || "Đang chọn đội"}</strong>
-      {result && <span className="combat-revealed-bid"><small>Điểm cược</small><b>{bid} điểm</b></span>}
+      {result && <span className="combat-revealed-bid"><small>{"\u0110i\u1ec3m \u0111\u00e3 ch\u1ecdn"}</small><b>{bid} điểm</b></span>}
       {winner && <em>Thắng</em>}
       {loser && <em>Thua</em>}
     </article>
@@ -934,7 +934,7 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet, reveal }) => {
   const title = result
     ? "Kết quả đối kháng"
     : combat.involved
-      ? "Khóa điểm, giành lợi thế"
+      ? "Ch\u1ecdn \u0111i\u1ec3m, gi\u00e0nh l\u1ee3i th\u1ebf"
       : "Theo dõi trận đối kháng";
 
   const setPreset = (ratio) => setAmount(Math.floor(maxBid * ratio));
@@ -949,11 +949,11 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet, reveal }) => {
     <section className="game-card combat-panel" aria-live="polite">
       <header className="combat-head">
         <div>
-          <p className="combat-kicker"><span>ĐẤU</span> Ô đối kháng · cược kín</p>
+          <p className="combat-kicker"><span>{"\u0110\u1ea4U"}</span> {"\u0110\u1ed1i kh\u00e1ng \u00b7 So \u0111i\u1ec3m"}</p>
           <h2 id="combatTitle">{title}</h2>
         </div>
         <span className="combat-status">
-          {result ? "Đã phân thắng bại" : remainingSeconds + "s · " + combat.submittedCount + "/2 đã khóa"}
+          {result ? "Đã phân thắng bại" : remainingSeconds + "s · " + combat.submittedCount + "/2 \u0111\u1ed9i \u0111\u00e3 ch\u1ecdn"}
         </span>
       </header>
 
@@ -961,7 +961,7 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet, reveal }) => {
         <div className="combat-countdown" aria-label={`Còn ${remainingSeconds} giây`}>
           <strong>{remainingSeconds}s</strong>
           <span><i style={{ "--combat-time": `${timeProgress}%` }} /></span>
-          <small>hết giờ = cược 0 điểm</small>
+          <small>{"H\u1ebft gi\u1edd = m\u1eb7c \u0111\u1ecbnh 0 \u0111i\u1ec3m"}</small>
         </div>
       )}
 
@@ -982,13 +982,13 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet, reveal }) => {
           <div className="combat-bet-copy">
             <div>
               <span>Lượt của đội bạn</span>
-              <strong>Đặt bao nhiêu điểm?</strong>
+              <strong>{"D\u00f9ng bao nhi\u00eau \u0111i\u1ec3m cho l\u01b0\u1ee3t n\u00e0y?"}</strong>
             </div>
             <small>Tối đa {maxBid} điểm</small>
           </div>
 
           <div className="combat-amount-row">
-            <label htmlFor="combatAmount">Mức cược</label>
+            <label htmlFor="combatAmount">{"S\u1ed1 \u0111i\u1ec3m s\u1eed d\u1ee5ng"}</label>
             <input
               id="combatAmount"
               inputMode="numeric"
@@ -1002,16 +1002,16 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet, reveal }) => {
             <span>điểm</span>
           </div>
 
-          <div className="combat-presets" aria-label="Chọn nhanh mức cược">
+          <div className="combat-presets" aria-label="Ch\u1ecdn nhanh s\u1ed1 \u0111i\u1ec3m s\u1eed d\u1ee5ng">
             <button onClick={() => setPreset(0.25)} type="button">25%</button>
             <button onClick={() => setPreset(0.5)} type="button">50%</button>
-            <button onClick={() => setPreset(1)} type="button">Tất tay</button>
+            <button onClick={() => setPreset(1)} type="button">{"D\u00f9ng t\u1ed1i \u0111a"}</button>
           </div>
 
           <button className="combat-submit" disabled={!canSubmit} type="submit">
-            Khóa điểm cược
+            {"X\u00e1c nh\u1eadn \u0111i\u1ec3m"}
           </button>
-          <p className="combat-rule">Điểm cược được giữ kín. Đội thua mất máu bằng chênh lệch cược; hòa thì đội thách đấu thắng và không gây sát thương.</p>
+          <p className="combat-rule">{"\u0110i\u1ec3m c\u1ee7a hai \u0111\u1ed9i \u0111\u01b0\u1ee3c gi\u1eef k\u00edn. \u0110\u1ed9i thua m\u1ea5t m\u00e1u b\u1eb1ng ch\u00eanh l\u1ec7ch \u0111i\u1ec3m; h\u00f2a th\u00ec \u0111\u1ed9i th\u00e1ch \u0111\u1ea5u th\u1eafng v\u00e0 kh\u00f4ng g\u00e2y s\u00e1t th\u01b0\u01a1ng."}</p>
         </form>
       )}
 
@@ -1019,14 +1019,14 @@ const CombatPanel = ({ combat, active, currentTeamId, onBet, reveal }) => {
         <div className="combat-waiting">
           <span className="combat-lock" aria-hidden="true">{combat.submitted ? "✓" : "•••"}</span>
           <div>
-            <strong>{combat.submitted ? "Đã khóa điểm cược" : "Đang theo dõi trực tiếp"}</strong>
+            <strong>{combat.submitted ? "\u0110\u00e3 x\u00e1c nh\u1eadn \u0111i\u1ec3m" : "Đang theo dõi trực tiếp"}</strong>
             <p>
               {combat.submitted
                 ? "Chờ đối thủ hoàn tất lựa chọn."
-                : "Hai đội đang đặt điểm; mức cược vẫn được niêm phong."}
+                : "Hai \u0111\u1ed9i \u0111ang ch\u1ecdn \u0111i\u1ec3m; \u0111i\u1ec3m c\u1ee7a hai \u0111\u1ed9i v\u1eabn \u0111\u01b0\u1ee3c gi\u1eef k\u00edn."}
             </p>
           </div>
-          <div className="combat-locks" aria-label={combat.submittedCount + " trên 2 đội đã đặt cược"}>
+          <div className="combat-locks" aria-label={combat.submittedCount + " tr\u00ean 2 \u0111\u1ed9i \u0111\u00e3 ch\u1ecdn"}>
             <span className={combat.submittedCount > 0 ? "locked" : ""} />
             <span className={combat.submittedCount > 1 ? "locked" : ""} />
           </div>
@@ -1241,6 +1241,7 @@ const EventReveal = ({ reveal, onClose }) => {
   const symbol = event.symbol || meta.symbol || "?";
   const name = event.name || meta.name || "Sự kiện";
   const desc = meta.description || event.message || "Đã kích hoạt ô sự kiện.";
+  const eventClass = event.type ? " event-" + event.type : "";
 
   // Với các sự kiện xử lý ngay (không có bước tiếp theo), hiện luôn kết quả trong thẻ.
   let outcome = null;
@@ -1256,7 +1257,12 @@ const EventReveal = ({ reveal, onClose }) => {
     event.type === EVENT_TILE_TYPES.TELEPORT;
 
   return (
-    <div className="event-overlay" role="dialog" aria-label={name}>
+    <div className={"event-overlay" + eventClass} role="dialog" aria-label={name}>
+      {event.type === EVENT_TILE_TYPES.BLESSING && (
+        <div aria-hidden="true" className="event-blessing-crosses">
+          {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
+        </div>
+      )}
       <div className="event-ticker">
         <div className="event-ticker-track">
           <span>{EVENT_TICKER_TEXT}</span>

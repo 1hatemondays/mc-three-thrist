@@ -50,6 +50,14 @@ const clearHostAccessKey = () => {
   }
 };
 
+const reloadAfterRestart = () => {
+  try {
+    window.localStorage.clear();
+  } catch {
+    // Reload still returns the host to a clean game.
+  }
+  window.location.reload();
+};
 const TEAM_COLORS = ["#f0b94b", "#65c8a2", "#ef8f6b", "#7bb7ff", "#d995ff", "#f4e06d", "#8bd6e8", "#f7a6c8"];
 const TEAM_ICONS = ["♠", "♥", "◆", "♣", "★", "✦", "●", "▲"];
 // Ô sự kiện trên màn TV hiển thị đồng nhất, không lộ loại — giữ tính bí ẩn.
@@ -99,6 +107,7 @@ const Confetti = ({ seed, count = CONFETTI_COUNT }) => {
 const EventAnnouncement = ({ banner }) => {
   if (!banner) return null;
   const eventClass = banner.type ? " event-" + banner.type : "";
+  const isBlessing = banner.type === EVENT_TILE_TYPES.BLESSING;
 
   return (
     <div
@@ -107,6 +116,11 @@ const EventAnnouncement = ({ banner }) => {
       className={"tv-event-layer" + (banner.global ? " global" : "") + eventClass}
       role="status"
     >
+      {isBlessing && (
+        <div aria-hidden="true" className="tv-blessing-crosses">
+          {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
+        </div>
+      )}
       <div className="tv-banner" key={banner.key}>
         <GameIcon className="tv-banner-icon" color={banner.color || "#f0b94b"} symbol={banner.symbol} type={banner.type} />
         <div>
@@ -147,7 +161,7 @@ const HostCombatSpotlight = ({ combat, reveal, teams = [] }) => {
         <small>{liveTeam?.hp ?? 100} máu · {liveTeam?.score ?? 0} điểm</small>
         <div className="combat-spotlight-hp"><i style={{ "--combat-hp": `${Math.min(100, Math.max(0, liveTeam?.hp ?? 100))}%` }} /></div>
         <div className="combat-spotlight-bid">
-          <small>Điểm cược</small>
+          <small>{"\u0110i\u1ec3m \u0111\u00e3 ch\u1ecdn"}</small>
           <b>{result ? `${amount} điểm` : "●●●"}</b>
         </div>
       </article>
@@ -159,8 +173,8 @@ const HostCombatSpotlight = ({ combat, reveal, teams = [] }) => {
       <section>
         <header>
           <div>
-            <p>Đối kháng trực tiếp · cược kín</p>
-            <h2 id="hostCombatTitle">{result ? "Công bố kết quả" : "Hai đội đang khóa điểm"}</h2>
+            <p>{"\u0110\u1ed1i kh\u00e1ng \u00b7 So \u0111i\u1ec3m"}</p>
+            <h2 id="hostCombatTitle">{result ? "Công bố kết quả" : "Hai \u0111\u1ed9i \u0111ang ch\u1ecdn \u0111i\u1ec3m"}</h2>
           </div>
           <strong>{result ? "ĐÃ CHỐT" : `${remainingSeconds}s`}</strong>
         </header>
@@ -179,7 +193,7 @@ const HostCombatSpotlight = ({ combat, reveal, teams = [] }) => {
             </div>
           </div>
         ) : (
-          <p className="combat-spotlight-note">Điểm cược đang được niêm phong · hết giờ tự động cược 0 điểm</p>
+          <p className="combat-spotlight-note">{"\u0110i\u1ec3m c\u1ee7a hai \u0111\u1ed9i \u0111\u01b0\u1ee3c gi\u1eef k\u00edn \u00b7 H\u1ebft gi\u1edd = m\u1eb7c \u0111\u1ecbnh 0 \u0111i\u1ec3m"}</p>
         )}
       </section>
     </div>
@@ -490,13 +504,16 @@ const GuideScreen = ({ state, activeTeam, auctionReveal, banner, combatReveal, c
   );
 };
 
-const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion, onShowLeaderboard, round }) => {
+const HostRoundBoxes = ({ activeTeam, gameOver, hiddenQuestionKey, onOpenQuestion, onRevealQuestion, onShowLeaderboard, round }) => {
   if (!round) return null;
   const auction = round.auction;
   const combat = round.combat;
   const questionControl = round.questionControl;
   const correctChoice = questionControl?.question?.choices?.[questionControl.question.correctIndex];
-
+  const questionKey = questionControl
+    ? [questionControl.teamId || "", questionControl.question?.id || questionControl.question?.text || "", questionControl.reveal ? "reveal" : "live"].join(":")
+    : "";
+  const questionVisible = questionControl && !gameOver && (!questionControl.reveal || hiddenQuestionKey !== questionKey);
   return (
     <div className="host-boxes">
       {gameOver && (
@@ -536,10 +553,10 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
         </section>
       )}
 
-      {questionControl && !gameOver && (
+      {questionVisible && (
         <div className="guide-question-layer">
           <section className={`host-box host-question-box${questionControl.answerOpen ? " is-open" : ""}${questionControl.reveal ? " is-revealed" : ""}`}>
-            <p>{"Câu hỏi người dẫn"}</p>
+            <p>{"C\u00e2u h\u1ecfi ng\u01b0\u1eddi d\u1eabn"}</p>
             <strong>{questionControl.question?.text}</strong>
             <ol>
               {(questionControl.question?.choices || []).map((choice, index) => (
@@ -556,17 +573,17 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
                   key={choice}
                 >
                   {String.fromCharCode(65 + index)}. {choice}
-                  {questionControl.reveal && index === questionControl.question.correctIndex && <b>ĐÁP ÁN ĐÚNG</b>}
+                  {questionControl.reveal && index === questionControl.question.correctIndex && <b>{"\u0110\u00c1P \u00c1N \u0110\u00daNG"}</b>}
                 </li>
               ))}
             </ol>
             {!questionControl.answerOpen && !questionControl.answered && (
-              <button className="host-box-action" onClick={onOpenQuestion} type="button">Mở trả lời</button>
+              <button className="host-box-action" onClick={onOpenQuestion} type="button">{"M\u1edf tr\u1ea3 l\u1eddi"}</button>
             )}
             {questionControl.answered && !questionControl.reveal && (
-              <button className="host-box-action" onClick={onRevealQuestion} type="button">Hiện đáp án</button>
+              <button className="host-box-action" onClick={onRevealQuestion} type="button">{"Hi\u1ec7n \u0111\u00e1p \u00e1n"}</button>
             )}
-            {questionControl.reveal && <small>{"Đáp án đúng: " + correctChoice}</small>}
+            {questionControl.reveal && <small>{"\u0110\u00e1p \u00e1n \u0111\u00fang: " + correctChoice}</small>}
           </section>
         </div>
       )}
@@ -589,7 +606,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
         <section className="host-box combat-box">
           <div className="combat-box-head">
             <p>Đối kháng trực tiếp</p>
-            <span>{combat.result ? "Kết quả" : combat.submittedCount + "/2 đã khóa"}</span>
+            <span>{combat.result ? "K\u1ebft qu\u1ea3" : combat.submittedCount + "/2 \u0111\u1ed9i \u0111\u00e3 ch\u1ecdn"}</span>
           </div>
           <div className="combat-matchup">
             <strong>{combat.attacker?.name || "Đội thách đấu"}</strong>
@@ -597,7 +614,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
             <strong>{combat.defender?.name || "Đội phòng thủ"}</strong>
           </div>
           {!combat.result && (
-            <div className="combat-box-progress" aria-label={combat.submittedCount + " trên 2 đội đã đặt cược"}>
+            <div className="combat-box-progress" aria-label={combat.submittedCount + " tr\u00ean 2 \u0111\u1ed9i \u0111\u00e3 ch\u1ecdn"}>
               <span className={combat.submittedCount > 0 ? "locked" : ""} />
               <span className={combat.submittedCount > 1 ? "locked" : ""} />
             </div>
@@ -607,7 +624,7 @@ const HostRoundBoxes = ({ activeTeam, gameOver, onOpenQuestion, onRevealQuestion
               ? combat.result.shielded
                 ? combat.result.winnerName + " thắng · lá chắn đã chặn sát thương"
                 : combat.result.winnerName + " thắng đối kháng"
-              : "Điểm cược đang được niêm phong."}
+              : "\u0110i\u1ec3m c\u1ee7a hai \u0111\u1ed9i \u0111\u01b0\u1ee3c gi\u1eef k\u00edn."}
           </small>
         </section>
       )}
@@ -635,6 +652,7 @@ export default function App() {
   const [hostAccessKey, setHostAccessKey] = useState(loadHostAccessKey);
   const [hostKeyDraft, setHostKeyDraft] = useState("");
   const [hostAuthError, setHostAuthError] = useState("");
+  const [hiddenQuestionKey, setHiddenQuestionKey] = useState("");
   const socketRef = useRef(null);
   const teamsRef = useRef([]);
   const auctionRevealIdRef = useRef(null);
@@ -765,14 +783,7 @@ export default function App() {
       );
     };
 
-    const onGameRestart = () => {
-      try {
-        window.localStorage.clear();
-      } catch {
-        // Reload still returns the host to a clean game.
-      }
-      window.location.reload();
-    };
+    const onGameRestart = () => reloadAfterRestart();
 
     socket.on(EVENTS.GAME_STATE, onState);
     socket.on(EVENTS.ROUND_RESULT, onRoundResult);
@@ -831,6 +842,16 @@ export default function App() {
   const canStartGame = Boolean(state?.setup?.complete && !setupStarted);
   const canEditTurnOrder = Boolean(teams.length > 0 && !setupStarted);
   const isGuideScreen = window.location.pathname.replace(/\/+$/, "").endsWith("/guide");
+  const hostQuestionControl = state?.round?.questionControl;
+  const hostQuestionKey = hostQuestionControl
+    ? [hostQuestionControl.teamId || "", hostQuestionControl.question?.id || hostQuestionControl.question?.text || "", hostQuestionControl.reveal ? "reveal" : "live"].join(":")
+    : "";
+  const hideRevealedHostQuestion = (event) => {
+    if (!hostQuestionControl?.reveal || hiddenQuestionKey === hostQuestionKey) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest(".host-question-box")) return;
+    setHiddenQuestionKey(hostQuestionKey);
+  };
   const turnOrder = state?.round?.turnOrder?.length
     ? state.round.turnOrder
     : teams.map((team) => team.id);
@@ -863,11 +884,22 @@ export default function App() {
   };
 
   const restartGame = () => {
-    if (window.confirm("Khởi động lại sẽ xóa toàn bộ đội, mê cung và tiến trình hiện tại. Tiếp tục?")) {
-      socketRef.current?.emit(EVENTS.GAME_RESTART);
-    }
-  };
+    if (!window.confirm("Kh\u1edfi \u0111\u1ed9ng l\u1ea1i s\u1ebd x\u00f3a to\u00e0n b\u1ed9 \u0111\u1ed9i, m\u00ea cung v\u00e0 ti\u1ebfn tr\u00ecnh hi\u1ec7n t\u1ea1i. Ti\u1ebfp t\u1ee5c?")) return;
 
+    const socket = socketRef.current;
+    if (!socket?.connected) {
+      window.alert("Ch\u01b0a k\u1ebft n\u1ed1i m\u00e1y ch\u1ee7, kh\u00f4ng th\u1ec3 kh\u1edfi \u0111\u1ed9ng l\u1ea1i.");
+      return;
+    }
+
+    socket.timeout(3000).emit(EVENTS.GAME_RESTART, (error, response = {}) => {
+      if (error || !response.ok) {
+        window.alert("Kh\u00f4ng th\u1ec3 kh\u1edfi \u0111\u1ed9ng l\u1ea1i. H\u00e3y m\u1edf kh\u00f3a l\u1ea1i m\u00e0n ng\u01b0\u1eddi d\u1eabn.");
+        return;
+      }
+      reloadAfterRestart();
+    });
+  };
 
   if (!hostAccessKey) {
     return (
@@ -920,7 +952,7 @@ export default function App() {
   }
 
   return (
-    <main>
+    <main onClick={hideRevealedHostQuestion}>
       <EventEffectOverlay effect={eventEffect} />
       <HostCombatSpotlight combat={state?.round?.combat} reveal={combatReveal} teams={teams} />
       <AuctionRevealOverlay mode="host" onClose={() => setAuctionReveal(null)} result={auctionReveal} />
@@ -998,6 +1030,15 @@ export default function App() {
         </div>
 
         <aside className="leaderboard">
+          <HostRoundBoxes
+            activeTeam={teams.find((team) => team.id === state?.round?.activeTeamId)}
+            gameOver={gameOver}
+            hiddenQuestionKey={hiddenQuestionKey}
+            onOpenQuestion={openQuestion}
+            onRevealQuestion={revealQuestion}
+            onShowLeaderboard={showFinalLeaderboard}
+            round={state?.round}
+          />
           <h2>{gameOver ? "Xếp hạng chung cuộc" : "Trạng thái đội"}</h2>
           {rankingRows.map((team, index) => (
             <div className={"rank" + (gameOver && index === 0 ? " winner" : state?.round?.activeTeamId === (team.teamId || team.id) ? " is-active" : "")} key={team.teamId || team.id}>

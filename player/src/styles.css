@@ -1837,6 +1837,136 @@ dd {
   .combat-countdown i,
   .combat-revealed-bid { animation: none; transition: none; }
 }
+.combat-modal {
+  width: min(1120px, calc(100vw - 24px));
+}
+
+.combat-panel {
+  padding: clamp(20px, 4vw, 46px);
+  border-color: var(--gold);
+  color: #fff9e9;
+  background:
+    linear-gradient(90deg, rgba(255, 249, 233, 0.06) 1px, transparent 1px) 0 0 / 42px 42px,
+    linear-gradient(rgba(255, 249, 233, 0.05) 1px, transparent 1px) 0 0 / 42px 42px,
+    #0f2119;
+  box-shadow: 10px 10px 0 rgba(240, 185, 75, 0.2);
+}
+
+.combat-panel::before {
+  inset: 14px;
+  height: auto;
+  border: 1px solid rgba(240, 185, 75, 0.72);
+  background: transparent;
+  pointer-events: none;
+}
+
+.combat-head,
+.combat-arena,
+.combat-bet,
+.combat-waiting,
+.combat-result {
+  position: relative;
+  z-index: 1;
+}
+
+.combat-kicker {
+  color: var(--gold);
+  letter-spacing: 0;
+}
+
+.combat-kicker span {
+  width: auto;
+  min-width: 42px;
+  padding: 0 6px;
+}
+
+.combat-head h2,
+.combat-team-card > strong,
+.combat-versus {
+  font-family: Cambria, "Times New Roman", serif;
+  letter-spacing: 0;
+}
+
+.combat-head h2 {
+  color: #fff9e9;
+  font-size: clamp(42px, 7vw, 78px);
+  line-height: 0.9;
+  text-wrap: balance;
+}
+
+.combat-status {
+  border: 2px solid var(--line);
+  background: var(--gold);
+  font-family: Cambria, "Times New Roman", serif;
+  font-size: clamp(18px, 3.6vw, 34px);
+  text-transform: none;
+}
+
+.combat-arena {
+  grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
+  gap: clamp(14px, 3vw, 28px);
+}
+
+.combat-team-card {
+  padding: clamp(18px, 3vw, 30px);
+  color: var(--ink);
+}
+
+.combat-team-card > strong {
+  margin-top: 18px;
+  overflow: visible;
+  font-size: clamp(30px, 5vw, 54px);
+  line-height: 0.96;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.combat-versus {
+  width: 64px;
+  border-radius: 0;
+  color: var(--ink);
+  background: var(--coral);
+  font-size: 24px;
+  transform: none;
+}
+
+.combat-bet {
+  background: #112d23;
+}
+
+.combat-amount-row input,
+.combat-presets button,
+.combat-submit {
+  font: inherit;
+}
+
+.combat-submit {
+  min-height: 52px;
+}
+
+@media (max-width: 560px) {
+  .combat-panel {
+    padding: 18px 12px;
+  }
+
+  .combat-panel::before {
+    inset: 8px;
+  }
+
+  .combat-head h2 {
+    font-size: clamp(34px, 11vw, 48px);
+  }
+
+  .combat-arena {
+    grid-template-columns: 1fr;
+  }
+
+  .combat-versus {
+    justify-self: center;
+    width: 46px;
+  }
+}
 .compact-choices button {
   min-height: 52px;
 }
@@ -2147,6 +2277,70 @@ dd {
 .event-start:hover:not(:disabled) {
   transform: translate(-1px, -1px);
   box-shadow: 5px 5px 0 var(--line);
+}
+
+.event-blessing-crosses {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.event-blessing-crosses i {
+  position: absolute;
+  bottom: -54px;
+  left: var(--cross-left, 50%);
+  width: var(--cross-size, 34px);
+  height: var(--cross-size, 34px);
+  filter: drop-shadow(0 0 12px rgba(101, 200, 162, 0.9));
+  animation: blessCrossRise var(--cross-duration, 3.1s) ease-out var(--cross-delay, 0s) infinite;
+}
+
+.event-blessing-crosses i::before,
+.event-blessing-crosses i::after {
+  position: absolute;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #c9ffe2, #65c8a2 62%, #2f8a68);
+  content: "";
+}
+
+.event-blessing-crosses i::before {
+  top: 0;
+  left: 50%;
+  width: 22%;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.event-blessing-crosses i::after {
+  top: 42%;
+  left: 0;
+  width: 100%;
+  height: 22%;
+}
+
+.event-blessing-crosses i:nth-child(1) { --cross-left: 8%; --cross-size: 24px; --cross-delay: 0.08s; --cross-duration: 2.7s; }
+.event-blessing-crosses i:nth-child(2) { --cross-left: 19%; --cross-size: 38px; --cross-delay: 0.38s; --cross-duration: 3.2s; }
+.event-blessing-crosses i:nth-child(3) { --cross-left: 31%; --cross-size: 30px; --cross-delay: 0.7s; --cross-duration: 2.9s; }
+.event-blessing-crosses i:nth-child(4) { --cross-left: 43%; --cross-size: 44px; --cross-delay: 0.18s; --cross-duration: 3.5s; }
+.event-blessing-crosses i:nth-child(5) { --cross-left: 55%; --cross-size: 28px; --cross-delay: 0.58s; --cross-duration: 2.8s; }
+.event-blessing-crosses i:nth-child(6) { --cross-left: 66%; --cross-size: 40px; --cross-delay: 0.28s; --cross-duration: 3.3s; }
+.event-blessing-crosses i:nth-child(7) { --cross-left: 76%; --cross-size: 26px; --cross-delay: 0.86s; --cross-duration: 2.9s; }
+.event-blessing-crosses i:nth-child(8) { --cross-left: 86%; --cross-size: 34px; --cross-delay: 0.48s; --cross-duration: 3.4s; }
+.event-blessing-crosses i:nth-child(9) { --cross-left: 94%; --cross-size: 22px; --cross-delay: 1.02s; --cross-duration: 2.6s; }
+
+@keyframes blessCrossRise {
+  0% { opacity: 0; transform: translateY(0) translateX(-10px) scale(0.45) rotate(-8deg); }
+  12% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-420px) translateX(12px) scale(1.08) rotate(7deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-blessing-crosses i {
+    animation: none !important;
+  }
 }
 
 @keyframes noticePop {
